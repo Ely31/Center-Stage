@@ -1,0 +1,1 @@
+This folder is meant to be used as an eocv-sim workspace as well as actual pipelines.
