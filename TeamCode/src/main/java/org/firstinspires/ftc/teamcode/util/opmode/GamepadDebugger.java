@@ -21,12 +21,8 @@ public class GamepadDebugger extends LinearOpMode {
         while (opModeIsActive()) {
             // TeleOp loop
             // See https://gm0.org/en/latest/docs/software/gamepad.html#storing-gamepad-state
-            try{
-                prevGamepad.copy(currentGamepad);
-                currentGamepad.copy(gamepad1);
-            } catch (RobotCoreException ignored){
-                // Idk why it wants a try catch statement
-            }
+            prevGamepad.copy(currentGamepad);
+            currentGamepad.copy(gamepad1);
 
             if (currentGamepad.share && !prevGamepad.share){
                 showBooleans = !showBooleans;

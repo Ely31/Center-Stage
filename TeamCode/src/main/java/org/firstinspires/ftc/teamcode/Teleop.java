@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.util.TimeUtil;
 
 @Config
 @TeleOp
-public class SlowTeleop extends LinearOpMode {
+public class Teleop extends LinearOpMode {
     // Pre init
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
@@ -76,7 +76,7 @@ public class SlowTeleop extends LinearOpMode {
 
             // Slow down the bot when scoring
             if (scoringState == ScoringState.SCORING) drivingSpeedMultiplier = 0.3;
-            else drivingSpeedMultiplier = 0.5;
+            else drivingSpeedMultiplier = 1;
             // Drive the bot
             drive.driveFieldCentric(
                     gamepad1.left_stick_x * drivingSpeedMultiplier,
@@ -84,7 +84,7 @@ public class SlowTeleop extends LinearOpMode {
                     gamepad1.right_stick_x * drivingSpeedMultiplier * 0.8,
                     gamepad1.right_trigger);
 
-            // Manually calibrate feild centric with a button
+            // Manually calibrate field centric with a button
             if (gamepad1.share) drive.resetHeading();
 
             // ARM AND LIFT CONTROL

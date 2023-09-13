@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.AutoScoringMech;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.hardware.PivotingCamera;
-import org.firstinspires.ftc.teamcode.vision.workspace.SignalPipeline;
+import org.firstinspires.ftc.teamcode.vision.old.SignalPipeline;
 
 //this autonomous is meant for if you start on the left side of the field
 //regular is the red side of the field, -1 is blue side of the field

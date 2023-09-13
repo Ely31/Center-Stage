@@ -99,7 +99,8 @@ public class TeleMecDrive {
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
-        
+
+        // TODO: switch to the new imu interface
         //initialize imu
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imuParameters = new BNO055IMU.Parameters();

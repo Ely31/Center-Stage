@@ -6,8 +6,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
-import org.firstinspires.ftc.teamcode.vision.workspace.ImageToTelemetryPipeline;
-import org.firstinspires.ftc.teamcode.vision.workspace.ImageToTelemetryPipeline2;
+import org.firstinspires.ftc.teamcode.vision.old.ImageToTelemetryPipeline2;
 
 @TeleOp(group = "test")
 public class ImageToTelemetry extends LinearOpMode {

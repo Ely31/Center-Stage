@@ -1,6 +1,7 @@
-package org.firstinspires.ftc.teamcode.vision.workspace;
+package org.firstinspires.ftc.teamcode.vision.old;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.vision.workspace.CameraConstants;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;

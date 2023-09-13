@@ -6,7 +6,7 @@ public class CameraConstants {
     public static final int midpointY = (int) (height/2.0);
     public static final double aspectRatio = 1.33333;
 
-    // Haven't calibrated the vertical fov yet, migt be totally wrong
+    // Haven't calibrated the vertical fov yet, might be totally wrong
     public static final double horizontalFOV = 42, verticalFOV = 42;
 
     public static final double
