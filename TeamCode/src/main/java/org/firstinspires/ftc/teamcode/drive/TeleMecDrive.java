@@ -1,14 +1,17 @@
 package org.firstinspires.ftc.teamcode.drive;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 
 // This has way more functions than you really need
@@ -23,8 +26,10 @@ public class TeleMecDrive {
     public DcMotor.RunMode runMode;
     public DcMotor.ZeroPowerBehavior zeroPowerBehavior;
 
-    private BNO055IMU imu;
-    BNO055IMU.Parameters imuParameters;
+    private IMU imu;
+    RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+    RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+    RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
     private double heading;
     public double getHeading(){
         return heading;
@@ -89,23 +94,17 @@ public class TeleMecDrive {
         rb = hardwareMap.get(DcMotorEx.class,"rb");
         lf.setDirection(DcMotorSimple.Direction.REVERSE);
         lb.setDirection(DcMotorSimple.Direction.REVERSE);
-        // Set the max speed to %95 when using RUE
-        setMaxRPMFraction(0.95);
         // Configure motor behavior
         setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
         // Use bulk reads
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        // TODO: switch to the new imu interface
         //initialize imu
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imuParameters = new BNO055IMU.Parameters();
-        imuParameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-        imu.initialize(imuParameters);
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(orientationOnRobot));
 
         this.slowFactor = slowFactor;
     }
@@ -115,7 +114,9 @@ public class TeleMecDrive {
 
         slowInput = ((-1 + slowFactor) * slowInput)+1;
 
-        heading = (imu.getAngularOrientation().firstAngle + (AutoToTele.endOfAutoHeading + Math.toRadians(-90)) + headingOffset);
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+
+        heading = (orientation.getYaw(AngleUnit.RADIANS) + (AutoToTele.endOfAutoHeading + Math.toRadians(-90)) + headingOffset);
 
         // Matrix math I don't understand to rotate the joystick input by the heading
         rotX = x * Math.cos(-heading) - -y * Math.sin(-heading);
@@ -155,6 +156,7 @@ public class TeleMecDrive {
     }
     public void resetHeading(){
         AutoToTele.endOfAutoHeading = (Math.PI/2); // Unit circle coming in handy
-        headingOffset = -(imu.getAngularOrientation().firstAngle + (AutoToTele.endOfAutoHeading + Math.toRadians(90 * AutoToTele.allianceSide)));
+        // TODO: Will need to fix this
+        headingOffset = getHeading();
     }
 }

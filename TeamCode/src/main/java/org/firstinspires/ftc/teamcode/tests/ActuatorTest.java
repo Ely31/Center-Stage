@@ -7,7 +7,6 @@ import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.outoftheboxrobotics.photoncore.PhotonCore;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
@@ -69,10 +68,9 @@ public class ActuatorTest extends LinearOpMode {
         while (opModeIsActive()){
             // Teleop code
             // Gamepad shenannigans
-            try{
-                prevGamepad.copy(currentGamepad);
-                currentGamepad.copy(gamepad1);
-            } catch (RobotCoreException ignored){}
+
+            prevGamepad.copy(currentGamepad);
+            currentGamepad.copy(gamepad1);
 
             // Update everything
             actuator.update();

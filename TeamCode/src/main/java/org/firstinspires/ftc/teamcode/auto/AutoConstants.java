@@ -13,6 +13,7 @@ import java.util.Random;
 
 public class AutoConstants {
     SampleMecanumDrive drive;
+    int randomMessageIndex;
     // Constructor
     public AutoConstants(SampleMecanumDrive drive){
         this.drive = drive;
@@ -156,9 +157,6 @@ public class AutoConstants {
         telemetry.addData("Number of cycles", getNumCycles());
         telemetry.addLine(ramdomAutoCheckMessage());
     }
-
-    int randomMessageIndex;
-
     String[] messageList = {
             "CHECK THE AUTO, REMEMBER NANO FINALS 3!",
             "Run the right auto kids!",
@@ -186,8 +184,7 @@ public class AutoConstants {
     };
 
     String ramdomAutoCheckMessage(){
-        // Generate a random number and look up that index in the array of messages
-
+        //look up the index of the randomly generated number in the array of messages and return that message
         return messageList[randomMessageIndex];
     }
 }
