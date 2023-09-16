@@ -15,4 +15,15 @@ public class Utility {
 
         return (min < input && input < max);
     }
+
+    public static String generateTelemetryTrackbar(double minval, double maxval, double input, double resolution){
+        double percentage = (maxval-minval)/(input-minval);
+        int segmentToLight = (int) (resolution*percentage);
+        StringBuilder builder = new StringBuilder();
+        for (int i=0; i < resolution; i++){
+            if (i == segmentToLight) builder.append("█");
+            else builder.append("-");
+        }
+        return builder.toString();
+    }
 }

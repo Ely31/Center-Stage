@@ -57,6 +57,12 @@ public class SingleMotorLift {
     public void editExtendedPos(double step){
         extendedPos += step;
     }
+    public void setExtendedPos(double height){
+        extendedPos = height;
+    }
+    public double getExtendedPos(){
+        return extendedPos;
+    }
 
     public void editRetractedPos(double step){
         retractedPos += step;

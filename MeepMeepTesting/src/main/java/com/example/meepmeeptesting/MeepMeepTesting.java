@@ -34,7 +34,7 @@ public class MeepMeepTesting {
                 );
 
         Image img = null;
-        try { img = ImageIO.read(new File("<PATH TO IMAGE>")); }
+        try { img = ImageIO.read(new File("/home/elywick/Documents/Robotics/Center Stage/Software/meepmeep background/CenterStageFieldImageCropped.png")); }
         catch (IOException e) {}
 
         meepMeep.setBackground(img)
