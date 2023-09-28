@@ -2,22 +2,21 @@ package org.firstinspires.ftc.teamcode.tests;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.DualMotorLift;
 
 @TeleOp(name="",group="test")
 public class LiftTest extends LinearOpMode {
     // Pre-init
-    Lift lift;
+    DualMotorLift lift;
     @Override
     public void runOpMode() {
         // Init
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        lift = new Lift(hardwareMap);
-        lift.setCoefficients(Lift.coeffs);
+        lift = new DualMotorLift(hardwareMap);
+        lift.setCoefficients(DualMotorLift.coeffs);
         waitForStart();
     
         // Pre-run

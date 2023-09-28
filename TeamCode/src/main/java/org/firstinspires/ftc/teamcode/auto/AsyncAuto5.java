@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.AutoScoringMech;
-import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.DualMotorLift;
 import org.firstinspires.ftc.teamcode.hardware.PivotingCamera;
 import org.firstinspires.ftc.teamcode.vision.old.SignalPipeline;
 
@@ -107,7 +107,7 @@ public class AsyncAuto5 extends LinearOpMode {
 
                 case SCORING_PRELOAD:
                         if (actionTimer.seconds() > 2){
-                            scoringMech.scoreWithBracer(Lift.mediumPos);
+                            scoringMech.scoreWithBracer(DualMotorLift.mediumPos);
                         }
                         if (scoringMech.liftIsMostlyDown()){
                             // Send it off again
@@ -126,7 +126,7 @@ public class AsyncAuto5 extends LinearOpMode {
                     if (actionTimer.seconds() > 0.25){
                         scoringMech.grabOffStackAsync(4-cycleIndex, !drive.isBusy());
                     } else {
-                        scoringMech.scoreWithBracer(Lift.highPos);
+                        scoringMech.scoreWithBracer(DualMotorLift.highPos);
                     }
 
                     if (!drive.isBusy()){
@@ -149,7 +149,7 @@ public class AsyncAuto5 extends LinearOpMode {
 
                 case TO_JUNCTION:
                         if (actionTimer.seconds() > 0.7){
-                            scoringMech.scoreWithBracer(Lift.highPos);
+                            scoringMech.scoreWithBracer(DualMotorLift.highPos);
                         }
                         if (scoringMech.liftIsGoingDown()){
                             actionTimer.reset();
@@ -168,7 +168,7 @@ public class AsyncAuto5 extends LinearOpMode {
                     break;
 
                 case PARKING:
-                    scoringMech.scoreWithBracer(Lift.highPos);
+                    scoringMech.scoreWithBracer(DualMotorLift.highPos);
                     // Yay, done
                     // Once the bot is parked, stop the OpMode
                     if (!drive.isBusy()){

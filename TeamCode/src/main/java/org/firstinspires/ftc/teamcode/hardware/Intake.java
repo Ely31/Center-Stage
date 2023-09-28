@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 @Config
 public class Intake {
 
@@ -14,10 +13,10 @@ public class Intake {
     private boolean lastInput;
     private boolean intakeToggledStatus;
 
-    public void init(HardwareMap hwmap) {
+    public Intake(HardwareMap hwmap) {
         intake = hwmap.get(DcMotor.class, "intake");
-        leftSensor = hwmap.get(ColorSensor.class,"leftSensor");
-        rightSensor = hwmap.get(ColorSensor.class,"rightSensor");
+        //leftSensor = hwmap.get(ColorSensor.class,"leftSensor");
+        //rightSensor = hwmap.get(ColorSensor.class,"rightSensor");
         lastInput = false;
         intakeToggledStatus = false;
     }
@@ -45,7 +44,7 @@ public class Intake {
 
         lastInput = input;
     }
-
+/*
     // Take the average of the values of both sensors
     public double maxProximity(){
         return Math.max(leftSensor.alpha(), rightSensor.alpha());
@@ -60,4 +59,5 @@ public class Intake {
         double maxProximity = maxProximity(); // So we don't make two i2c calls
         return (325 < maxProximity && maxProximity < 380);
     }
+    */
 }

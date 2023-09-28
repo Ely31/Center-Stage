@@ -39,7 +39,7 @@ public class AutoScoringMech extends ScoringMech{
     }
 
     public AutoScoringMech(HardwareMap hwmap){
-        lift = new Lift(hwmap);
+        lift = new DualMotorLift(hwmap);
         arm = new Arm(hwmap);
         bracer = hwmap.get(Servo.class, "bracer");
         setStackIndex(0);

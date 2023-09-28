@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
-import com.outoftheboxrobotics.photoncore.PhotonCore;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -50,7 +49,6 @@ public class ActuatorTest extends LinearOpMode {
     @Override
     public void runOpMode(){
         // Init
-        PhotonCore.enable();
         actuator = new Actuator(hardwareMap, name, gearboxRatio);
         actuator.setDiameter(diameter);
         actuator.setAngularLimits(min,max);

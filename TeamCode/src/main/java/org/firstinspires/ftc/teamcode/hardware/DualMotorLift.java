@@ -7,10 +7,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.actuators.LinearActuator;
-import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
-public class Lift {
+public class DualMotorLift {
     LinearActuator left;
     LinearActuator right;
 
@@ -27,7 +26,7 @@ public class Lift {
     public static PIDCoefficients coeffs = new PIDCoefficients(0.3,0.08,0.03);
     public static double f = 0.4;
 
-    public Lift(HardwareMap hwmap){
+    public DualMotorLift(HardwareMap hwmap){
         left = new LinearActuator(hwmap, "leftSpool", 13.7, 5.93);
         right = new LinearActuator(hwmap, "rightSpool", 13.7, 5.93);
         left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -49,7 +48,7 @@ public class Lift {
     public void setCoefficients(PIDCoefficients coeffs){
         left.setCoefficients(coeffs);
         right.setCoefficients(coeffs);
-        Lift.coeffs = coeffs;
+        DualMotorLift.coeffs = coeffs;
         left.setfCoefficient(f);
         right.setfCoefficient(f);
     }

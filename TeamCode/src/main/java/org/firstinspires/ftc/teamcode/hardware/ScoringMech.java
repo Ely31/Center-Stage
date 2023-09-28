@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
 public class ScoringMech {
-    Lift lift;
+    DualMotorLift lift;
     Arm arm;
     Servo bracer;
 
@@ -66,7 +66,7 @@ public class ScoringMech {
 
     // Constructor
     public ScoringMech(HardwareMap hwmap){
-        lift = new Lift(hwmap);
+        lift = new DualMotorLift(hwmap);
         arm = new Arm(hwmap);
         bracer = hwmap.get(Servo.class, "bracer");
         setStackIndex(0);
