@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
+import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.SingleMotorLift;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
@@ -21,6 +22,7 @@ public class Teleop extends LinearOpMode {
     TeleMecDrive drive;
     SingleMotorLift lift;
     Intake intake;
+    Climber climber;
     double drivingSpeedMultiplier = 1;
     // Lift constants
     public static double liftPosEditStep = 0.2;
@@ -35,9 +37,10 @@ public class Teleop extends LinearOpMode {
         // Init
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
-        drive = new TeleMecDrive(hardwareMap, 0.4);
+        drive = new TeleMecDrive(hardwareMap, 0.4, false);
         lift = new SingleMotorLift(hardwareMap);
         intake = new Intake(hardwareMap);
+        climber = new Climber(hardwareMap);
 
         waitForStart();
         matchTimer.reset();
@@ -82,6 +85,9 @@ public class Teleop extends LinearOpMode {
             // INTAKE CONTROL
             intake.toggle(gamepad1.a);
 
+            // CLIMBER CONTROL
+            climber.toggle(gamepad2.left_bumper && gamepad2.right_bumper);
+            climber.update();
 
             // TELEMETRY
             // Show the set height of the lift on a horizontal bar so driver 2 can see it easier than reading a number

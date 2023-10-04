@@ -27,9 +27,9 @@ public class TeleMecDrive {
     public DcMotor.ZeroPowerBehavior zeroPowerBehavior;
 
     private IMU imu;
-    RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-    RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
-    RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
+    RevHubOrientationOnRobot.LogoFacingDirection logoDirection;
+    RevHubOrientationOnRobot.UsbFacingDirection  usbDirection;
+    RevHubOrientationOnRobot orientationOnRobot;
     private double heading;
     public double getHeading(){
         return heading;
@@ -87,7 +87,7 @@ public class TeleMecDrive {
 
 
     // Constructor
-    public TeleMecDrive(HardwareMap hardwareMap, double slowFactor) {
+    public TeleMecDrive(HardwareMap hardwareMap, double slowFactor, boolean isProtobot) {
         lf = hardwareMap.get(DcMotorEx.class,"lf");
         lb = hardwareMap.get(DcMotorEx.class,"lb");
         rf = hardwareMap.get(DcMotorEx.class,"rf");
@@ -101,7 +101,15 @@ public class TeleMecDrive {
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
-
+        //Set up the rev hub orientation
+        if (isProtobot){
+            logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+            usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        } else{
+            logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+            usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        }
+        orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
         //initialize imu
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(orientationOnRobot));

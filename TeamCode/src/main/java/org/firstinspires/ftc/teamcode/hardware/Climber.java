@@ -9,20 +9,22 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.actuators.LinearActuator;
 
 @Config
-public class SingleMotorLift {
+public class Climber {
     LinearActuator liftActuator;
 
     // Measurements are in inches
-    public static double maxHeight = 22;
+    public static double maxHeight = 4;
     public static double minHeight = 0;
     public static double retractedPos = 0;
-    public static double extendedPos = 5;
+    public static double extendedPos = 4;
+
+    boolean lastInput = false;
+    boolean toggledStatus = false;
 
     public static PIDCoefficients coeffs = new PIDCoefficients(0.3,0.08,0.03);
-    public static double f = 0.4;
 
-    public SingleMotorLift(HardwareMap hwmap){
-        liftActuator = new LinearActuator(hwmap, "lift", 13.7, 5.93);
+    public Climber(HardwareMap hwmap){
+        liftActuator = new LinearActuator(hwmap, "lift", 5.2, 0.31496);
         liftActuator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         liftActuator.zero();
         liftActuator.setLimits(minHeight, maxHeight);
@@ -36,8 +38,7 @@ public class SingleMotorLift {
 
     public void setCoefficients(PIDCoefficients coeffs){
         liftActuator.setCoefficients(coeffs);
-        liftActuator.setfCoefficient(f);
-        SingleMotorLift.coeffs = coeffs;
+        Climber.coeffs = coeffs;
     }
 
     // Methods
@@ -54,27 +55,14 @@ public class SingleMotorLift {
         setHeight(extendedPos);
     }
 
-    public void editExtendedPos(double step){
-        extendedPos += step;
-    }
-    public void setExtendedPos(double height){
-        extendedPos = height;
-    }
-    public double getExtendedPos(){
-        return extendedPos;
-    }
+    public void toggle(boolean input){
+        if (input && !lastInput){
+            toggledStatus = !toggledStatus;
+        }
+        if (toggledStatus) extend();
+        else retract();
 
-    public void editRetractedPos(double step){
-        retractedPos += step;
-    }
-    public void setRetractedPos(double pos) {
-        retractedPos = pos;
-    }
-    public double getRetractedPos(){
-        return retractedPos;
-    }
-    public void resetRetractedPos(){
-        retractedPos = 0;
+        lastInput = input;
     }
 
     public void update(){
@@ -87,7 +75,8 @@ public class SingleMotorLift {
     }
 
     public void disalayDebug(Telemetry telemetry){
-        telemetry.addLine("LIFT");
+        telemetry.addLine("CLIMBER");
+        telemetry.addData("state", toggledStatus);
         liftActuator.displayDebugInfo(telemetry);
     }
 }

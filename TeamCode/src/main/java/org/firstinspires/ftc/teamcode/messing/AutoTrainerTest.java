@@ -19,7 +19,7 @@ public class AutoTrainerTest extends LinearOpMode {
     public void runOpMode(){
         // Init
         telemetry.setMsTransmissionInterval(100);
-        teleDrive = new TeleMecDrive(hardwareMap, 0.4);
+        teleDrive = new TeleMecDrive(hardwareMap, 0.4, false);
         trainer = new AutoTrainer(hardwareMap, telemetry, new Pose2d(0,0, Math.toRadians(-90)));
 
         ElapsedTime telemetryMessageTime = new ElapsedTime();

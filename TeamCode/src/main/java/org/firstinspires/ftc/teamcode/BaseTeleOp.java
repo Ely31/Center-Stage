@@ -18,7 +18,7 @@ public class BaseTeleOp extends LinearOpMode {
         // Init
         //PhotonCore.enable();
         telemetry.setMsTransmissionInterval(100);
-        drive = new TeleMecDrive(hardwareMap, 0.4);
+        drive = new TeleMecDrive(hardwareMap, 0.4, false);
 
         waitForStart();
         timer.reset();

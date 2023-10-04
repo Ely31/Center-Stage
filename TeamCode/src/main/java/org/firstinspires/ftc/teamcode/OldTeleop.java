@@ -63,7 +63,7 @@ public class OldTeleop extends LinearOpMode {
         // Init
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
-        drive = new TeleMecDrive(hardwareMap, 0.4);
+        drive = new TeleMecDrive(hardwareMap, 0.4, false);
         scoringMech = new ScoringMech(hardwareMap);
 
         waitForStart();
