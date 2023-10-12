@@ -21,10 +21,10 @@ public class Climber {
     boolean lastInput = false;
     boolean toggledStatus = false;
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(0.3,0.08,0.03);
+    public static PIDCoefficients coeffs = new PIDCoefficients(1,0.0,0.0);
 
     public Climber(HardwareMap hwmap){
-        liftActuator = new LinearActuator(hwmap, "lift", 5.2, 0.31496);
+        liftActuator = new LinearActuator(hwmap, "climber", 5.2, 0.31496);
         liftActuator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         liftActuator.zero();
         liftActuator.setLimits(minHeight, maxHeight);

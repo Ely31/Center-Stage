@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
-import org.firstinspires.ftc.teamcode.hardware.AutoScoringMech;
+import org.firstinspires.ftc.teamcode.hardware.AutoScoringMechOld;
 import org.firstinspires.ftc.teamcode.hardware.DualMotorLift;
 import org.firstinspires.ftc.teamcode.hardware.PivotingCamera;
 import org.firstinspires.ftc.teamcode.vision.old.SignalPipeline;
@@ -21,7 +21,7 @@ public class Auto1 extends LinearOpMode {
     SampleMecanumDrive drive;
     PivotingCamera camera;
     SignalPipeline signalPipeline = new SignalPipeline();
-    AutoScoringMech scoringMech;
+    AutoScoringMechOld scoringMech;
 
     AutoConstants1 autoConstants;
 
@@ -48,7 +48,7 @@ public class Auto1 extends LinearOpMode {
         // Init
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
-        scoringMech = new AutoScoringMech(hardwareMap);
+        scoringMech = new AutoScoringMechOld(hardwareMap);
         camera = new PivotingCamera(hardwareMap, signalPipeline);
         autoConstants = new AutoConstants1(drive);
         // Juice telemetry speed

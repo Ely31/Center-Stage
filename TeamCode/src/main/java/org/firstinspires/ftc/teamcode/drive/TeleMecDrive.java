@@ -106,8 +106,8 @@ public class TeleMecDrive {
             logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
             usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
         } else{
-            logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-            usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+            logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
+            usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
         }
         orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
         //initialize imu

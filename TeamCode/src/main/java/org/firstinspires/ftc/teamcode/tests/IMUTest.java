@@ -2,8 +2,10 @@ package org.firstinspires.ftc.teamcode.tests;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.IMU;
 
+@TeleOp(group = "test")
 public class IMUTest extends LinearOpMode {
     IMU imu;
     @Override

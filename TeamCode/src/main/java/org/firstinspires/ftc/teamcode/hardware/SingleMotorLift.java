@@ -18,7 +18,7 @@ public class SingleMotorLift {
     public static double retractedPos = 0;
     public static double extendedPos = 5;
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(0.3,0.08,0.03);
+    public static PIDCoefficients coeffs = new PIDCoefficients(0.5,0.08,0.03);
     public static double f = 0.4;
 
     public SingleMotorLift(HardwareMap hwmap){

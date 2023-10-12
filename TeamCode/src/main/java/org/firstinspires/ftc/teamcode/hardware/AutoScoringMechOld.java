@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
-public class AutoScoringMech extends ScoringMechOld {
+public class AutoScoringMechOld extends ScoringMechOld {
 
     ElapsedTime scoringWait = new ElapsedTime();
     ElapsedTime stackGrabbingWait = new ElapsedTime();
@@ -38,7 +38,7 @@ public class AutoScoringMech extends ScoringMechOld {
         return stackGrabbingState;
     }
 
-    public AutoScoringMech(HardwareMap hwmap){
+    public AutoScoringMechOld(HardwareMap hwmap){
         lift = new DualMotorLift(hwmap);
         arm = new Arm(hwmap);
         bracer = hwmap.get(Servo.class, "bracer");

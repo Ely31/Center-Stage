@@ -5,32 +5,31 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.hardware.SingleMotorLift;
+import org.firstinspires.ftc.teamcode.hardware.Climber;
 
 @TeleOp(name="",group="test")
-public class LiftTest extends LinearOpMode {
+public class ClimberTest extends LinearOpMode {
     // Pre-init
-    SingleMotorLift lift;
+    Climber climber;
     @Override
     public void runOpMode() {
         // Init
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        lift = new SingleMotorLift(hardwareMap);
-        lift.setCoefficients(SingleMotorLift.coeffs);
+        climber = new Climber(hardwareMap);
+        climber.setCoefficients(Climber.coeffs);
         waitForStart();
     
         // Pre-run
-        lift.retract();
+        climber.retract();
         while (opModeIsActive()) {
             // TeleOp loop
-            if(gamepad1.dpad_left) lift.retract();
-            else if (gamepad1.dpad_right) lift.extend();
+            if(gamepad1.dpad_left) climber.retract();
+            else if (gamepad1.dpad_right) climber.extend();
 
-            if (gamepad1.dpad_up) lift.editExtendedPos(0.1);
-            if (gamepad1.dpad_down) lift.editExtendedPos(0.1);
+            climber.toggle(gamepad1.left_bumper && gamepad1.right_bumper);
 
-            lift.update();
-            lift.disalayDebug(telemetry);
+            climber.update();
+            climber.disalayDebug(telemetry);
             telemetry.update();
         }
     }

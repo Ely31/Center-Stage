@@ -1,17 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
-import org.firstinspires.ftc.teamcode.hardware.ScoringMech;
+import org.firstinspires.ftc.teamcode.hardware.ScoringMechOld;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 
 @Config
+@Disabled
 @TeleOp
 public class OldTeleop extends LinearOpMode {
     // Pre init
@@ -19,7 +21,7 @@ public class OldTeleop extends LinearOpMode {
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
     double drivingSpeedMultiplier;
-    ScoringMech scoringMech;
+    ScoringMechOld scoringMechOld;
 
     ElapsedTime clawActuationTimer = new ElapsedTime();
     ElapsedTime pivotActuationTimer = new ElapsedTime();
@@ -64,7 +66,7 @@ public class OldTeleop extends LinearOpMode {
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
         drive = new TeleMecDrive(hardwareMap, 0.4, false);
-        scoringMech = new ScoringMech(hardwareMap);
+        scoringMechOld = new ScoringMechOld(hardwareMap);
 
         waitForStart();
         matchTimer.reset();
@@ -90,27 +92,27 @@ public class OldTeleop extends LinearOpMode {
             // ARM AND LIFT CONTROL
             // Edit things
             // Switch active junction using the four buttons on gamepad one
-            if (gamepad1.cross)     scoringMech.setActiveScoringJunction(0);
-            if (gamepad1.square)    scoringMech.setActiveScoringJunction(1);
-            if (gamepad1.triangle)  scoringMech.setActiveScoringJunction(2);
-            if (gamepad1.circle)    scoringMech.setActiveScoringJunction(3);
+            if (gamepad1.cross)     scoringMechOld.setActiveScoringJunction(0);
+            if (gamepad1.square)    scoringMechOld.setActiveScoringJunction(1);
+            if (gamepad1.triangle)  scoringMechOld.setActiveScoringJunction(2);
+            if (gamepad1.circle)    scoringMechOld.setActiveScoringJunction(3);
 
             // This bit is hacked in to change the behavior without ripping up too much code
             // If you press any of the buttons, make the signal true. If not, it's false.
             hackyExtendSignal = gamepad1.cross || gamepad1.square || gamepad1.triangle || gamepad1.circle;
 
             // Edit the current level with the dpad on gamepad two
-            if (gamepad2.dpad_up)   scoringMech.editCurrentLiftPos(liftPosEditStep);
-            if (gamepad2.dpad_down) scoringMech.editCurrentLiftPos(-liftPosEditStep);
+            if (gamepad2.dpad_up)   scoringMechOld.editCurrentLiftPos(liftPosEditStep);
+            if (gamepad2.dpad_down) scoringMechOld.editCurrentLiftPos(-liftPosEditStep);
             // Edit retracted pose for grabbing off the stack using rising edge detectors
             if (gamepad2.triangle && !prevStackIndexUpInput) {
-                scoringMech.setStackIndex(scoringMech.getStackIndex()+1);
-                scoringMech.setRetractedGrabbingPose(scoringMech.getStackIndex());
+                scoringMechOld.setStackIndex(scoringMechOld.getStackIndex()+1);
+                scoringMechOld.setRetractedGrabbingPose(scoringMechOld.getStackIndex());
             }
             prevStackIndexUpInput = gamepad2.triangle;
             if (gamepad2.cross && !prevStackIndexDownInput) {
-                scoringMech.setStackIndex(scoringMech.getStackIndex()-1);
-                scoringMech.setRetractedGrabbingPose(scoringMech.getStackIndex());
+                scoringMechOld.setStackIndex(scoringMechOld.getStackIndex()-1);
+                scoringMechOld.setRetractedGrabbingPose(scoringMechOld.getStackIndex());
             }
             prevStackIndexDownInput = gamepad2.cross;
 
@@ -124,24 +126,24 @@ public class OldTeleop extends LinearOpMode {
             // But, if you press a special key combo, escape pid control and bring the lift down
             // With raw power to fix a lift issue
             if (gamepad2.dpad_left && gamepad2.share){
-                scoringMech.setRawLiftPowerDangerous(-liftRawPowerAmount);
-                scoringMech.zeroLift();
+                scoringMechOld.setRawLiftPowerDangerous(-liftRawPowerAmount);
+                scoringMechOld.zeroLift();
             } else
             if (gamepad2.dpad_right && gamepad2.share) {
-                scoringMech.setRawLiftPowerDangerous(1);
-                scoringMech.zeroLift();
+                scoringMechOld.setRawLiftPowerDangerous(1);
+                scoringMechOld.zeroLift();
             }
-            else scoringMech.updateLift();
+            else scoringMechOld.updateLift();
 
 
             // TELEMETRY
             if (debug) {
                 telemetry.addData("scoring state", scoringState.name());
-                telemetry.addData("active junction", scoringMech.getActiveScoringJunction());
+                telemetry.addData("active junction", scoringMechOld.getActiveScoringJunction());
                 telemetry.addData("grabbing state", grabbingState.name());
-                telemetry.addData("stack index", scoringMech.getStackIndex());
+                telemetry.addData("stack index", scoringMechOld.getStackIndex());
                 telemetry.addData("heading", drive.getHeading());
-                scoringMech.displayDebug(telemetry);
+                scoringMechOld.displayDebug(telemetry);
                 telemetry.addData("avg loop time (ms)", timeUtil.getAverageLoopTime());
                 telemetry.addData("period", timeUtil.getPeriod());
                 telemetry.addData("time", matchTimer.seconds());
@@ -159,26 +161,26 @@ public class OldTeleop extends LinearOpMode {
     void updateClaw(boolean input){
         switch(grabbingState){
             case OPEN:
-                scoringMech.openClaw();
+                scoringMechOld.openClaw();
                 // If the button is pressed for the first time or the sensor detects a cone, close the claw
-                if ((input && !prevClawInput) || scoringMech.getConeStatus()){
+                if ((input && !prevClawInput) || scoringMechOld.getConeStatus()){
                     grabbingState = GrabbingState.ClOSED;
                 }
                 break;
             case ClOSED:
-                scoringMech.closeClaw();
+                scoringMechOld.closeClaw();
                 if (input && !prevClawInput){
                     grabbingState = GrabbingState.WAITING_OPEN;
                 }
                 break;
             case WAITING_OPEN:
-                scoringMech.openClaw();
+                scoringMechOld.openClaw();
                 // If you press the button again, close it
                 if (input && !prevClawInput){
                     grabbingState = GrabbingState.ClOSED;
                 }
                 // If it stops seeing the cone, go back to the open state, where it starts to look for one again
-                if (!scoringMech.getConeStatus()){
+                if (!scoringMechOld.getConeStatus()){
                     grabbingState = GrabbingState.OPEN;
                 }
                 break;
@@ -192,15 +194,15 @@ public class OldTeleop extends LinearOpMode {
         // Run the scoring fsm
         switch (scoringState){
             case RETRACTED:
-                scoringMech.retract(pivotActuationTimer.milliseconds());
+                scoringMechOld.retract(pivotActuationTimer.milliseconds());
                 // Handle bracer stuff
                 if (pivotActuationTimer.milliseconds() > Arm.pivotActuationTime + 500){
                     // The servo doesn't need to be working once everything is back inside the bot
-                    scoringMech.extendBracer();
+                    scoringMechOld.extendBracer();
                 }
                 // Don't retract the bracer when doing ground junctions, it would hit the bot
-                else if(!(scoringMech.getActiveScoringJunction() == 0)){
-                    scoringMech.retractBracer();
+                else if(!(scoringMechOld.getActiveScoringJunction() == 0)){
+                    scoringMechOld.retractBracer();
                 }
 
                 if (grabbingState == GrabbingState.ClOSED && clawActuationTimer.milliseconds() > Arm.clawActuationTime){
@@ -209,15 +211,15 @@ public class OldTeleop extends LinearOpMode {
                 break;
 
             case PREMOVED:
-                scoringMech.retractPremoved(pivotActuationTimer.milliseconds());
+                scoringMechOld.retractPremoved(pivotActuationTimer.milliseconds());
 
                 if (pivotActuationTimer.milliseconds() > Arm.pivotActuationTime + 300){
                     // The servo doesn't need to be working once everything is back inside the bot
-                    scoringMech.extendBracer();
+                    scoringMechOld.extendBracer();
                 }
                 // Don't retract the bracer when doing ground junctions, it would hit the bot
-                else if(!(scoringMech.getActiveScoringJunction() == 0)){
-                    scoringMech.retractBracer();
+                else if(!(scoringMechOld.getActiveScoringJunction() == 0)){
+                    scoringMechOld.retractBracer();
                 }
 
                 if (((gamepad1.left_trigger > 0) && !prevScoringInput) || hackyExtendSignal) {
@@ -229,8 +231,8 @@ public class OldTeleop extends LinearOpMode {
                 break;
 
             case SCORING:
-                scoringMech.score();
-                scoringMech.extendBracer();
+                scoringMechOld.score();
+                scoringMechOld.extendBracer();
                 // Retract if you press the retract button
                 if ((gamepad1.left_trigger > 0) && !prevScoringInput) {
                     pivotActuationTimer.reset();

@@ -5,12 +5,6 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-import java.awt.Image;
-import java.io.File;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
 public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(900);
@@ -19,9 +13,9 @@ public class MeepMeepTesting {
                 // Set characteristics of bot
                 .setDimensions(15,15)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(0, 0, 0))
+                .setConstraints(55, 40, Math.toRadians(180), Math.toRadians(180), 14)
+                .followTrajectorySequence(h ->
+                        h.trajectorySequenceBuilder(new Pose2d(0, 0, 0))
                                 .forward(30)
                                 .turn(Math.toRadians(90))
                                 .forward(30)
@@ -33,11 +27,7 @@ public class MeepMeepTesting {
                                 .build()
                 );
 
-        Image img = null;
-        try { img = ImageIO.read(new File("/home/elywick/Documents/Robotics/Center Stage/Software/meepmeep background/meepmeep-field.png")); }
-        catch (IOException e) {}
-
-        meepMeep.setBackground(img)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(myBot)

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 @Config
 public class Intake {
@@ -15,6 +16,7 @@ public class Intake {
 
     public Intake(HardwareMap hwmap) {
         intake = hwmap.get(DcMotor.class, "intake");
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
         //leftSensor = hwmap.get(ColorSensor.class,"leftSensor");
         //rightSensor = hwmap.get(ColorSensor.class,"rightSensor");
         lastInput = false;
