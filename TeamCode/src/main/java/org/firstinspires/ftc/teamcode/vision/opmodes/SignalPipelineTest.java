@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.hardware.PivotingCamera;
 import org.firstinspires.ftc.teamcode.vision.old.SignalPipeline;
 
 @Autonomous(group = "test")

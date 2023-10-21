@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.AutoScoringMechOld;
+import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.DualMotorLift;
-import org.firstinspires.ftc.teamcode.hardware.PivotingCamera;
 import org.firstinspires.ftc.teamcode.vision.old.SignalPipeline;
 
 //this autonomous is meant for if you start on the left side of the field
@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.vision.old.SignalPipeline;
 public class AsyncAuto5 extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
-    PivotingCamera camera;
+    Camera camera;
     SignalPipeline signalPipeline = new SignalPipeline();
     AutoScoringMechOld scoringMech;
 
@@ -49,7 +49,7 @@ public class AsyncAuto5 extends LinearOpMode {
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
         scoringMech = new AutoScoringMechOld(hardwareMap);
-        camera = new PivotingCamera(hardwareMap, signalPipeline);
+        camera = new Camera(hardwareMap, signalPipeline);
         autoConstants = new AutoConstants(drive);
         // Juice telemetry speed
         telemetry.setMsTransmissionInterval(100);

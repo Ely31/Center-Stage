@@ -13,28 +13,51 @@ import org.openftc.easyopencv.OpenCvPipeline;
 
 public class TeamPropDetector extends OpenCvPipeline {
 
+    // Don't use this first constructor unless it's for testing
+    public TeamPropDetector(){
+        lower = orangeLower;
+        upper = orangeUpper;
+    }
+    public TeamPropDetector(boolean isRedAlliance){
+        if (isRedAlliance){
+            lower = orangeLower;
+            upper = orangeUpper;
+        } else {
+            lower = blueLower;
+            upper = blueUpper;
+        }
+    }
+
     // 0 is left, 1 middle, 2 right
     public int propPosition;
 
     // Some color constants
     public final Scalar BLUE = new Scalar(0, 0, 255);
     public final Scalar GREEN = new Scalar(0, 255, 0);
+    public final Scalar WHITE = new Scalar(255,255,255);
 
     // Min and max values for the threshold
-    public Scalar lower = new Scalar(0, 65, 40);
-    public Scalar upper = new Scalar(255, 115, 130);
+    public Scalar orangeLower = new Scalar(0, 65, 40);
+    public Scalar orangeUpper = new Scalar(255, 115, 130);
+    public Scalar blueLower = new Scalar(0, 65, 40);
+    public Scalar blueUpper = new Scalar(255, 115, 130);
+    public Scalar lower;
+    public Scalar upper;
 
+    // Variables that determine the placement of the boxes
     final static int frameWidth = 320;
-    final static int thirdWidth = frameWidth/3;
+    final static int center = frameWidth/2;
     final static int frameHeight = 240;
-    final static int topOfReigions = 100;
+    final static int topOfSides = 120;
+    final static int topOfMiddle = 110;
+    final static int sidesSpan = 100;
+    static final int REGION_WIDTH = 30;
+    static final int REGION_HEIGHT = 30;
 
     // The core values which define the location and size of the sample regions
-    static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(0,topOfReigions);
-    static final Point REGION2_TOPLEFT_ANCHOR_POINT = new Point(thirdWidth,topOfReigions);
-    static final Point REGION3_TOPLEFT_ANCHOR_POINT = new Point(thirdWidth*2,topOfReigions);
-    static final int REGION_WIDTH = thirdWidth;
-    static final int REGION_HEIGHT = frameHeight-topOfReigions;
+    static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(center - sidesSpan - (int)(REGION_WIDTH/2),topOfSides);
+    static final Point REGION2_TOPLEFT_ANCHOR_POINT = new Point(center - (int)(REGION_WIDTH/2),topOfMiddle);
+    static final Point REGION3_TOPLEFT_ANCHOR_POINT = new Point(center + sidesSpan - (int)(REGION_WIDTH/2),topOfSides);
 
     Point region1_pointA = new Point(
             REGION1_TOPLEFT_ANCHOR_POINT.x,
@@ -106,9 +129,20 @@ public class TeamPropDetector extends OpenCvPipeline {
                 region1_pointB, // Second point which defines the rectangle
                 BLUE, // The color the rectangle is drawn in
                 1); // Thickness of the rectangle lines
-        // Draw the rest of the regions
+        // Write the average brightness next to it
+        Imgproc.putText(
+                input,
+                String.valueOf(avg1),
+                region1_pointA,
+                1,
+                2,
+                WHITE
+                );
+        // Draw the rest of the regions and text
         Imgproc.rectangle(input, region2_pointA,region2_pointB,BLUE,1);
+        Imgproc.putText(input, String.valueOf(avg2), region2_pointA, 1, 2, WHITE);
         Imgproc.rectangle(input,region3_pointA,region3_pointB,BLUE,1);
+        Imgproc.putText(input, String.valueOf(avg3), region3_pointA, 1, 2, WHITE);
 
         // Find the max of the 3 averages
         int maxOneTwo = Math.max(avg1, avg2);
@@ -135,8 +169,7 @@ public class TeamPropDetector extends OpenCvPipeline {
             propPosition = 1; // Record our analysis
             Imgproc.rectangle(input,region2_pointA,region2_pointB,GREEN,2);
         }
-        else if(max == avg3) // Was it from region 3?
-        {
+        else {
             propPosition = 2; // Record our analysis
             Imgproc.rectangle(input,region3_pointA,region3_pointB,GREEN,2);
         }

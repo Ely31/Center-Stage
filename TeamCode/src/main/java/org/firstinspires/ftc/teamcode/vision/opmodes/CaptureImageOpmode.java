@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.vision.opmodes;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.hardware.PivotingCamera;
 import org.firstinspires.ftc.teamcode.vision.workspace.CaptureImagePipeline;
 
 @TeleOp(group = "test")

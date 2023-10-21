@@ -8,19 +8,17 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.AutoScoringMechOld;
+import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.DualMotorLift;
-import org.firstinspires.ftc.teamcode.hardware.PivotingCamera;
-import org.firstinspires.ftc.teamcode.vision.old.SignalPipeline;
+import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
 
-//this autonomous is meant for if you start on the left side of the field
-//regular is the red side of the field, -1 is blue side of the field
 @Config
 @Autonomous
 public class Auto1 extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
-    PivotingCamera camera;
-    SignalPipeline signalPipeline = new SignalPipeline();
+    Camera camera;
+    TeamPropDetector propPipeline = new TeamPropDetector();
     AutoScoringMechOld scoringMech;
 
     AutoConstants1 autoConstants;
@@ -49,7 +47,7 @@ public class Auto1 extends LinearOpMode {
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
         scoringMech = new AutoScoringMechOld(hardwareMap);
-        camera = new PivotingCamera(hardwareMap, signalPipeline);
+        camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new AutoConstants1(drive);
         // Juice telemetry speed
         telemetry.setMsTransmissionInterval(100);
@@ -60,13 +58,13 @@ public class Auto1 extends LinearOpMode {
         // Init loop
         while (!isStarted()&&!isStopRequested()){
             // Configure the alliance with the gamepad
-            if (gamepad1.circle) autoConstants.setSide(1); // Red alliance
-            if (gamepad1.cross) autoConstants.setSide(-1); // Blue alliance
+            if (gamepad1.circle) autoConstants.setAlliance(1); // Red alliance
+            if (gamepad1.cross) autoConstants.setAlliance(-1); // Blue alliance
 
             // Recompute trajectories every second
             if (pipelineThrottle.seconds() > 1){
                 // Update stuff
-                autoConstants.updateDropLocationFromVisionResult(signalPipeline.getParkPos());
+                autoConstants.updateDropLocationFromVisionResult(propPipeline.getAnalysis());
                 autoConstants.updateParkPos(autoConstants.getDropLocation());
                 autoConstants.updateTrajectories();
 
