@@ -13,12 +13,12 @@ public class SingleMotorLift {
     LinearActuator liftActuator;
 
     // Measurements are in inches
-    public static double maxHeight = 22;
+    public static double maxHeight = 14; // Make this higher, just a safe val for now
     public static double minHeight = 0;
     public static double retractedPos = 0;
     public static double extendedPos = 5;
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(0.5,0.08,0.03);
+    public static PIDCoefficients coeffs = new PIDCoefficients(0.05,0.00,0.00);
     public static double f = 0.4;
 
     public SingleMotorLift(HardwareMap hwmap){

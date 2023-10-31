@@ -36,6 +36,8 @@ public class AutoConstants1 {
     public int getDropLocation() {
         return zone;
     }
+    // This is used so we don't put our pixel in the same slot as our partner. Hopefully. We'll see.
+    int dropOffset = 0;
 
     boolean WingSide = false;
     public boolean isWingSide() {
@@ -49,33 +51,30 @@ public class AutoConstants1 {
     public int getNumCycles() {return numCycles;}
     public void setNumCycles(int numCycles) {this.numCycles = numCycles;}
 
-
     public void updateDropLocationFromVisionResult(int visionResult){
         switch(visionResult){
             case 0:
                 // Switch 1 and 3 if we're on blue terminal
                 if (getAlliance() == 1){
-                    zone = 0;
+                    zone = 1;
                 } else {
-                    zone = 2;
+                    zone = 3;
                 }
                 break;
             case 1:
                 // We don't have to change the middle positon however
-                zone = 1;
+                zone = 2;
                 break;
             case 3:
                 // Switch 3 and 1 if we're on blue terminal
                 if (getAlliance() == 1) {
-                    zone = 2;
+                    zone = 3;
                 } else {
-                    zone = 0;
+                    zone = 1;
                 }
                 break;
         }
     }
-
-    public double grabApproachVelo = 25;
 
     // Pose2d's
     public Pose2d startPos = new Pose2d(-35.8, -63* alliance, Math.toRadians(-90* alliance));
@@ -87,34 +86,39 @@ public class AutoConstants1 {
     public Pose2d[] dropPositions;
     public Pose2d[] spikeMarkPositions;
 
-    public void updateParkPos(int posIndex){
+    public void updateScoringPositions(int posIndex){
         dropPositions = new Pose2d[]{
                 // Pos 1
-                new Pose2d(-61, -11 * alliance, Math.toRadians(180 * alliance)),
+                new Pose2d(54, -27 * alliance, Math.toRadians(0 * alliance)),
                 // Pos 2
-                new Pose2d(-37, -11 * alliance, Math.toRadians(180 * alliance)),
+                new Pose2d(54, -34 * alliance, Math.toRadians(0 * alliance)),
                 // Pos 3
-                new Pose2d(-13, -11 * alliance, Math.toRadians(180 * alliance))
+                new Pose2d(54, -40 * alliance, Math.toRadians(0 * alliance))
         };
         spikeMarkPositions = new Pose2d[]{
                 // Pos 1
-                new Pose2d(-61, -11 * alliance, Math.toRadians(180 * alliance)),
+                new Pose2d(-61, -11 * alliance, Math.toRadians(-90 * alliance)),
                 // Pos 2
-                new Pose2d(-37, -11 * alliance, Math.toRadians(180 * alliance)),
+                new Pose2d(-37, -11 * alliance, Math.toRadians(-90 * alliance)),
                 // Pos 3
-                new Pose2d(-13, -11 * alliance, Math.toRadians(180 * alliance))
+                new Pose2d(-13, -11 * alliance, Math.toRadians(-90 * alliance))
         };
         // Grab the correct pos from the array and set parkPos to it
-        dropPos = dropPositions[posIndex];
-        spikeMarkPos = spikeMarkPositions[posIndex];
+        dropPos = dropPositions[posIndex-1]; // Ahh so that's why I used 0-2 instead of 1-3
+        spikeMarkPos = spikeMarkPositions[posIndex-1];
     }
 
     public TrajectorySequence dropOffPurplePixel;
+    public TrajectorySequence toBoard;
     public TrajectorySequence park;
 
     public void updateTrajectories() {
 
-        startPos = new Pose2d(-35.8, -63* alliance, Math.toRadians(-90* alliance));
+        if (isWingSide()) {
+            startPos = new Pose2d(-35.25, -63 * alliance, Math.toRadians(-90 * alliance));
+        } else {
+            startPos = new Pose2d(11.75, -63 * alliance, Math.toRadians(-90 * alliance));
+        }
 
         dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                 .lineToSplineHeading(new Pose2d(-35.8, -9.7* alliance, Math.toRadians(130* alliance)))
@@ -137,7 +141,7 @@ public class AutoConstants1 {
     public void addTelemetry(Telemetry telemetry){
         telemetry.addLine(allianceToString());
         telemetry.addData("Alliance side as integer", getAlliance());
-        telemetry.addData("Park zone", zone);
+        telemetry.addData("Zone", zone);
         telemetry.addData("Number of cycles", getNumCycles());
         telemetry.addLine(ramdomAutoCheckMessage());
     }
@@ -164,7 +168,8 @@ public class AutoConstants1 {
             ":)",
             "Don't lose worlds!",
             "Pay attention bro",
-            "Don't pull a brainstormers FF finals"
+            "Don't pull a brainstormers FF finals",
+            "Guys this auto's more complicated than last year"
     };
 
     String ramdomAutoCheckMessage(){

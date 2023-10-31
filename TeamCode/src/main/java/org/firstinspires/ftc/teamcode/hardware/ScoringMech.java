@@ -14,25 +14,20 @@ public class ScoringMech {
         lift = new SingleMotorLift(hwmap);
         arm = new Arm(hwmap);
     }
+    public ScoringMech (){}
 
     // Functions from the arm class
-    public void openClaw(){
-        arm.openClaw();
+    public void setBottomState(boolean state){
+        arm.setBottomGripperState(state);
     }
-    public void closeClaw(){
-        arm.closeClaw();
-    }
-    public void setClawState(boolean state){
-        arm.setClawState(state);
-    }
-    public boolean getClawState(){
-        return arm.getClawState();
+    public boolean getBottomState(){
+        return arm.getBottomGripperState();
     }
     public double getPivotPos(){
         return arm.getPivotPos();
     }
     public boolean getConeStatus(){
-        return arm.coneIsInClaw();
+        return arm.pixelIsInBottom();
     }
 
     // Functions from the lift class
@@ -45,44 +40,35 @@ public class ScoringMech {
 
     public void score(){
         lift.extend();
+        arm.pivotScore();
         // More stuff to do
     }
 
     public void retract(){
         lift.retract();
-        arm.grabPassthrough();
+        arm.pivotGoToIntake();
     }
-    public void retract(double v4bTimerMs){
-        v4bToGrabbingPos();
-        if (v4bTimerMs > Arm.pivotActuationTime){
+    public void retract(double armTimerMs){
+        armToIntakePos();
+        if (armTimerMs > Arm.pivotActuationTime){
             retractLift();
         }
     }
-    public void zeroLift(){
-        lift.zero();
-    }
-
-    public void retractLift(){
-        lift.retract();
-    }
-    public void v4bToGrabbingPos(){
-        arm.grabPassthrough();
-    }
+    public void zeroLift(){lift.zero();}
+    public void retractLift(){lift.retract();}
+    public void armToIntakePos(){arm.pivotGoToIntake();}
+    public void preMoveArm(){arm.preMove();}
 
     // ESSENTIAL to call this function every loop
-    public void update(){
-        lift.update();
-    }
+    public void update(){lift.update();}
 
     // DANGEROUS!
-    public void setRawLiftPowerDangerous(double power){
-        lift.setRawPowerDangerous(power);
-    }
+    public void setRawLiftPowerDangerous(double power){lift.setRawPowerDangerous(power);}
 
     // Stuff the ds with telemetry if we want
     public void displayDebug(Telemetry telemetry){
         telemetry.addLine("SCORING MECH");
-        telemetry.addData("claw state", getClawState());
+        telemetry.addData("bottom state", getBottomState());
         arm.displayDebug(telemetry);
         lift.disalayDebug(telemetry);
     }

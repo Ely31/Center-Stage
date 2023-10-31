@@ -13,10 +13,10 @@ public class Climber {
     LinearActuator liftActuator;
 
     // Measurements are in inches
-    public static double maxHeight = 4;
+    public static double maxHeight = 3.6;
     public static double minHeight = 0;
     public static double retractedPos = 0;
-    public static double extendedPos = 4;
+    public static double extendedPos = maxHeight;
 
     boolean lastInput = false;
     boolean toggledStatus = false;

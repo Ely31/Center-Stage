@@ -2,14 +2,13 @@ package org.firstinspires.ftc.teamcode.hardware;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
-public class AutoScoringMech extends ScoringMechOld {
+public class AutoScoringMech extends ScoringMech {
 
     ElapsedTime scoringWait = new ElapsedTime();
     ElapsedTime stackGrabbingWait = new ElapsedTime();
@@ -39,30 +38,26 @@ public class AutoScoringMech extends ScoringMechOld {
     }
 
     public AutoScoringMech(HardwareMap hwmap){
-        lift = new DualMotorLift(hwmap);
+        lift = new SingleMotorLift(hwmap);
         arm = new Arm(hwmap);
-        bracer = hwmap.get(Servo.class, "bracer");
-        setStackIndex(0);
-        setRetractedGrabbingPose(0);
     }
 
-    public void grabOffStackAsync(int coneNumber, boolean hasCone){
+    public void grabOffStackAsync(boolean hasCone){
         // You have to call updateLift while using this for it to work
         switch (stackGrabbingState){
             case CREEPING:
-                openClaw();
-                setRetractedGrabbingPose(coneNumber);
+                setBottomState(false);
                 retract();
                 if (hasCone){
                     stackGrabbingWait.reset();
-                    closeClaw();
+                    setBottomState(true);
                     stackGrabbingState = StackGrabbingState.GRABBING;
                 }
                 break;
             case GRABBING:
-                if (stackGrabbingWait.milliseconds() > Arm.clawActuationTime){
+                if (stackGrabbingWait.milliseconds() > Arm.pixelActuationTime){
                     stackGrabbingWait.reset();
-                    preMoveV4b();
+                    preMoveArm();
                     stackGrabbingState = StackGrabbingState.LIFTING;
                 }
                 break;
@@ -78,10 +73,10 @@ public class AutoScoringMech extends ScoringMechOld {
         return stackGrabbingState == StackGrabbingState.DONE;
     }
 
-    public void grabOffStack(int coneNumber, boolean hasCone){
+    public void grabOffStack(boolean hasCone){
         while (!(stackGrabbingState == StackGrabbingState.DONE)) {
-            grabOffStackAsync(coneNumber, hasCone);
-            updateLift();
+            grabOffStackAsync(hasCone);
+            update();
         }
     }
     // Have to call this before grabbing off the stack again to kick start the fsm
@@ -97,20 +92,20 @@ public class AutoScoringMech extends ScoringMechOld {
                 // Move on if the lift is all the way up
                 if (Utility.withinErrorOfValue(lift.getHeight(), height, 5)) {
                     scoringWait.reset();
-                    arm.scorePassthroughFlat(); // Move the v4b over the junction
+                    arm.pivotScore(); // Move the v4b over the junction
                     scoringState = ScoringState.WAITING_FOR_V4B_EXTEND;
                 }
                 break;
             case WAITING_FOR_V4B_EXTEND:
                 if (scoringWait.seconds() > 0.65){ // Wait for the v4b to move all the way
-                    arm.openClaw(); // Drop the cone
+                    setBottomState(false); // Drop the cone
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_CONE_DROP;
                 }
                 break;
             case WAITING_FOR_CONE_DROP:
                 if (scoringWait.seconds() > 0.45){ // Wait for the cone to drop
-                    arm.grabPassthrough(); // Move the v4b inside the bot
+                    arm.pivotGoToIntake(); // Move the v4b inside the bot
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_V4B_RETRACT;
                 }
@@ -136,8 +131,7 @@ public class AutoScoringMech extends ScoringMechOld {
         switch (scoringState){
             case EXTENDING:
                 lift.setHeight(height);
-                arm.scorePassthrough(); // Move the v4b over the junction
-                extendBracer();
+                arm.pivotScore(); // Move the v4b over the junction
                 // Move on if the lift is all the way up
                 if (Utility.withinErrorOfValue(lift.getHeight(), height, 0.5)) {
                     scoringWait.reset();
@@ -147,7 +141,7 @@ public class AutoScoringMech extends ScoringMechOld {
 
             case WAITING_FOR_V4B_EXTEND:
                 if (scoringWait.seconds() > 0.2){ // Wait for the v4b to move all the way
-                    arm.openClaw(); // Drop the cone
+                    setBottomState(false); // Drop the cone
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_CONE_DROP;
                 }
@@ -161,8 +155,7 @@ public class AutoScoringMech extends ScoringMechOld {
                 break;
 
             case WAITING_FOR_V4B_RETRACT:
-                v4bToGrabbingPos();
-                retractBracer();
+                armToIntakePos();
 
                 if (scoringWait.milliseconds() > Arm.pivotActuationTime + 300){
                     scoringWait.reset();
@@ -176,13 +169,11 @@ public class AutoScoringMech extends ScoringMechOld {
                 // Move on if the lift is all the way down
                 if (Utility.withinErrorOfValue(lift.getHeight(), 0, 1)) {
                     // Move this guy back in the bot so it doesn't get crunched
-                    extendBracer();
                     scoringState = ScoringState.DONE; // Finish
                 }
                 break;
 
             case DONE:
-                extendBracer();
                 break;
         }
     }
@@ -191,7 +182,7 @@ public class AutoScoringMech extends ScoringMechOld {
         // While it isn't finished scoring, run an FSM
         while (!(scoringState == ScoringState.DONE)){
             scoreAsync(height);
-            updateLift();
+            update();
         }
     }
     // Have to call this before scoring again to get the state machine to run

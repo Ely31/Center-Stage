@@ -10,127 +10,110 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
 public class Arm {
-    Servo leftPivot;
-    Servo rightPivot;
-    Servo end;
-    Servo claw;
-    ColorSensor clawSensor;
+    Servo pivot;
+    Servo bottomPixel;
+    Servo topPixel;
+    ColorSensor bottomPixelSensor;
+    ColorSensor topPixelSensor;
 
-    boolean clawState = false; // True is closed
+    boolean bottomState = false; // True is closed, false open
+    boolean topState = false;
 
     // Constants
-    public static double leftOffset = 0.005;
-
     public static double pivotMax = 0.9;
     public static double pivotMin = 0.03;
-    public static double pivotGrabbingPos = pivotMin;
+    public static double pivotIntakingPos = pivotMin;
     public static double pivotScoringPos = 0.63;
-    public static double pivotGroundScoringPos = 0.875;
     public static double pivotPremovePos = 0.36;
     public static double pivotActuationTime = 300;
 
-    public static double endMin = 0;
-    public static double endMax = 1;
-    public static double endGrabbingPos = 0.55;
-    public static double endScoringPos = 0.5;
-    public static double endFlatScoringPos = 0.45;
-    public static double endGroundScoringPos = 0.45;
-
-    public static double clawClosedPos = 0.93;
-    public static double clawOpenPos = 0.45;
-    public static double clawActuationTime = 350; // In milliseconds
+    public static double pixelClosedPos = 0.93;
+    public static double pixelOpenPos = 0.45;
+    public static double pixelActuationTime = 350; // In milliseconds
 
     public static double sensorThreshold = 800;
 
     public Arm(HardwareMap hwmap){
         // Hardwaremap stuff
-        leftPivot = hwmap.get(Servo.class, "leftPivot");
-        rightPivot = hwmap.get(Servo.class, "rightPivot");
-        end = hwmap.get(Servo.class, "end");
-        claw = hwmap.get(Servo.class, "claw");
-        clawSensor = hwmap.get(ColorSensor.class, "clawSensor");
-
-        leftPivot.setDirection(Servo.Direction.REVERSE);
-        end.setDirection(Servo.Direction.REVERSE);
+        pivot = hwmap.get(Servo.class, "pivot");
+        bottomPixel = hwmap.get(Servo.class, "bottomPixel");
+        topPixel = hwmap.get(Servo.class, "topPixel");
+        bottomPixelSensor = hwmap.get(ColorSensor.class, "bottomSensor");
+        topPixelSensor = hwmap.get(ColorSensor.class, "topSensor");
 
         // Warning: Robot moves on intitialization
-        grabPassthrough();
-        openClaw();
+        pivotGoToIntake();
+        setBothGrippers(false);
     }
 
-    // Methods for controlling each dof
-    public void openClaw(){
-        claw.setPosition(clawOpenPos);
-        clawState = false;
+    // Control each
+    public void setBottomGripperState(boolean state){
+        bottomState = state;
+        if (state) bottomPixel.setPosition(pixelClosedPos);
+        else bottomPixel.setPosition(pixelOpenPos);
     }
-    public void closeClaw(){
-        claw.setPosition(clawClosedPos);
-        clawState = true;
+    public boolean getBottomGripperState(){
+        return bottomState;
     }
 
-    public void setClawState(boolean state){
-        clawState = state;
+    public void setTopGripperState(boolean state){
+        topState = state;
+        if (state) topPixel.setPosition(pixelClosedPos);
+        else topPixel.setPosition(pixelOpenPos);
     }
-    public boolean getClawState(){
-        return clawState;
+    public boolean getTopGripperState(){
+        return topState;
+    }
+
+    public void setBothGrippers(boolean state){
+        if (state) {
+            setBottomGripperState(true); setTopGripperState(true);
+            bottomPixel.setPosition(pixelClosedPos);
+            topPixel.setPosition(pixelClosedPos);
+        }
+        else {
+            setBottomGripperState(false); setTopGripperState(false);
+            bottomPixel.setPosition(pixelOpenPos);
+            topPixel.setPosition(pixelClosedPos);
+        }
+    }
+    public boolean getBothGrippers(){
+        // Returns true only if both are closed
+        return (getBottomGripperState() && getTopGripperState());
     }
 
     public void setPivotPos(double pos){
+        // Make sure it's a safe move
         double finalPos = Utility.clipValue(pivotMin, pivotMax, pos);
-        // We have to offset one of the servos becuase there is no positon on the splines where they are both at the exact same angle
-        leftPivot.setPosition(finalPos + leftOffset);
-        rightPivot.setPosition(finalPos);
+        pivot.setPosition(finalPos);
     }
     public double getPivotPos(){
         // Take the pos of the one we didn't offset
-        return rightPivot.getPosition();
+        return pivot.getPosition();
     }
-
-    public void setEndPos(double pos){
-        double finalPos = Utility.clipValue(endMin, endMax, pos);
-        end.setPosition(finalPos);
+    public void pivotGoToIntake(){
+        setPivotPos(pivotIntakingPos);
     }
-    public double getEndPos(){
-        return end.getPosition();
-    }
-
-    // All the different positions of the arm
-    public void grabPassthrough(){
-        setPivotPos(pivotGrabbingPos);
-        setEndPos(endGrabbingPos);
-    }
-    public void scorePassthrough(){
+    public void pivotScore(){
         setPivotPos(pivotScoringPos);
-        setEndPos(endScoringPos);
-    }
-    public void scorePassthroughFlat(){
-        setPivotPos(pivotScoringPos);
-        setEndPos(endFlatScoringPos);
-    }
-    public void scoreGroundPassthrough() {
-        setPivotPos(pivotGroundScoringPos);
-        setEndPos(endGroundScoringPos);
     }
 
-    public void setPivotGrabbingPos(double pos){
-        pivotGrabbingPos = pos;
-    }
-
-    public void preMoveV4b(){
+    public void preMove(){
         setPivotPos(pivotPremovePos);
     }
 
-    public boolean coneIsInClaw(){
-        return clawSensor.alpha() > sensorThreshold;
+    public boolean pixelIsInBottom(){
+        return bottomPixelSensor.alpha() > sensorThreshold;
+    }
+    public boolean pixelIsInTop(){
+        return topPixelSensor.alpha() > sensorThreshold;
     }
 
     public void displayDebug(Telemetry telemetry){
-        telemetry.addData("Left pivot pos",leftPivot.getPosition());
-        telemetry.addData("Right pivot pos",rightPivot.getPosition());
-        telemetry.addData("End pos",end.getPosition());
-        telemetry.addData("Claw pos",claw.getPosition());
-        telemetry.addData("Claw closed", getClawState());
-        telemetry.addData("Claw sensor val", clawSensor.alpha());
-        telemetry.addData("Cone in claw", coneIsInClaw());
+        telemetry.addData("Pivot pos", pivot.getPosition());
+        telemetry.addData("Claw pos", bottomPixel.getPosition());
+        telemetry.addData("Claw closed", getBottomGripperState());
+        telemetry.addData("Claw sensor val", bottomPixelSensor.alpha());
+        telemetry.addData("Cone in claw", pixelIsInBottom());
     }
 }

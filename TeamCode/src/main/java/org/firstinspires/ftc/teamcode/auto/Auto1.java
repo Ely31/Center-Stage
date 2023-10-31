@@ -7,9 +7,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
-import org.firstinspires.ftc.teamcode.hardware.AutoScoringMechOld;
+import org.firstinspires.ftc.teamcode.hardware.AutoScoringMech;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
-import org.firstinspires.ftc.teamcode.hardware.DualMotorLift;
 import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
 
 @Config
@@ -19,7 +18,7 @@ public class Auto1 extends LinearOpMode {
     SampleMecanumDrive drive;
     Camera camera;
     TeamPropDetector propPipeline = new TeamPropDetector();
-    AutoScoringMechOld scoringMech;
+    AutoScoringMech scoringMech;
 
     AutoConstants1 autoConstants;
 
@@ -46,7 +45,7 @@ public class Auto1 extends LinearOpMode {
         // Init
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
-        scoringMech = new AutoScoringMechOld(hardwareMap);
+        scoringMech = new AutoScoringMech(hardwareMap);
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new AutoConstants1(drive);
         // Juice telemetry speed
@@ -65,7 +64,7 @@ public class Auto1 extends LinearOpMode {
             if (pipelineThrottle.seconds() > 1){
                 // Update stuff
                 autoConstants.updateDropLocationFromVisionResult(propPipeline.getAnalysis());
-                autoConstants.updateParkPos(autoConstants.getDropLocation());
+                autoConstants.updateScoringPositions(autoConstants.getDropLocation());
                 autoConstants.updateTrajectories();
 
                 drive.setPoseEstimate(autoConstants.startPos);
@@ -86,9 +85,9 @@ public class Auto1 extends LinearOpMode {
             switch (autoState){
                 case GRABBING_PRELOAD:
                     // Grab the preload
-                    scoringMech.closeClaw();
+                    scoringMech.setBottomState(true);
                     // Once the claw is shut, premove the v4b, then move on to the next state
-                    if (actionTimer.milliseconds() > Arm.clawActuationTime){
+                    if (actionTimer.milliseconds() > Arm.pixelActuationTime){
                         //scoringMech.preMoveV4b();
                         // Set the drive on it's next trajectory
                         drive.followTrajectorySequenceAsync(autoConstants.dropOffPurplePixel);
@@ -99,7 +98,7 @@ public class Auto1 extends LinearOpMode {
 
                 case SCORING_PRELOAD:
                         if (actionTimer.seconds() > 2){
-                            scoringMech.scoreWithBracer(DualMotorLift.mediumPos);
+                            scoringMech.scoreWithBracer(12);
                         }
                         if (scoringMech.liftIsMostlyDown()){
                             // Send it off again
@@ -121,7 +120,7 @@ public class Auto1 extends LinearOpMode {
             }
             // Update all the things
             drive.update();
-            scoringMech.updateLift();
+            scoringMech.update();
 
             // To be used to automatically calibrate field centric
             autoConstants.saveAutoPose();
@@ -132,6 +131,6 @@ public class Auto1 extends LinearOpMode {
             telemetry.addData("number of cycles", autoConstants.getNumCycles());
             scoringMech.displayAutoMechDebug(telemetry);
             telemetry.update();
-        }
+        } // End of while loop
     }
 }
