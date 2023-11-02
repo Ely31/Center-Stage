@@ -13,13 +13,16 @@ public class SingleMotorLift {
     LinearActuator liftActuator;
 
     // Measurements are in inches
-    public static double maxHeight = 14; // Make this higher, just a safe val for now
+    public static double maxHeight = 29;
     public static double minHeight = 0;
     public static double retractedPos = 0;
-    public static double extendedPos = 5;
+    public static double extendedPos = 7; //5
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(0.05,0.00,0.00);
-    public static double f = 0.4;
+    public static PIDCoefficients coeffs = new PIDCoefficients(0.5,0.04,0.04);
+    public static double f = 0.0;
+
+    boolean state = false; // True for extended
+    double targetHeight;
 
     public SingleMotorLift(HardwareMap hwmap){
         liftActuator = new LinearActuator(hwmap, "lift", 13.7, 5.93);
@@ -48,10 +51,10 @@ public class SingleMotorLift {
         return liftActuator.getCurrentDistance();
     }
     public void retract(){
-        setHeight(retractedPos);
+        state = false;
     }
     public void extend(){
-        setHeight(extendedPos);
+        state = true;
     }
 
     public void editExtendedPos(double step){
@@ -78,6 +81,8 @@ public class SingleMotorLift {
     }
 
     public void update(){
+        if (state) targetHeight = extendedPos; else targetHeight = retractedPos;
+        setHeight(targetHeight);
         liftActuator.update();
     }
 
@@ -88,6 +93,7 @@ public class SingleMotorLift {
 
     public void disalayDebug(Telemetry telemetry){
         telemetry.addLine("LIFT");
+        telemetry.addData("state", state);
         liftActuator.displayDebugInfo(telemetry);
     }
 }

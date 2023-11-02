@@ -3,14 +3,16 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
 public class Arm {
-    Servo pivot;
+    ServoImplEx pivot;
     Servo bottomPixel;
     Servo topPixel;
     ColorSensor bottomPixelSensor;
@@ -20,10 +22,10 @@ public class Arm {
     boolean topState = false;
 
     // Constants
-    public static double pivotMax = 0.9;
-    public static double pivotMin = 0.03;
+    public static double pivotMax = 0.8;
+    public static double pivotMin = 0.0;
     public static double pivotIntakingPos = pivotMin;
-    public static double pivotScoringPos = 0.63;
+    public static double pivotScoringPos = pivotMax;
     public static double pivotPremovePos = 0.36;
     public static double pivotActuationTime = 300;
 
@@ -35,7 +37,9 @@ public class Arm {
 
     public Arm(HardwareMap hwmap){
         // Hardwaremap stuff
-        pivot = hwmap.get(Servo.class, "pivot");
+        pivot = hwmap.get(ServoImplEx.class, "pivot");
+        pivot.setDirection(Servo.Direction.REVERSE);
+        pivot.setPwmRange(new PwmControl.PwmRange(500,2500));
         bottomPixel = hwmap.get(Servo.class, "bottomPixel");
         topPixel = hwmap.get(Servo.class, "topPixel");
         bottomPixelSensor = hwmap.get(ColorSensor.class, "bottomSensor");

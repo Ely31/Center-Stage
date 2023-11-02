@@ -65,7 +65,7 @@ public class Auto1 extends LinearOpMode {
                 // Update stuff
                 autoConstants.updateDropLocationFromVisionResult(propPipeline.getAnalysis());
                 autoConstants.updateScoringPositions(autoConstants.getDropLocation());
-                autoConstants.updateTrajectories();
+                autoConstants.updateTrajectories(propPipeline.getAnalysis());
 
                 drive.setPoseEstimate(autoConstants.startPos);
                 // Display auto configuration to telemetry

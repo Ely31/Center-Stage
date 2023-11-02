@@ -51,6 +51,8 @@ public class AutoConstants1 {
     public int getNumCycles() {return numCycles;}
     public void setNumCycles(int numCycles) {this.numCycles = numCycles;}
 
+    public int delaySeconds = 0; // To be used to avoid collisions
+
     public void updateDropLocationFromVisionResult(int visionResult){
         switch(visionResult){
             case 0:
@@ -81,10 +83,8 @@ public class AutoConstants1 {
 
     // Set parkPos to a default to avoid null issues
     public Pose2d dropPos = new Pose2d(-57, -12* alliance, Math.toRadians(180* alliance));
-    public Pose2d spikeMarkPos = new Pose2d(-57, -12* alliance, Math.toRadians(180* alliance));
 
     public Pose2d[] dropPositions;
-    public Pose2d[] spikeMarkPositions;
 
     public void updateScoringPositions(int posIndex){
         dropPositions = new Pose2d[]{
@@ -95,24 +95,15 @@ public class AutoConstants1 {
                 // Pos 3
                 new Pose2d(54, -40 * alliance, Math.toRadians(0 * alliance))
         };
-        spikeMarkPositions = new Pose2d[]{
-                // Pos 1
-                new Pose2d(-61, -11 * alliance, Math.toRadians(-90 * alliance)),
-                // Pos 2
-                new Pose2d(-37, -11 * alliance, Math.toRadians(-90 * alliance)),
-                // Pos 3
-                new Pose2d(-13, -11 * alliance, Math.toRadians(-90 * alliance))
-        };
-        // Grab the correct pos from the array and set parkPos to it
         dropPos = dropPositions[posIndex-1]; // Ahh so that's why I used 0-2 instead of 1-3
-        spikeMarkPos = spikeMarkPositions[posIndex-1];
     }
 
     public TrajectorySequence dropOffPurplePixel;
-    public TrajectorySequence toBoard;
+    public TrajectorySequence throughBridge;
+    public TrajectorySequence scoreYellowPixel;
     public TrajectorySequence park;
 
-    public void updateTrajectories() {
+    public void updateTrajectories(int spikeMarkIndex) {
 
         if (isWingSide()) {
             startPos = new Pose2d(-35.25, -63 * alliance, Math.toRadians(-90 * alliance));
@@ -120,11 +111,61 @@ public class AutoConstants1 {
             startPos = new Pose2d(11.75, -63 * alliance, Math.toRadians(-90 * alliance));
         }
 
-        dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                .lineToSplineHeading(new Pose2d(-35.8, -9.7* alliance, Math.toRadians(130* alliance)))
+        // Ahhhh we have to have six unique purple pixel trajectories
+        /*
+        spikeMarkPositions = new Pose2d[]{
+                // Pos 1
+                new Pose2d(-61, -11 * alliance, Math.toRadians(-90 * alliance)),
+                // Pos 2
+                new Pose2d(-37, -11 * alliance, Math.toRadians(-90 * alliance)),
+                // Pos 3
+                new Pose2d(-13, -11 * alliance, Math.toRadians(-90 * alliance))
+        */
+        if (isWingSide()){
+            switch (spikeMarkIndex){
+                case 1:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .splineToSplineHeading(new Pose2d(-61, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .build();
+                case 2:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .splineToSplineHeading(new Pose2d(-37, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .build();
+                default:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .splineToSplineHeading(new Pose2d(-13, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .build();
+            }
+        } else {
+            switch (spikeMarkIndex){
+                case 1:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .splineToSplineHeading(new Pose2d(1, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .build();
+                case 2:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .splineToSplineHeading(new Pose2d(11.75, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .build();
+                default:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .splineToSplineHeading(new Pose2d(22, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .build();
+            }
+        }
+
+        if (isWingSide()){
+            throughBridge = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
+                    .build();
+        } else {
+            throughBridge = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
+
+                    .build();
+        }
+
+        scoreYellowPixel = drive.trajectorySequenceBuilder(throughBridge.end())
                 .build();
 
-        park = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
+        park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                 .setTangent(Math.toRadians(-130 * alliance))
                 .splineToSplineHeading(new Pose2d(-58, -12.2 * alliance, Math.toRadians(180 * alliance)), Math.toRadians(180 * alliance))
                 .lineTo(new Vector2d(-64.8, -12.2 * alliance))

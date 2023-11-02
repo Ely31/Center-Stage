@@ -154,7 +154,7 @@ public class TeamPropDetector extends OpenCvPipeline {
          */
         if(max == avg1) // Was it from region 1?
         {
-            propPosition = 0; // Record our analysis
+            propPosition = 1; // Record our analysis
 
             // Draw a solid rectangle on top of the chosen region.
             Imgproc.rectangle(
@@ -166,11 +166,11 @@ public class TeamPropDetector extends OpenCvPipeline {
         }
         else if(max == avg2) // Was it from region 2?
         {
-            propPosition = 1; // Record our analysis
+            propPosition = 2; // Record our analysis
             Imgproc.rectangle(input,region2_pointA,region2_pointB,GREEN,2);
         }
         else {
-            propPosition = 2; // Record our analysis
+            propPosition = 3; // Record our analysis
             Imgproc.rectangle(input,region3_pointA,region3_pointB,GREEN,2);
         }
 

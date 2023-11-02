@@ -27,7 +27,7 @@ public class LiftTest extends LinearOpMode {
             else if (gamepad1.dpad_right) lift.extend();
 
             if (gamepad1.dpad_up) lift.editExtendedPos(0.1);
-            if (gamepad1.dpad_down) lift.editExtendedPos(0.1);
+            if (gamepad1.dpad_down) lift.editExtendedPos(-0.1);
 
             lift.update();
             lift.disalayDebug(telemetry);
