@@ -22,10 +22,10 @@ public class Arm {
     boolean topState = false;
 
     // Constants
-    public static double pivotMax = 0.8;
+    public static double pivotMax = 0.85;
     public static double pivotMin = 0.0;
-    public static double pivotIntakingPos = pivotMin;
-    public static double pivotScoringPos = pivotMax;
+    double pivotIntakingPos = pivotMin;
+    double pivotScoringPos = pivotMax;
     public static double pivotPremovePos = 0.36;
     public static double pivotActuationTime = 300;
 

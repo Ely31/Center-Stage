@@ -9,22 +9,24 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.actuators.LinearActuator;
 
 @Config
-public class SingleMotorLift {
+public class Lift {
     LinearActuator liftActuator;
 
     // Measurements are in inches
     public static double maxHeight = 29;
     public static double minHeight = 0;
     public static double retractedPos = 0;
-    public static double extendedPos = 7; //5
+    public static double extendedPos = 7;
 
     public static PIDCoefficients coeffs = new PIDCoefficients(0.5,0.04,0.04);
     public static double f = 0.0;
 
     boolean state = false; // True for extended
+    public boolean getState() {return state;}
+
     double targetHeight;
 
-    public SingleMotorLift(HardwareMap hwmap){
+    public Lift(HardwareMap hwmap){
         liftActuator = new LinearActuator(hwmap, "lift", 13.7, 5.93);
         liftActuator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         liftActuator.zero();
@@ -40,7 +42,7 @@ public class SingleMotorLift {
     public void setCoefficients(PIDCoefficients coeffs){
         liftActuator.setCoefficients(coeffs);
         liftActuator.setfCoefficient(f);
-        SingleMotorLift.coeffs = coeffs;
+        Lift.coeffs = coeffs;
     }
 
     // Methods

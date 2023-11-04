@@ -7,8 +7,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
@@ -20,9 +18,7 @@ public class TeleMecDrive {
     private DcMotorEx lb;
     private DcMotorEx rf;
     private DcMotorEx rb;
-    private PIDFCoefficients coefficients = new PIDFCoefficients(20,0,8,11.9); // To be used in RUE mode, tuned in roadrunner
 
-    public double lfMaxRPMFraction;
     public DcMotor.RunMode runMode;
     public DcMotor.ZeroPowerBehavior zeroPowerBehavior;
 
@@ -46,7 +42,6 @@ public class TeleMecDrive {
         lb.setMode(mode);
         rf.setMode(mode);
         rb.setMode(mode);
-        if (mode == DcMotor.RunMode.RUN_USING_ENCODER) setCoefficients(coefficients);
 
         runMode = mode;
     }
@@ -58,33 +53,6 @@ public class TeleMecDrive {
 
         zeroPowerBehavior = behavior;
     }
-    public void setCoefficients(PIDFCoefficients coefficients){
-        lf.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, coefficients);
-        lb.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, coefficients);
-        rf.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, coefficients);
-        rb.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, coefficients);
-    }
-    public void setMaxRPMFraction(double maxRPMFraction){
-        // Aahhh why do I have to type this so many times
-        MotorConfigurationType lfConfig = lf.getMotorType().clone();
-        lfConfig.setAchieveableMaxRPMFraction(maxRPMFraction);
-        lf.setMotorType(lfConfig);
-
-        lfMaxRPMFraction = lfConfig.getAchieveableMaxRPMFraction(); // Just to see if this works
-
-        MotorConfigurationType lbConfig = lb.getMotorType().clone();
-        lbConfig.setAchieveableMaxRPMFraction(maxRPMFraction);
-        lb.setMotorType(lbConfig);
-
-        MotorConfigurationType rfConfig = rf.getMotorType().clone();
-        rfConfig.setAchieveableMaxRPMFraction(maxRPMFraction);
-        rf.setMotorType(rfConfig);
-
-        MotorConfigurationType rbConfig = rb.getMotorType().clone();
-        rbConfig.setAchieveableMaxRPMFraction(maxRPMFraction);
-        rb.setMotorType(rbConfig);
-    }
-
 
     // Constructor
     public TeleMecDrive(HardwareMap hardwareMap, double slowFactor, boolean isProtobot) {
@@ -124,7 +92,7 @@ public class TeleMecDrive {
 
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
 
-        heading = (orientation.getYaw(AngleUnit.RADIANS) + (AutoToTele.endOfAutoHeading + Math.toRadians(-90)) + headingOffset);
+        heading = (orientation.getYaw(AngleUnit.RADIANS) + headingOffset);
 
         // Matrix math I don't understand to rotate the joystick input by the heading
         rotX = x * Math.cos(-heading) - -y * Math.sin(-heading);
@@ -155,16 +123,9 @@ public class TeleMecDrive {
         rb.setPower(rbPower*slowInput);
     }
 
-
-    public void setWheelPowers(double LF, double LB, double RF, double RB){
-        lf.setPower(LF);
-        lb.setPower(LB);
-        rf.setPower(RF);
-        rb.setPower(RB);
-    }
     public void resetHeading(){
         AutoToTele.endOfAutoHeading = (Math.PI/2); // Unit circle coming in handy
         // TODO: Will need to fix this
-        headingOffset = getHeading();
+        headingOffset = -getHeading();
     }
 }

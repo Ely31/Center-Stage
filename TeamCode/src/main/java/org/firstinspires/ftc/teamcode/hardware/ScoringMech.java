@@ -7,11 +7,11 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Config
 public class ScoringMech {
-    SingleMotorLift lift;
+    Lift lift;
     Arm arm;
     // Constructor
     public ScoringMech(HardwareMap hwmap){
-        lift = new SingleMotorLift(hwmap);
+        lift = new Lift(hwmap);
         arm = new Arm(hwmap);
     }
     public ScoringMech (){}

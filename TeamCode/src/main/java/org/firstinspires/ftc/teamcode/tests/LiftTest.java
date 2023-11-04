@@ -5,18 +5,18 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.hardware.SingleMotorLift;
+import org.firstinspires.ftc.teamcode.hardware.Lift;
 
 @TeleOp(name="",group="test")
 public class LiftTest extends LinearOpMode {
     // Pre-init
-    SingleMotorLift lift;
+    Lift lift;
     @Override
     public void runOpMode() {
         // Init
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        lift = new SingleMotorLift(hardwareMap);
-        lift.setCoefficients(SingleMotorLift.coeffs);
+        lift = new Lift(hardwareMap);
+        lift.setCoefficients(Lift.coeffs);
         waitForStart();
     
         // Pre-run

@@ -4,6 +4,9 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 @Config
 public class Intake {
 
@@ -61,4 +64,8 @@ public class Intake {
         return (325 < maxProximity && maxProximity < 380);
     }
     */
+    public void displayDebug(Telemetry telemetry){
+        telemetry.addData("Intake Power", intake.getPower());
+        telemetry.addData("Toggled Status", intakeToggledStatus);
+    }
 }

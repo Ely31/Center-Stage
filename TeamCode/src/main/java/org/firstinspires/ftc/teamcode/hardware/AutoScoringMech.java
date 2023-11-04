@@ -38,7 +38,7 @@ public class AutoScoringMech extends ScoringMech {
     }
 
     public AutoScoringMech(HardwareMap hwmap){
-        lift = new SingleMotorLift(hwmap);
+        lift = new Lift(hwmap);
         arm = new Arm(hwmap);
     }
 

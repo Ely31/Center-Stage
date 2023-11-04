@@ -8,8 +8,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
-import org.firstinspires.ftc.teamcode.hardware.SingleMotorLift;
+import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
+import org.firstinspires.ftc.teamcode.util.REDetector;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
@@ -20,7 +21,7 @@ public class Teleop extends LinearOpMode {
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
-    SingleMotorLift lift;
+    Lift lift;
     Intake intake;
     Climber climber;
     double drivingSpeedMultiplier = 1;
@@ -28,9 +29,11 @@ public class Teleop extends LinearOpMode {
     public static double liftPosEditStep = 0.2;
     public static double liftRawPowerAmount = 0.2;
 
+    REDetector liftInput = new REDetector();
+
     // Telemetry options
     public static boolean debug = true;
-    public static boolean instructionsOn = true;
+    public static boolean instructionsOn = false;
 
     @Override
     public void runOpMode(){
@@ -38,7 +41,7 @@ public class Teleop extends LinearOpMode {
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
         drive = new TeleMecDrive(hardwareMap, 0.4, false);
-        lift = new SingleMotorLift(hardwareMap);
+        lift = new Lift(hardwareMap);
         intake = new Intake(hardwareMap);
         climber = new Climber(hardwareMap);
 
@@ -62,6 +65,9 @@ public class Teleop extends LinearOpMode {
             if (gamepad1.share) drive.resetHeading();
 
             // ARM AND LIFT CONTROL
+            if (liftInput.status(gamepad1.left_bumper)){
+                if (lift.getState()) lift.extend(); else lift.retract();
+            }
             // Edit things
 
             // Edit the extended position with the dpad on gamepad two
@@ -83,7 +89,7 @@ public class Teleop extends LinearOpMode {
             else lift.update();
 
             // INTAKE CONTROL
-            intake.toggle(gamepad1.a);
+            if (gamepad1.b) intake.reverse(); else intake.toggle(gamepad1.a);
 
             // CLIMBER CONTROL
             climber.toggle(gamepad2.left_bumper && gamepad2.right_bumper);
@@ -92,13 +98,15 @@ public class Teleop extends LinearOpMode {
             // TELEMETRY
             // Show the set height of the lift on a horizontal bar so driver 2 can see it easier than reading a number
             telemetry.addData("Lift target height", lift.getExtendedPos());
-            telemetry.addLine(Utility.generateTelemetryTrackbar(SingleMotorLift.minHeight, SingleMotorLift.maxHeight, lift.getExtendedPos(),10));
+            telemetry.addLine(Utility.generateTelemetryTrackbar(Lift.minHeight, Lift.maxHeight, lift.getExtendedPos(),10));
             // Heck, stack two on top of each other so it's even bigger
-            telemetry.addLine(Utility.generateTelemetryTrackbar(SingleMotorLift.minHeight, SingleMotorLift.maxHeight, lift.getExtendedPos(),10));
+            telemetry.addLine(Utility.generateTelemetryTrackbar(Lift.minHeight, Lift.maxHeight, lift.getExtendedPos(),10));
 
             if (debug) {
                 telemetry.addData("heading", drive.getHeading());
                 lift.disalayDebug(telemetry);
+                telemetry.addData("Lift input", liftInput.status(gamepad1.left_bumper));
+                intake.displayDebug(telemetry);
                 telemetry.addData("avg loop time (ms)", timeUtil.getAverageLoopTime());
                 telemetry.addData("period", timeUtil.getPeriod());
                 telemetry.addData("time", matchTimer.seconds());

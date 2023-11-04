@@ -1,9 +1,12 @@
 // Based on OpenFTC's SkystoneDeterminationExample code
 // And now based off our ff code
+// And now modified for Ceter stage
+// Dang, what a run. Three seasons this code was good for.
 
 package org.firstinspires.ftc.teamcode.vision.workspace;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -15,8 +18,7 @@ public class TeamPropDetector extends OpenCvPipeline {
 
     // Don't use this first constructor unless it's for testing
     public TeamPropDetector(){
-        lower = orangeLower;
-        upper = orangeUpper;
+        this(false);
     }
     public TeamPropDetector(boolean isRedAlliance){
         if (isRedAlliance){
@@ -29,7 +31,7 @@ public class TeamPropDetector extends OpenCvPipeline {
     }
 
     // 0 is left, 1 middle, 2 right
-    public int propPosition;
+    int propPosition;
 
     // Some color constants
     public final Scalar BLUE = new Scalar(0, 0, 255);
@@ -37,20 +39,21 @@ public class TeamPropDetector extends OpenCvPipeline {
     public final Scalar WHITE = new Scalar(255,255,255);
 
     // Min and max values for the threshold
-    public Scalar orangeLower = new Scalar(0, 65, 40);
-    public Scalar orangeUpper = new Scalar(255, 115, 130);
-    public Scalar blueLower = new Scalar(0, 65, 40);
-    public Scalar blueUpper = new Scalar(255, 115, 130);
+    public Scalar orangeLower = new Scalar(0, 185, 40);
+    public Scalar orangeUpper = new Scalar(30, 255, 255);
+    public Scalar blueLower = new Scalar(90, 180, 90);
+    public Scalar blueUpper = new Scalar(120, 255, 255);
     public Scalar lower;
     public Scalar upper;
+
+    public boolean showThresh = false;
 
     // Variables that determine the placement of the boxes
     final static int frameWidth = 320;
     final static int center = frameWidth/2;
-    final static int frameHeight = 240;
-    final static int topOfSides = 120;
-    final static int topOfMiddle = 110;
-    final static int sidesSpan = 100;
+    final static int topOfSides = 125;
+    final static int topOfMiddle = 120;
+    final static int sidesSpan = 95;
     static final int REGION_WIDTH = 30;
     static final int REGION_HEIGHT = 30;
 
@@ -80,14 +83,16 @@ public class TeamPropDetector extends OpenCvPipeline {
 
 
     Mat region1_Binary, region2_Binary, region3_Binary;
-    Mat YCrCb = new Mat();
+    Mat hsv = new Mat();
     Mat Binary = new Mat();
+    Mat displayBinary = new Mat();
+    final Mat white = new Mat(320, 240, CvType.CV_8U, Scalar.all(0));
     int avg1, avg2, avg3;
 
     // Converts to YCrCb and then thresholds
     void ThresholdInput(Mat input){
-        Imgproc.cvtColor(input, YCrCb, Imgproc.COLOR_RGB2YCrCb);
-        Core.inRange(YCrCb, lower, upper, Binary);
+        Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
+        Core.inRange(hsv, lower, upper, Binary);
     }
 
     @Override
@@ -121,6 +126,12 @@ public class TeamPropDetector extends OpenCvPipeline {
         avg1 = (int) Core.mean(region1_Binary).val[0];
         avg2 = (int) Core.mean(region2_Binary).val[0];
         avg3 = (int) Core.mean(region3_Binary).val[0];
+
+        // Draw the threshold on top of the display image
+        Core.inRange(hsv, lower, upper, displayBinary);
+        // Couldn't figure out bitwise and, but not works well enough
+        //Core.bitwise_and(input, input, input, displayBinary);
+        Core.bitwise_not(input, input, displayBinary);
 
         // Draw rectangles showing the sample regions on the screen.
         Imgproc.rectangle(
@@ -174,12 +185,7 @@ public class TeamPropDetector extends OpenCvPipeline {
             Imgproc.rectangle(input,region3_pointA,region3_pointB,GREEN,2);
         }
 
-        /*
-         * Render the 'input' buffer to the viewport. But note this is not
-         * simply rendering the raw camera feed, because we called functions
-         * to add some annotations to this buffer earlier up.
-         */
-        return input;
+        if (showThresh) return displayBinary; else return input;
     }
 
     // Call this from the OpMode to obtain the latest analysis
