@@ -47,7 +47,7 @@ public class Arm {
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
-        setBothGrippers(false);
+        setBothGrippersState(false);
     }
 
     // Control each
@@ -69,7 +69,7 @@ public class Arm {
         return topState;
     }
 
-    public void setBothGrippers(boolean state){
+    public void setBothGrippersState(boolean state){
         if (state) {
             setBottomGripperState(true); setTopGripperState(true);
             bottomPixel.setPosition(pixelClosedPos);
@@ -81,7 +81,7 @@ public class Arm {
             topPixel.setPosition(pixelClosedPos);
         }
     }
-    public boolean getBothGrippers(){
+    public boolean getBothGrippersState(){
         // Returns true only if both are closed
         return (getBottomGripperState() && getTopGripperState());
     }

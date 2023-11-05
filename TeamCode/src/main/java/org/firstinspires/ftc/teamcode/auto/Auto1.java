@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
-import org.firstinspires.ftc.teamcode.hardware.AutoScoringMech;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
+import org.firstinspires.ftc.teamcode.hardware.ScoringMech;
 import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
 
 @Config
@@ -18,7 +18,7 @@ public class Auto1 extends LinearOpMode {
     SampleMecanumDrive drive;
     Camera camera;
     TeamPropDetector propPipeline = new TeamPropDetector();
-    AutoScoringMech scoringMech;
+    ScoringMech scoringMech;
 
     AutoConstants1 autoConstants;
 
@@ -45,7 +45,7 @@ public class Auto1 extends LinearOpMode {
         // Init
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
-        scoringMech = new AutoScoringMech(hardwareMap);
+        scoringMech = new ScoringMech(hardwareMap);
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new AutoConstants1(drive);
         // Juice telemetry speed
@@ -85,7 +85,7 @@ public class Auto1 extends LinearOpMode {
             switch (autoState){
                 case GRABBING_PRELOAD:
                     // Grab the preload
-                    scoringMech.setBottomState(true);
+                    scoringMech.grabJustForPreload();
                     // Once the claw is shut, premove the v4b, then move on to the next state
                     if (actionTimer.milliseconds() > Arm.pixelActuationTime){
                         //scoringMech.preMoveV4b();
@@ -129,7 +129,7 @@ public class Auto1 extends LinearOpMode {
             telemetry.addData("auto state", autoState.name());
             telemetry.addData("cycle index", cycleIndex);
             telemetry.addData("number of cycles", autoConstants.getNumCycles());
-            scoringMech.displayAutoMechDebug(telemetry);
+            scoringMech.displayDebug(telemetry);
             telemetry.update();
         } // End of while loop
     }

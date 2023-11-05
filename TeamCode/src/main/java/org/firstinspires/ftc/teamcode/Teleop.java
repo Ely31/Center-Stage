@@ -6,11 +6,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
+import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
-import org.firstinspires.ftc.teamcode.util.REDetector;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
@@ -22,6 +22,7 @@ public class Teleop extends LinearOpMode {
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
     Lift lift;
+    Arm arm;
     Intake intake;
     Climber climber;
     double drivingSpeedMultiplier = 1;
@@ -29,7 +30,15 @@ public class Teleop extends LinearOpMode {
     public static double liftPosEditStep = 0.2;
     public static double liftRawPowerAmount = 0.2;
 
-    REDetector liftInput = new REDetector();
+    boolean prevLiftInput = false;
+
+    enum ScoringState {
+        INTAKING,
+        PREMOVED,
+        SCORING
+    }
+
+    ScoringState scoringState = ScoringState.INTAKING;
 
     // Telemetry options
     public static boolean debug = true;
@@ -42,6 +51,7 @@ public class Teleop extends LinearOpMode {
         // Bind hardware to the hardwaremap
         drive = new TeleMecDrive(hardwareMap, 0.4, false);
         lift = new Lift(hardwareMap);
+        arm = new Arm(hardwareMap);
         intake = new Intake(hardwareMap);
         climber = new Climber(hardwareMap);
 
@@ -65,19 +75,15 @@ public class Teleop extends LinearOpMode {
             if (gamepad1.share) drive.resetHeading();
 
             // ARM AND LIFT CONTROL
-            if (liftInput.status(gamepad1.left_bumper)){
-                if (lift.getState()) lift.extend(); else lift.retract();
-            }
-            // Edit things
-
+            // This method here does most of the work
+            updateScoringMech();
             // Edit the extended position with the dpad on gamepad two
             // This works even when the lift is down
             if (gamepad2.dpad_up)   lift.editExtendedPos(liftPosEditStep);
             if (gamepad2.dpad_down) lift.editExtendedPos(-liftPosEditStep);
-
             // Update the lift so its pid controller runs, very important
             // But, if you press a special key combo, escape pid control and bring the lift down
-            // With raw power to fix a lift issue
+            // With raw power to fix potential lift issues
             if (gamepad2.dpad_left && gamepad2.share){
                 lift.setRawPowerDangerous(-liftRawPowerAmount);
                 lift.zero();
@@ -105,7 +111,6 @@ public class Teleop extends LinearOpMode {
             if (debug) {
                 telemetry.addData("heading", drive.getHeading());
                 lift.disalayDebug(telemetry);
-                telemetry.addData("Lift input", liftInput.status(gamepad1.left_bumper));
                 intake.displayDebug(telemetry);
                 telemetry.addData("avg loop time (ms)", timeUtil.getAverageLoopTime());
                 telemetry.addData("period", timeUtil.getPeriod());
@@ -118,5 +123,51 @@ public class Teleop extends LinearOpMode {
 
             telemetry.update();
         } // End of the loop
+    }
+
+    void updateScoringMech(){
+        switch (scoringState){
+            case INTAKING:
+                arm.pivotGoToIntake();
+                // Open the grippers so we can actually intake
+                arm.setBothGrippersState(false);
+                lift.retract();
+                // Switch states when bumper pressed
+                if (!prevLiftInput && gamepad1.left_bumper){
+                    scoringState = ScoringState.SCORING;
+                }
+                // Or, (and this'll happen 99% of the time) when it has both pixels
+                if (arm.pixelIsInBottom() && arm.pixelIsInTop()){
+                    // Automatically grab 'em and move the arm up
+                    arm.setBothGrippersState(true);
+                    scoringState = ScoringState.PREMOVED;
+                }
+                break;
+            case PREMOVED:
+                arm.preMove();
+                // Just make sure we're still holding on
+                arm.setBothGrippersState(true);
+                lift.retract();
+                // Switch states when bumper pressed
+                if (!prevLiftInput && gamepad1.left_bumper){
+                    scoringState = ScoringState.SCORING;
+                }
+                break;
+            case SCORING:
+                arm.pivotScore();
+                lift.extend();
+                // Release the top and bottom individually if we wish
+                if (gamepad1.square) arm.setBottomGripperState(false);
+                if (gamepad1.triangle)arm.setTopGripperState(false);
+                // But more often used, drop them both at once
+                if (gamepad1.right_bumper) arm.setBothGrippersState(false);
+                // TODO: Implement autoretract after both pixels are dropped
+                // Switch states when bumper pressed
+                if (!prevLiftInput && gamepad1.left_bumper){
+                    scoringState = ScoringState.INTAKING;
+                }
+                break;
+        }
+        prevLiftInput = gamepad1.left_bumper;
     }
 }
