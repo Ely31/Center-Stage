@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
+import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
@@ -25,6 +26,7 @@ public class Teleop extends LinearOpMode {
     Arm arm;
     Intake intake;
     Climber climber;
+    DroneLauncher launcher;
     double drivingSpeedMultiplier = 1;
     // Lift constants
     public static double liftPosEditStep = 0.2;
@@ -54,6 +56,7 @@ public class Teleop extends LinearOpMode {
         arm = new Arm(hardwareMap);
         intake = new Intake(hardwareMap);
         climber = new Climber(hardwareMap);
+        launcher = new DroneLauncher(hardwareMap);
 
         waitForStart();
         matchTimer.reset();
@@ -95,11 +98,22 @@ public class Teleop extends LinearOpMode {
             else lift.update();
 
             // INTAKE CONTROL
-            if (gamepad1.b) intake.reverse(); else intake.toggle(gamepad1.a);
+            if (gamepad1.b) intake.reverse();
+            // Only allow intaking when the arm is there to catch the pixels
+            else if (scoringState == ScoringState.INTAKING) intake.toggle(gamepad1.a);
+            else intake.off();
 
             // CLIMBER CONTROL
+            // Require pressing two keys at once to reduce accidental input
             climber.toggle(gamepad2.left_bumper && gamepad2.right_bumper);
             climber.update();
+            // Move the arm up if we do anything with it
+            if (gamepad2.left_bumper && gamepad2.right_bumper) climber.release();
+
+            // DRONE LAUNCHER CONTROL
+            // Require pressing two keys at once to reduce the chance of accidentally shooting it
+            if (gamepad2.left_bumper && gamepad2.right_trigger > 0.1) launcher.release();
+            else launcher.hold();
 
             // TELEMETRY
             // Show the set height of the lift on a horizontal bar so driver 2 can see it easier than reading a number
@@ -112,6 +126,8 @@ public class Teleop extends LinearOpMode {
                 telemetry.addData("heading", drive.getHeading());
                 lift.disalayDebug(telemetry);
                 intake.displayDebug(telemetry);
+                arm.displayDebug(telemetry);
+                climber.disalayDebug(telemetry);
                 telemetry.addData("avg loop time (ms)", timeUtil.getAverageLoopTime());
                 telemetry.addData("period", timeUtil.getPeriod());
                 telemetry.addData("time", matchTimer.seconds());

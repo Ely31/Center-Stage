@@ -19,20 +19,20 @@ public class AutoConstants1 {
         randomMessageIndex = new Random().nextInt(messageList.length);
     }
 
-    // 1 is red or left, -1 is blue or right
-    int alliance = 1;
+    // 1 is red, -1 is blue
+    private int alliance = 1;
     public int getAlliance() {return alliance;}
     public void setAlliance(int alliance) {this.alliance = alliance;}
 
     public boolean allianceToBool(){
-        return alliance != 1;
+        return alliance == 1;
     }
     public String allianceToString(){
-        if (alliance == 1) return "Left, red terminal";
-        else return "Right, blue terminal";
+        if (alliance == 1) return "Red Alliance";
+        else return "Blue Alliance";
     }
 
-    int zone = 1;
+    private int zone = 1;
     public int getDropLocation() {
         return zone;
     }
@@ -47,11 +47,16 @@ public class AutoConstants1 {
         WingSide = wingSide;
     }
 
-    int numCycles = 4;
+    private int numCycles = 4;
     public int getNumCycles() {return numCycles;}
     public void setNumCycles(int numCycles) {this.numCycles = numCycles;}
 
-    public int delaySeconds = 0; // To be used to avoid collisions
+    private int delaySeconds = 0; // To be used to avoid collisions
+    public int getDelaySeconds(){return delaySeconds;}
+    public void setDelaySeconds(int seconds){
+        delaySeconds = seconds;
+    }
+
 
     public void updateDropLocationFromVisionResult(int visionResult){
         switch(visionResult){
@@ -112,15 +117,6 @@ public class AutoConstants1 {
         }
 
         // Ahhhh we have to have six unique purple pixel trajectories
-        /*
-        spikeMarkPositions = new Pose2d[]{
-                // Pos 1
-                new Pose2d(-61, -11 * alliance, Math.toRadians(-90 * alliance)),
-                // Pos 2
-                new Pose2d(-37, -11 * alliance, Math.toRadians(-90 * alliance)),
-                // Pos 3
-                new Pose2d(-13, -11 * alliance, Math.toRadians(-90 * alliance))
-        */
         if (isWingSide()){
             switch (spikeMarkIndex){
                 case 1:
@@ -155,20 +151,25 @@ public class AutoConstants1 {
 
         if (isWingSide()){
             throughBridge = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
+
+                    .build();
+            park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
+                    .setTangent(Math.toRadians(-130 * alliance))
+                    .splineToSplineHeading(new Pose2d(-58, -12.2 * alliance, Math.toRadians(180 * alliance)), Math.toRadians(180 * alliance))
+                    .lineTo(new Vector2d(-64.8, -12.2 * alliance))
                     .build();
         } else {
             throughBridge = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
 
                     .build();
+            park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
+                    .setTangent(Math.toRadians(-130 * alliance))
+                    .splineToSplineHeading(new Pose2d(-58, -12.2 * alliance, Math.toRadians(180 * alliance)), Math.toRadians(180 * alliance))
+                    .lineTo(new Vector2d(-64.8, -12.2 * alliance))
+                    .build();
         }
 
         scoreYellowPixel = drive.trajectorySequenceBuilder(throughBridge.end())
-                .build();
-
-        park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
-                .setTangent(Math.toRadians(-130 * alliance))
-                .splineToSplineHeading(new Pose2d(-58, -12.2 * alliance, Math.toRadians(180 * alliance)), Math.toRadians(180 * alliance))
-                .lineTo(new Vector2d(-64.8, -12.2 * alliance))
                 .build();
     }
 
@@ -177,17 +178,21 @@ public class AutoConstants1 {
         AutoToTele.endOfAutoHeading = drive.getPoseEstimate().getHeading();
     }
 
-
     // Telemetry stuff
     public void addTelemetry(Telemetry telemetry){
-        telemetry.addLine(allianceToString());
+        // Write the alliance in its color
+        telemetry.addLine("<font color =#"+ (allianceToBool() ? "ff0000>" : "0000ff>") + allianceToString() + "</font>" );
         telemetry.addData("Alliance side as integer", getAlliance());
-        telemetry.addData("Zone", zone);
+        telemetry.addData("Side", (isWingSide() ? "Wing" : "Board")); // First time using this funny switchy thing
         telemetry.addData("Number of cycles", getNumCycles());
+        telemetry.addData("Delay in seconds", delaySeconds);
+        telemetry.addData("Zone", zone);
+
         telemetry.addLine(ramdomAutoCheckMessage());
     }
     String[] messageList = {
             "CHECK THE AUTO, REMEMBER NANO FINALS 3!",
+            "Ok apparently it was Nano Finals 2",
             "Run the right auto kids!",
             "Is it red? is it blue?",
             "Is it left? is it right?",
@@ -210,9 +215,9 @@ public class AutoConstants1 {
             "Don't lose worlds!",
             "Pay attention bro",
             "Don't pull a brainstormers FF finals",
-            "Guys this auto's more complicated than last year"
+            "Guys this auto's more complicated than last year",
+            "Is it wing? is it board?"
     };
-
     String ramdomAutoCheckMessage(){
         //look up the index of the randomly generated number in the array of messages and return that message
         return messageList[randomMessageIndex];

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.hardware;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -11,10 +12,17 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 public class ScoringMech {
     Lift lift;
     Arm arm;
+    Intake intake;
+    Servo purplePixelPusher;
+    public static double pppClampPos = 0;
+    public static double pppOpenPos = 1;
     // Constructor
     public ScoringMech(HardwareMap hwmap){
         lift = new Lift(hwmap);
         arm = new Arm(hwmap);
+        intake = new Intake(hwmap);
+        purplePixelPusher = hwmap.get(Servo.class, "ppp");
+        clampPurplePixel();
     }
 
     public void score(){
@@ -37,6 +45,13 @@ public class ScoringMech {
     public void grabJustForPreload(){
         arm.setBothGrippersState(true);
     }
+    public void clampPurplePixel(){
+        purplePixelPusher.setPosition(pppClampPos);
+    }
+    public void openPurplePixel(){
+        purplePixelPusher.setPosition(pppOpenPos);
+    }
+
 
     // ESSENTIAL to call this function every loop
     public void update(){lift.update();}
@@ -46,8 +61,8 @@ public class ScoringMech {
 
     public enum ScoringState{
         EXTENDING,
-        WAITING_FOR_ARM_EXTEND,
-        WAITING_FOR_CONE_DROP,
+        WAITING_FOR_ARM_PIVOT,
+        WAITING_FOR_PIXELS_DROP,
         WAITING_FOR_ARM_RETRACT,
         RETRACTING,
         DONE
@@ -60,7 +75,6 @@ public class ScoringMech {
     public enum StackGrabbingState{
         CREEPING,
         GRABBING,
-        LIFTING,
         DONE
     }
     StackGrabbingState stackGrabbingState = StackGrabbingState.CREEPING;
@@ -68,15 +82,16 @@ public class ScoringMech {
         return stackGrabbingState;
     }
 
-    public void grabOffStackAsync(boolean hasCone){
+    public void grabOffStackAsync(boolean hasPixels){
         // You have to call updateLift while using this for it to work
         switch (stackGrabbingState){
             case CREEPING:
-                arm.setBottomGripperState(false);
+                arm.setBothGrippersState(false);
                 retract();
-                if (hasCone){
+                intake.on();
+                if (hasPixels){
                     stackGrabbingWait.reset();
-                    arm.setBottomGripperState(true);
+                    arm.setBothGrippersState(true);
                     stackGrabbingState = StackGrabbingState.GRABBING;
                 }
                 break;
@@ -84,11 +99,7 @@ public class ScoringMech {
                 if (stackGrabbingWait.milliseconds() > Arm.pixelActuationTime){
                     stackGrabbingWait.reset();
                     arm.preMove();
-                    stackGrabbingState = StackGrabbingState.LIFTING;
-                }
-                break;
-            case LIFTING:
-                if (stackGrabbingWait.seconds() > 0.25){
+                    intake.off();
                     stackGrabbingState = StackGrabbingState.DONE;
                 }
                 break;
@@ -99,7 +110,7 @@ public class ScoringMech {
         return stackGrabbingState == StackGrabbingState.DONE;
     }
 
-    public void scoreWithBracer(double height){
+    public void scoreAsync(double height){
         // You have to call updateLift while using this for it to work
         switch (scoringState){
             case EXTENDING:
@@ -108,20 +119,20 @@ public class ScoringMech {
                 // Move on if the lift is all the way up
                 if (Utility.withinErrorOfValue(lift.getHeight(), height, 0.5)) {
                     scoringWait.reset();
-                    scoringState = ScoringState.WAITING_FOR_ARM_EXTEND;
+                    scoringState = ScoringState.WAITING_FOR_ARM_PIVOT;
                 }
                 break;
 
-            case WAITING_FOR_ARM_EXTEND:
+            case WAITING_FOR_ARM_PIVOT:
                 if (scoringWait.seconds() > 0.2){ // Wait for the arm to move all the way
                     arm.setBothGrippersState(false); // Drop the pixels
                     scoringWait.reset();
-                    scoringState = ScoringState.WAITING_FOR_CONE_DROP;
+                    scoringState = ScoringState.WAITING_FOR_PIXELS_DROP;
                 }
                 break;
 
-            case WAITING_FOR_CONE_DROP:
-                if (scoringWait.seconds() > 0.3){ // Wait for the cone to drop
+            case WAITING_FOR_PIXELS_DROP:
+                if (scoringWait.seconds() > 0.3){ // Wait for them to fall out
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
                 }
@@ -130,7 +141,7 @@ public class ScoringMech {
             case WAITING_FOR_ARM_RETRACT:
                 arm.pivotGoToIntake();
 
-                if (scoringWait.milliseconds() > Arm.pivotActuationTime + 300){
+                if (scoringWait.milliseconds() > Arm.pivotActuationTime){
                     scoringWait.reset();
                     lift.retract();
                     scoringState = ScoringState.RETRACTING;
@@ -141,7 +152,6 @@ public class ScoringMech {
                 lift.retract();
                 // Move on if the lift is all the way down
                 if (Utility.withinErrorOfValue(lift.getHeight(), 0, 1)) {
-                    // Move this guy back in the bot so it doesn't get crunched
                     scoringState = ScoringState.DONE; // Finish
                 }
                 break;

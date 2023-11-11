@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
@@ -27,18 +28,17 @@ public class Auto1 extends LinearOpMode {
     // For the rising egde detectors
     boolean prevCycleIncrease = false;
     boolean prevCycleDecrease = false;
+    boolean prevDelayIncrease = false;
+    boolean prevDelayDecrease = false;
 
     // For the giant fsm to run everything asynchronously
     enum AutoState{
-        GRABBING_PRELOAD,
-        SCORING_PRELOAD,
-        WAITING_FOR_CONE_GRAB,
-        TO_JUNCTION,
-        WAITING_TIL_CLEAR_OF_JUNCTION,
-        TO_STACK,
+        GRABBING_PRELOADS,
+        PUSHING_PURPLE,
+        SCORING_YELLOW,
         PARKING
     }
-    AutoState autoState = AutoState.GRABBING_PRELOAD;
+    AutoState autoState = AutoState.GRABBING_PRELOADS;
 
     @Override
     public void runOpMode(){
@@ -48,8 +48,9 @@ public class Auto1 extends LinearOpMode {
         scoringMech = new ScoringMech(hardwareMap);
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new AutoConstants1(drive);
-        // Juice telemetry speed
+        // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
+        telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
 
         ElapsedTime pipelineThrottle = new ElapsedTime();
         ElapsedTime actionTimer = new ElapsedTime();
@@ -59,9 +60,23 @@ public class Auto1 extends LinearOpMode {
             // Configure the alliance with the gamepad
             if (gamepad1.circle) autoConstants.setAlliance(1); // Red alliance
             if (gamepad1.cross) autoConstants.setAlliance(-1); // Blue alliance
+            // This isn't the best choice of buttons right now
+            if (gamepad1.left_bumper) autoConstants.setWingSide(true);
+            if (gamepad1.right_bumper) autoConstants.setWingSide(false);
 
-            // Recompute trajectories every second
-            if (pipelineThrottle.seconds() > 1){
+            // Buncha rising edge detectors
+            if (gamepad1.dpad_up && !prevCycleIncrease) autoConstants.setNumCycles(autoConstants.getNumCycles() + 1);
+            if (gamepad1.dpad_down && !prevCycleDecrease) autoConstants.setNumCycles(autoConstants.getNumCycles() - 1);
+            if (gamepad1.dpad_right && !prevDelayIncrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() + 1);
+            if (gamepad1.dpad_left && !prevDelayDecrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() - 1);
+
+            prevCycleIncrease = gamepad1.dpad_up;
+            prevCycleDecrease = gamepad1.dpad_down;
+            prevDelayIncrease = gamepad1.dpad_right;
+            prevDelayDecrease = gamepad1.dpad_left;
+
+            // Recompute trajectories when the gamepad is touched or every few seconds to be safe
+            if (pipelineThrottle.seconds() > 10 || !gamepad1.atRest()){
                 // Update stuff
                 autoConstants.updateDropLocationFromVisionResult(propPipeline.getAnalysis());
                 autoConstants.updateScoringPositions(autoConstants.getDropLocation());
@@ -83,31 +98,32 @@ public class Auto1 extends LinearOpMode {
         while (opModeIsActive()){
             // One big fsm
             switch (autoState){
-                case GRABBING_PRELOAD:
+                case GRABBING_PRELOADS:
                     // Grab the preload
                     scoringMech.grabJustForPreload();
                     // Once the claw is shut, premove the v4b, then move on to the next state
                     if (actionTimer.milliseconds() > Arm.pixelActuationTime){
-                        //scoringMech.preMoveV4b();
                         // Set the drive on it's next trajectory
                         drive.followTrajectorySequenceAsync(autoConstants.dropOffPurplePixel);
                         actionTimer.reset();
-                        autoState = AutoState.SCORING_PRELOAD;
+                        autoState = AutoState.PUSHING_PURPLE;
                     }
                     break;
 
-                case SCORING_PRELOAD:
+                case PUSHING_PURPLE:
                         if (actionTimer.seconds() > 2){
-                            scoringMech.scoreWithBracer(12);
+                            scoringMech.openPurplePixel();
                         }
                         if (scoringMech.liftIsMostlyDown()){
                             // Send it off again
-                            drive.followTrajectorySequenceAsync(autoConstants.park);
+                            drive.followTrajectorySequenceAsync(autoConstants.throughBridge);
                             actionTimer.reset();
-                            // Reset the scoring fsm so it can run again next time
-                            scoringMech.resetScoringState();
-                            autoState = AutoState.PARKING;
+                            autoState = AutoState.SCORING_YELLOW;
                         }
+                    break;
+
+                case SCORING_YELLOW:
+
                     break;
 
                 case PARKING:

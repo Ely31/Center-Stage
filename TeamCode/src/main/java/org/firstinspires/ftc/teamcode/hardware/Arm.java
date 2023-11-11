@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
@@ -8,6 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
@@ -17,6 +19,7 @@ public class Arm {
     Servo topPixel;
     ColorSensor bottomPixelSensor;
     ColorSensor topPixelSensor;
+    Rev2mDistanceSensor boardSensor;
 
     boolean bottomState = false; // True is closed, false open
     boolean topState = false;
@@ -44,6 +47,7 @@ public class Arm {
         topPixel = hwmap.get(Servo.class, "topPixel");
         bottomPixelSensor = hwmap.get(ColorSensor.class, "bottomSensor");
         topPixelSensor = hwmap.get(ColorSensor.class, "topSensor");
+        boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
@@ -113,11 +117,16 @@ public class Arm {
         return topPixelSensor.alpha() > sensorThreshold;
     }
 
+    public double getBoardDistance(){
+        return boardSensor.getDistance(DistanceUnit.CM);
+    }
+
     public void displayDebug(Telemetry telemetry){
         telemetry.addData("Pivot pos", pivot.getPosition());
         telemetry.addData("Claw pos", bottomPixel.getPosition());
         telemetry.addData("Claw closed", getBottomGripperState());
         telemetry.addData("Claw sensor val", bottomPixelSensor.alpha());
         telemetry.addData("Cone in claw", pixelIsInBottom());
+        telemetry.addData("Board distance", getBoardDistance());
     }
 }
