@@ -19,18 +19,17 @@ public class ArmTest extends LinearOpMode {
         while (opModeIsActive()) {
             // TeleOp loop
 
-            arm.setBothGrippersState(gamepad1.x);
+            //arm.setBothGrippersState(gamepad1.x);
 
             if (gamepad1.dpad_left) arm.pivotGoToIntake();
             else if (gamepad1.dpad_right) arm.pivotScore();
-           /*
-            else {
-                arm.setPivotPos(gamepad1.right_trigger+.05);
-                arm.setEndPos(gamepad1.left_trigger);
-            }*/
 
-            telemetry.addData("Pivot Pos", arm.getPivotPos());
-            telemetry.addData("End Pos", arm.getPivotPos());
+            if (gamepad1.a) arm.setTopGripperState(true);
+            if (gamepad1.b) arm.setTopGripperState(false);
+            if (gamepad1.x) arm.setBottomGripperState(true);
+            if (gamepad1.y) arm.setBottomGripperState(false);
+
+            arm.displayDebug(telemetry);
             telemetry.update();
         }
     }

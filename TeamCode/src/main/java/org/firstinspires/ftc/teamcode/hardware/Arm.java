@@ -26,17 +26,18 @@ public class Arm {
 
     // Constants
     public static double pivotMax = 0.85;
-    public static double pivotMin = 0.0;
+    public static double pivotMin = 0.02;
     double pivotIntakingPos = pivotMin;
     double pivotScoringPos = pivotMax;
     public static double pivotPremovePos = 0.36;
     public static double pivotActuationTime = 300;
 
-    public static double pixelClosedPos = 0.93;
-    public static double pixelOpenPos = 0.45;
-    public static double pixelActuationTime = 350; // In milliseconds
+    public static double pixelClosedPos = 0.88;
+    public static double pixelOpenPos = 0.6;
+    public static double pixelPosOffset = -0.05;
+    public static double pixelActuationTime = 250; // In milliseconds
 
-    public static double sensorThreshold = 800;
+    public static double sensorThreshold = 6000;
 
     public Arm(HardwareMap hwmap){
         // Hardwaremap stuff
@@ -57,8 +58,8 @@ public class Arm {
     // Control each
     public void setBottomGripperState(boolean state){
         bottomState = state;
-        if (state) bottomPixel.setPosition(pixelClosedPos);
-        else bottomPixel.setPosition(pixelOpenPos);
+        if (state) bottomPixel.setPosition(pixelClosedPos + pixelPosOffset);
+        else bottomPixel.setPosition(pixelOpenPos + pixelPosOffset);
     }
     public boolean getBottomGripperState(){
         return bottomState;
@@ -76,12 +77,12 @@ public class Arm {
     public void setBothGrippersState(boolean state){
         if (state) {
             setBottomGripperState(true); setTopGripperState(true);
-            bottomPixel.setPosition(pixelClosedPos);
+            bottomPixel.setPosition(pixelClosedPos + pixelPosOffset);
             topPixel.setPosition(pixelClosedPos);
         }
         else {
             setBottomGripperState(false); setTopGripperState(false);
-            bottomPixel.setPosition(pixelOpenPos);
+            bottomPixel.setPosition(pixelOpenPos + pixelPosOffset);
             topPixel.setPosition(pixelClosedPos);
         }
     }
@@ -123,10 +124,14 @@ public class Arm {
 
     public void displayDebug(Telemetry telemetry){
         telemetry.addData("Pivot pos", pivot.getPosition());
-        telemetry.addData("Claw pos", bottomPixel.getPosition());
-        telemetry.addData("Claw closed", getBottomGripperState());
-        telemetry.addData("Claw sensor val", bottomPixelSensor.alpha());
-        telemetry.addData("Cone in claw", pixelIsInBottom());
+        telemetry.addData("Bottom pos", bottomPixel.getPosition());
+        telemetry.addData("Bottom state", getBottomGripperState());
+        telemetry.addData("Bottom sensor val", bottomPixelSensor.alpha());
+        telemetry.addData("Pixel in bottom", pixelIsInBottom());
+        telemetry.addData("Top pos", topPixel.getPosition());
+        telemetry.addData("Top state", getTopGripperState());
+        telemetry.addData("Top sensor val", topPixelSensor.alpha());
+        telemetry.addData("Pixel in top", pixelIsInTop());
         telemetry.addData("Board distance", getBoardDistance());
     }
 }
