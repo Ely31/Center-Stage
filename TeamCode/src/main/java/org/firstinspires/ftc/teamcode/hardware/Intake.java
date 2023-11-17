@@ -65,6 +65,7 @@ public class Intake {
     }
     */
     public void displayDebug(Telemetry telemetry){
+        telemetry.addLine("INTAKE");
         telemetry.addData("Intake Power", intake.getPower());
         telemetry.addData("Toggled Status", intakeToggledStatus);
     }

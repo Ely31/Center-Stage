@@ -24,24 +24,27 @@ public class Teleop extends LinearOpMode {
     TeleMecDrive drive;
     Lift lift;
     Arm arm;
+    ElapsedTime armTimer = new ElapsedTime();
     Intake intake;
     Climber climber;
     DroneLauncher launcher;
+
     double drivingSpeedMultiplier = 1;
-    // Lift constants
-    public static double liftPosEditStep = 0.2;
-    public static double liftRawPowerAmount = 0.2;
+    public static double liftPosEditStep = 0.4;
 
     boolean prevLiftInput = false;
+    boolean prevBoardAssistInput = false;
 
     enum ScoringState {
         INTAKING,
         PREMOVED,
         SCORING
     }
-
     ScoringState scoringState = ScoringState.INTAKING;
 
+    // Configuration
+    boolean autoRetract = false;
+    boolean boardAssist = false; // Use the distance sensor and imu to position the bot to the board automatially
     // Telemetry options
     public static boolean debug = true;
     public static boolean instructionsOn = false;
@@ -60,35 +63,48 @@ public class Teleop extends LinearOpMode {
 
         waitForStart();
         matchTimer.reset();
+        armTimer.reset();
         while (opModeIsActive()){
             // Send signals to drivers when endgame approaches
            timeUtil.updateAll(matchTimer.milliseconds(), gamepad1, gamepad2);
 
-            // Slow down the bot when scoring
-            //if (scoringState == ScoringState.SCORING) drivingSpeedMultiplier = 0.3;
-            //else drivingSpeedMultiplier = 1;
-            // Drive the bot
-            drive.driveFieldCentric(
-                    gamepad1.left_stick_x * drivingSpeedMultiplier,
-                    gamepad1.left_stick_y * drivingSpeedMultiplier,
-                    gamepad1.right_stick_x * drivingSpeedMultiplier * 0.8,
-                    gamepad1.right_trigger);
-
+            // DRIVING
+            // Let board assist take control of the sticks if it's enabled and we're probably facing and close to the board
+            if (boardAssist && arm.getBoardDistance() < 300 && scoringState == ScoringState.SCORING){
+                drive.driveBoardLocked(
+                        gamepad1.left_stick_x * drivingSpeedMultiplier,
+                        gamepad1.left_stick_y * drivingSpeedMultiplier,
+                        gamepad1.right_stick_x * drivingSpeedMultiplier * 0.8,
+                        gamepad1.right_trigger
+                );
+            } else {
+                // Drive the bot normally
+                drive.driveFieldCentric(
+                        gamepad1.left_stick_x * drivingSpeedMultiplier,
+                        gamepad1.left_stick_y * drivingSpeedMultiplier,
+                        gamepad1.right_stick_x * drivingSpeedMultiplier * 0.8,
+                        gamepad1.right_trigger
+                );
+            }
             // Manually calibrate field centric with a button
             if (gamepad1.share) drive.resetHeading();
+            // Enable/disable board assist in case it causes problems
+            if (!prevBoardAssistInput && gamepad1.touchpad){
+                boardAssist = !boardAssist;
+            }
+            prevBoardAssistInput = gamepad1.touchpad;
 
             // ARM AND LIFT CONTROL
-            // This method here does most of the work
+            // This method here does most of the heavy work
             updateScoringMech();
-            // Edit the extended position with the dpad on gamepad two
+            // Edit the extended position with the joystick on gamepad two
             // This works even when the lift is down
-            if (gamepad2.dpad_up)   lift.editExtendedPos(liftPosEditStep);
-            if (gamepad2.dpad_down) lift.editExtendedPos(-liftPosEditStep);
+            lift.editExtendedPos(-gamepad1.left_stick_y * liftPosEditStep);
             // Update the lift so its pid controller runs, very important
             // But, if you press a special key combo, escape pid control and bring the lift down
             // With raw power to fix potential lift issues
             if (gamepad2.dpad_left && gamepad2.share){
-                lift.setRawPowerDangerous(-liftRawPowerAmount);
+                lift.setRawPowerDangerous(-0.2);
                 lift.zero();
             } else
             if (gamepad2.dpad_right && gamepad2.share) {
@@ -107,12 +123,12 @@ public class Teleop extends LinearOpMode {
             // Require pressing two keys at once to reduce accidental input
             climber.toggle(gamepad2.left_bumper && gamepad2.right_bumper);
             climber.update();
-            // Move the arm up if we do anything with it
+            // Move the climber arm up if we do anything with it
             if (gamepad2.left_bumper && gamepad2.right_bumper) climber.release();
 
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it
-            if (gamepad2.left_bumper && gamepad2.right_trigger > 0.1) launcher.release();
+            if (gamepad2.left_trigger > 0.8 && gamepad2.right_trigger > 0.8) launcher.release();
             else launcher.hold();
 
             // TELEMETRY
@@ -128,6 +144,7 @@ public class Teleop extends LinearOpMode {
                 intake.displayDebug(telemetry);
                 arm.displayDebug(telemetry);
                 climber.disalayDebug(telemetry);
+                telemetry.addLine("TIME");
                 telemetry.addData("avg loop time (ms)", timeUtil.getAverageLoopTime());
                 telemetry.addData("period", timeUtil.getPeriod());
                 telemetry.addData("time", matchTimer.seconds());
@@ -145,9 +162,10 @@ public class Teleop extends LinearOpMode {
         switch (scoringState){
             case INTAKING:
                 arm.pivotGoToIntake();
+                // Wait to retract the lift until the arm is safely away from the board
+                if (armTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
                 // Open the grippers so we can actually intake
                 arm.setBothGrippersState(false);
-                lift.retract();
                 // Switch states when bumper pressed
                 if (!prevLiftInput && gamepad1.left_bumper){
                     scoringState = ScoringState.SCORING;
@@ -161,9 +179,10 @@ public class Teleop extends LinearOpMode {
                 break;
             case PREMOVED:
                 arm.preMove();
+                // Wait to retract the lift until the arm is safely away from the board
+                if (armTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
-                lift.retract();
                 // Switch states when bumper pressed
                 if (!prevLiftInput && gamepad1.left_bumper){
                     scoringState = ScoringState.SCORING;
@@ -177,10 +196,14 @@ public class Teleop extends LinearOpMode {
                 if (gamepad1.triangle)arm.setTopGripperState(false);
                 // But more often used, drop them both at once
                 if (gamepad1.right_bumper) arm.setBothGrippersState(false);
-                // TODO: Implement autoretract after both pixels are dropped
-                // Switch states when bumper pressed
-                if (!prevLiftInput && gamepad1.left_bumper){
-                    scoringState = ScoringState.INTAKING;
+
+                // Switch states when bumper pressed or both pixels are gone if autoRetract is on
+                if ((!prevLiftInput && gamepad1.left_bumper) || (autoRetract && !(arm.pixelIsInBottom() && arm.pixelIsInTop()))){
+                    // If we haven't dropped the pixels premove instead
+                    if (arm.pixelIsInTop() || arm.pixelIsInBottom()) scoringState = ScoringState.PREMOVED;
+                    else scoringState = ScoringState.INTAKING;
+                    // Reset timer so the clock ticks on the arm being away from the board
+                    armTimer.reset();
                 }
                 break;
         }

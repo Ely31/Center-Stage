@@ -123,6 +123,22 @@ public class TeleMecDrive {
         rb.setPower(rbPower*slowInput);
     }
 
+    public void driveBoardLocked(double x, double y, double turn, double slowInput){
+        // Only difference between this and driveRobotCentric is that the slow button only effects strafing
+        // So that the control loops on heading and board distance don't get affected
+        slowInput = ((-1 + slowFactor) * slowInput)+1;
+
+        double lfPower = y + x*slowInput + turn;
+        double lbPower = y - x*slowInput + turn;
+        double rfPower = y - x*slowInput - turn;
+        double rbPower = y + x*slowInput - turn;
+
+        lf.setPower(lfPower);
+        lb.setPower(lbPower);
+        rf.setPower(rfPower);
+        rb.setPower(rbPower);
+    }
+
     public void resetHeading(){
         AutoToTele.endOfAutoHeading = (Math.PI/2); // Unit circle coming in handy
         // TODO: Will need to fix this

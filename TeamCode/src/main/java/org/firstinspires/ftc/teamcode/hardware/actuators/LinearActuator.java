@@ -138,6 +138,6 @@ public class LinearActuator {
         telemetry.addData("Ticks per inch", "%.3f",TICKS_PER_INCH);
         telemetry.addData("Ticks per rev", "%.3f",TICKS_PER_REV);
         telemetry.addData("Gearbox ratio", "%.1f",GEARBOX_RATIO);
-        telemetry.addData("Lef", motor.getPower());
+        telemetry.addData("Power", motor.getPower());
     }
 }

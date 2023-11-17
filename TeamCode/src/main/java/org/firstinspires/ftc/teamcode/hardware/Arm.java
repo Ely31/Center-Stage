@@ -31,6 +31,7 @@ public class Arm {
     double pivotScoringPos = pivotMax;
     public static double pivotPremovePos = 0.36;
     public static double pivotActuationTime = 300;
+    public static double pivotAwayFromBordTime = 200;
 
     public static double pixelClosedPos = 0.88;
     public static double pixelOpenPos = 0.6;
@@ -75,16 +76,8 @@ public class Arm {
     }
 
     public void setBothGrippersState(boolean state){
-        if (state) {
-            setBottomGripperState(true); setTopGripperState(true);
-            bottomPixel.setPosition(pixelClosedPos + pixelPosOffset);
-            topPixel.setPosition(pixelClosedPos);
-        }
-        else {
-            setBottomGripperState(false); setTopGripperState(false);
-            bottomPixel.setPosition(pixelOpenPos + pixelPosOffset);
-            topPixel.setPosition(pixelClosedPos);
-        }
+        setBottomGripperState(state);
+        setTopGripperState(state);
     }
     public boolean getBothGrippersState(){
         // Returns true only if both are closed
@@ -123,6 +116,7 @@ public class Arm {
     }
 
     public void displayDebug(Telemetry telemetry){
+        telemetry.addLine("ARM");
         telemetry.addData("Pivot pos", pivot.getPosition());
         telemetry.addData("Bottom pos", bottomPixel.getPosition());
         telemetry.addData("Bottom state", getBottomGripperState());
