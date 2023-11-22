@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
@@ -29,6 +30,17 @@ public class TeleMecDrive {
     private double heading;
     public double getHeading(){
         return heading;
+    }
+    // See https://stackoverflow.com/questions/2320986/easy-way-to-keeping-angles-between-179-and-180-degrees
+    public double getNormalizedHeading(){
+        // reduce the angle
+        double angle =  heading % 2*Math.PI;
+        // force it to be the positive remainder, so that 0 <= angle < 360
+        angle = (angle + 2*Math.PI) % 2*Math.PI;
+        // force into the minimum absolute value residue class, so that -180 < angle <= 180
+        if (angle > Math.PI) angle -= 2*Math.PI;
+
+        return angle;
     }
     private double headingOffset = 0;
 
@@ -143,5 +155,12 @@ public class TeleMecDrive {
         AutoToTele.endOfAutoHeading = (Math.PI/2); // Unit circle coming in handy
         // TODO: Will need to fix this
         headingOffset = -getHeading();
+    }
+
+    public void displayDebug(Telemetry telemetry){
+        telemetry.addLine("DRIVE");
+        telemetry.addData("Heading in radians", getHeading());
+        telemetry.addData("Heading in degrees", Math.toDegrees(getHeading()));
+        telemetry.addData("Normalized heading in radians", getNormalizedHeading());
     }
 }

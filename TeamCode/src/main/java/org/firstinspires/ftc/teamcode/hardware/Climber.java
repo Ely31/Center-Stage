@@ -15,24 +15,22 @@ public class Climber {
     Servo climberRelease;
 
     // Measurements are in inches
-    public static double maxHeight = 3.75;
-    public static double minHeight = 0;
     public static double retractedPos = 0;
-    public static double extendedPos = maxHeight;
+    public static double extendedPos = 3.85;
 
     boolean lastInput = false;
     boolean toggledStatus = false;
 
     public static double servoHoldPos = 0;
-    public static double servoReleasePos = 1;
+    public static double servoReleasePos = 0.6;
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(1,0.0,0.0);
+    public static PIDCoefficients coeffs = new PIDCoefficients(3,0.0,0.0);
 
     public Climber(HardwareMap hwmap){
         climber = new LinearActuator(hwmap, "climber", 5.2, 0.31496);
         climber.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         climber.zero();
-        climber.setLimits(minHeight, maxHeight);
+        climber.setLimits(retractedPos, extendedPos);
 
         climberRelease = hwmap.get(Servo.class, "climberRelease");
         hold();
@@ -93,6 +91,7 @@ public class Climber {
     public void disalayDebug(Telemetry telemetry){
         telemetry.addLine("CLIMBER");
         telemetry.addData("state", toggledStatus);
+        telemetry.addData("release servo pos", climberRelease.getPosition());
         climber.displayDebugInfo(telemetry);
     }
 }

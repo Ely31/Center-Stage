@@ -23,8 +23,8 @@ public class ClimberTest extends LinearOpMode {
         climber.retract();
         while (opModeIsActive()) {
             // TeleOp loop
-            if(gamepad1.dpad_left) climber.retract();
-            else if (gamepad1.dpad_right) climber.extend();
+            if(gamepad1.dpad_left) climber.release();
+            else if (gamepad1.dpad_right) climber.hold();
 
             climber.toggle(gamepad1.left_bumper && gamepad1.right_bumper);
 

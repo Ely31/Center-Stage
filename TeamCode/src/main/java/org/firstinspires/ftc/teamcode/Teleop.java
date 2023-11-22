@@ -44,7 +44,8 @@ public class Teleop extends LinearOpMode {
 
     // Configuration
     boolean autoRetract = false;
-    boolean boardAssist = false; // Use the distance sensor and imu to position the bot to the board automatially
+    boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
+    boolean boardAssistActive = false;
     // Telemetry options
     public static boolean debug = true;
     public static boolean instructionsOn = false;
@@ -70,7 +71,13 @@ public class Teleop extends LinearOpMode {
 
             // DRIVING
             // Let board assist take control of the sticks if it's enabled and we're probably facing and close to the board
-            if (boardAssist && arm.getBoardDistance() < 300 && scoringState == ScoringState.SCORING){
+            boardAssistActive = (
+                    boardAssistEnabled &&
+                    arm.getBoardDistance() < 30 &&
+                    scoringState == ScoringState.SCORING &&
+                    Math.abs(drive.getNormalizedHeading()) < 0.17
+            );
+            if (boardAssistActive){
                 drive.driveBoardLocked(
                         gamepad1.left_stick_x * drivingSpeedMultiplier,
                         gamepad1.left_stick_y * drivingSpeedMultiplier,
@@ -90,7 +97,7 @@ public class Teleop extends LinearOpMode {
             if (gamepad1.share) drive.resetHeading();
             // Enable/disable board assist in case it causes problems
             if (!prevBoardAssistInput && gamepad1.touchpad){
-                boardAssist = !boardAssist;
+                boardAssistEnabled = !boardAssistEnabled;
             }
             prevBoardAssistInput = gamepad1.touchpad;
 
@@ -99,7 +106,7 @@ public class Teleop extends LinearOpMode {
             updateScoringMech();
             // Edit the extended position with the joystick on gamepad two
             // This works even when the lift is down
-            lift.editExtendedPos(-gamepad1.left_stick_y * liftPosEditStep);
+            lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
             // Update the lift so its pid controller runs, very important
             // But, if you press a special key combo, escape pid control and bring the lift down
             // With raw power to fix potential lift issues
@@ -129,6 +136,8 @@ public class Teleop extends LinearOpMode {
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it
             if (gamepad2.left_trigger > 0.8 && gamepad2.right_trigger > 0.8) launcher.release();
+            // Could get rid of the else statement but it'll be useful for testing
+            // so we don't have to restart the program every time
             else launcher.hold();
 
             // TELEMETRY
@@ -139,15 +148,13 @@ public class Teleop extends LinearOpMode {
             telemetry.addLine(Utility.generateTelemetryTrackbar(Lift.minHeight, Lift.maxHeight, lift.getExtendedPos(),10));
 
             if (debug) {
-                telemetry.addData("heading", drive.getHeading());
+                telemetry.addData("Scoring state", scoringState.name());
+                drive.displayDebug(telemetry);
                 lift.disalayDebug(telemetry);
                 intake.displayDebug(telemetry);
                 arm.displayDebug(telemetry);
                 climber.disalayDebug(telemetry);
-                telemetry.addLine("TIME");
-                telemetry.addData("avg loop time (ms)", timeUtil.getAverageLoopTime());
-                telemetry.addData("period", timeUtil.getPeriod());
-                telemetry.addData("time", matchTimer.seconds());
+                timeUtil.displayDebug(telemetry, matchTimer);
             }
             // Someone should be able to learn how to drive without looking at the source code
             if (instructionsOn) {
@@ -158,6 +165,7 @@ public class Teleop extends LinearOpMode {
         } // End of the loop
     }
 
+    // The big one
     void updateScoringMech(){
         switch (scoringState){
             case INTAKING:
@@ -167,8 +175,8 @@ public class Teleop extends LinearOpMode {
                 // Open the grippers so we can actually intake
                 arm.setBothGrippersState(false);
                 // Switch states when bumper pressed
-                if (!prevLiftInput && gamepad1.left_bumper){
-                    scoringState = ScoringState.SCORING;
+                if (!prevLiftInput && gamepad1.right_bumper){
+                    scoringState = ScoringState.PREMOVED;
                 }
                 // Or, (and this'll happen 99% of the time) when it has both pixels
                 if (arm.pixelIsInBottom() && arm.pixelIsInTop()){
@@ -184,7 +192,7 @@ public class Teleop extends LinearOpMode {
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
                 // Switch states when bumper pressed
-                if (!prevLiftInput && gamepad1.left_bumper){
+                if (!prevLiftInput && gamepad1.right_bumper){
                     scoringState = ScoringState.SCORING;
                 }
                 break;
@@ -195,10 +203,10 @@ public class Teleop extends LinearOpMode {
                 if (gamepad1.square) arm.setBottomGripperState(false);
                 if (gamepad1.triangle)arm.setTopGripperState(false);
                 // But more often used, drop them both at once
-                if (gamepad1.right_bumper) arm.setBothGrippersState(false);
+                if (gamepad1.left_bumper) arm.setBothGrippersState(false);
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
-                if ((!prevLiftInput && gamepad1.left_bumper) || (autoRetract && !(arm.pixelIsInBottom() && arm.pixelIsInTop()))){
+                if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && !(arm.pixelIsInBottom() && arm.pixelIsInTop()))){
                     // If we haven't dropped the pixels premove instead
                     if (arm.pixelIsInTop() || arm.pixelIsInBottom()) scoringState = ScoringState.PREMOVED;
                     else scoringState = ScoringState.INTAKING;
@@ -207,6 +215,6 @@ public class Teleop extends LinearOpMode {
                 }
                 break;
         }
-        prevLiftInput = gamepad1.left_bumper;
+        prevLiftInput = gamepad1.right_bumper;
     }
 }

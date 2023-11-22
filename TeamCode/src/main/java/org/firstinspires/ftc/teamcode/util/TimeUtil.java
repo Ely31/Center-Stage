@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.util;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 import java.util.ArrayList;
 
 public class TimeUtil {
@@ -157,5 +159,12 @@ public class TimeUtil {
     public void updateAll(double currentTime, Gamepad g1, Gamepad g2){
         update(currentTime);
         updateGamepads(g1, g2);
+    }
+
+    public void displayDebug(Telemetry telemetry, ElapsedTime timer){
+        telemetry.addLine("TIME");
+        telemetry.addData("avg loop time (ms)", getAverageLoopTime());
+        telemetry.addData("period", getPeriod());
+        telemetry.addData("time", timer.seconds());
     }
 }
