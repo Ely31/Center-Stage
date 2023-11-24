@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.hardware;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -13,16 +12,13 @@ public class ScoringMech {
     Lift lift;
     Arm arm;
     Intake intake;
-    Servo purplePixelPusher;
-    public static double pppClampPos = 0;
-    public static double pppOpenPos = 1;
+    PurplePixelPusher ppp;
     // Constructor
     public ScoringMech(HardwareMap hwmap){
         lift = new Lift(hwmap);
         arm = new Arm(hwmap);
         intake = new Intake(hwmap);
-        purplePixelPusher = hwmap.get(Servo.class, "ppp");
-        clampPurplePixel();
+        ppp = new PurplePixelPusher(hwmap);
     }
 
     public void score(){
@@ -45,12 +41,7 @@ public class ScoringMech {
     public void grabJustForPreload(){
         arm.setBothGrippersState(true);
     }
-    public void clampPurplePixel(){
-        purplePixelPusher.setPosition(pppClampPos);
-    }
-    public void openPurplePixel(){
-        purplePixelPusher.setPosition(pppOpenPos);
-    }
+    public void setPPPState(boolean state) {ppp.setState(state);}
 
 
     // ESSENTIAL to call this function every loop
@@ -96,7 +87,7 @@ public class ScoringMech {
                 }
                 break;
             case GRABBING:
-                if (stackGrabbingWait.milliseconds() > Arm.pixelActuationTime){
+                if (stackGrabbingWait.milliseconds() > Arm.gripperActuationTime){
                     stackGrabbingWait.reset();
                     arm.preMove();
                     intake.off();
@@ -116,6 +107,7 @@ public class ScoringMech {
             case EXTENDING:
                 lift.setHeight(height);
                 arm.pivotScore();
+                arm.setStopperState(false);
                 // Move on if the lift is all the way up
                 if (Utility.withinErrorOfValue(lift.getHeight(), height, 0.5)) {
                     scoringWait.reset();
@@ -141,7 +133,7 @@ public class ScoringMech {
             case WAITING_FOR_ARM_RETRACT:
                 arm.pivotGoToIntake();
 
-                if (scoringWait.milliseconds() > Arm.pivotActuationTime){
+                if (scoringWait.milliseconds() > Arm.pivotAwayFromBordTime){
                     scoringWait.reset();
                     lift.retract();
                     scoringState = ScoringState.RETRACTING;
@@ -150,6 +142,7 @@ public class ScoringMech {
 
             case RETRACTING:
                 lift.retract();
+                arm.setStopperState(true);
                 // Move on if the lift is all the way down
                 if (Utility.withinErrorOfValue(lift.getHeight(), 0, 1)) {
                     scoringState = ScoringState.DONE; // Finish
@@ -178,8 +171,6 @@ public class ScoringMech {
         telemetry.addLine("SCORING MECH");
         telemetry.addData("scoring state", scoringState.name());
         telemetry.addData("grabbing state", stackGrabbingState.name());
-        telemetry.addData("bottom state", arm.pixelIsInBottom());
-        telemetry.addData("top state", arm.pixelIsInTop());
         arm.displayDebug(telemetry);
         lift.disalayDebug(telemetry);
     }

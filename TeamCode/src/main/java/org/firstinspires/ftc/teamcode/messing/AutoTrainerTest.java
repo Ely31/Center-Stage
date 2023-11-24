@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 
-@TeleOp
+@TeleOp(group = "test")
 public class AutoTrainerTest extends LinearOpMode {
     // Pre init
     TeleMecDrive teleDrive;

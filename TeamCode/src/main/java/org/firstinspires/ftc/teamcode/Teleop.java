@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.acmerobotics.roadrunner.control.PIDFController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -11,9 +13,9 @@ import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
-import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
 @TeleOp
@@ -22,29 +24,36 @@ public class Teleop extends LinearOpMode {
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
+    PIDFController boardDistanceController;
+    public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.01,0,0);
+    PIDFController boardHeadingController;
+    public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0,0,0);
     Lift lift;
     Arm arm;
-    ElapsedTime armTimer = new ElapsedTime();
+    ElapsedTime pivotTimer = new ElapsedTime();
+    ElapsedTime gripperTimer = new ElapsedTime();
     Intake intake;
     Climber climber;
     DroneLauncher launcher;
+    PurplePixelPusher ppp;
 
-    double drivingSpeedMultiplier = 1;
-    public static double liftPosEditStep = 0.4;
-
+    public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
-    boolean prevBoardAssistInput = false;
+    boolean prevHeadingResetInput = false;
 
     enum ScoringState {
         INTAKING,
+        WAITING_FOR_GRIPPERS,
         PREMOVED,
         SCORING
     }
     ScoringState scoringState = ScoringState.INTAKING;
 
     // Configuration
-    boolean autoRetract = false;
+    boolean autoRetract = true;
+    boolean autoPremove = false;
     boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
+    boolean prevBoardAssistInput = false;
     boolean boardAssistActive = false;
     // Telemetry options
     public static boolean debug = true;
@@ -56,15 +65,23 @@ public class Teleop extends LinearOpMode {
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
         drive = new TeleMecDrive(hardwareMap, 0.4, false);
+        boardDistanceController = new PIDFController(boardDistanceCoeffs);
+        boardDistanceController.setTargetPosition(5);
+        boardHeadingController = new PIDFController(boardHeadingCoeffs);
+        boardHeadingController.setTargetPosition(0);
         lift = new Lift(hardwareMap);
         arm = new Arm(hardwareMap);
         intake = new Intake(hardwareMap);
         climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
+        ppp = new PurplePixelPusher(hardwareMap);
+        // Have it up so that if a pixel does get in that area it doesn't break the ppp arm
+        ppp.setState(false);
 
         waitForStart();
         matchTimer.reset();
-        armTimer.reset();
+        pivotTimer.reset();
+        gripperTimer.reset();
         while (opModeIsActive()){
             // Send signals to drivers when endgame approaches
            timeUtil.updateAll(matchTimer.milliseconds(), gamepad1, gamepad2);
@@ -79,22 +96,23 @@ public class Teleop extends LinearOpMode {
             );
             if (boardAssistActive){
                 drive.driveBoardLocked(
-                        gamepad1.left_stick_x * drivingSpeedMultiplier,
-                        gamepad1.left_stick_y * drivingSpeedMultiplier,
-                        gamepad1.right_stick_x * drivingSpeedMultiplier * 0.8,
+                        gamepad1.left_stick_y,
+                        -boardDistanceController.update(arm.getBoardDistance()),
+                        gamepad1.right_stick_x * 0.8,
                         gamepad1.right_trigger
                 );
             } else {
                 // Drive the bot normally
                 drive.driveFieldCentric(
-                        gamepad1.left_stick_x * drivingSpeedMultiplier,
-                        gamepad1.left_stick_y * drivingSpeedMultiplier,
-                        gamepad1.right_stick_x * drivingSpeedMultiplier * 0.8,
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        gamepad1.right_stick_x * 0.8,
                         gamepad1.right_trigger
                 );
             }
             // Manually calibrate field centric with a button
-            if (gamepad1.share) drive.resetHeading();
+            if (gamepad1.share && !prevHeadingResetInput) drive.resetHeading();
+            prevHeadingResetInput = gamepad1.share;
             // Enable/disable board assist in case it causes problems
             if (!prevBoardAssistInput && gamepad1.touchpad){
                 boardAssistEnabled = !boardAssistEnabled;
@@ -123,7 +141,7 @@ public class Teleop extends LinearOpMode {
             // INTAKE CONTROL
             if (gamepad1.b) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
-            else if (scoringState == ScoringState.INTAKING) intake.toggle(gamepad1.a);
+            else if (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS) intake.toggle(gamepad1.a);
             else intake.off();
 
             // CLIMBER CONTROL
@@ -143,11 +161,10 @@ public class Teleop extends LinearOpMode {
             // TELEMETRY
             // Show the set height of the lift on a horizontal bar so driver 2 can see it easier than reading a number
             telemetry.addData("Lift target height", lift.getExtendedPos());
-            telemetry.addLine(Utility.generateTelemetryTrackbar(Lift.minHeight, Lift.maxHeight, lift.getExtendedPos(),10));
-            // Heck, stack two on top of each other so it's even bigger
-            telemetry.addLine(Utility.generateTelemetryTrackbar(Lift.minHeight, Lift.maxHeight, lift.getExtendedPos(),10));
 
             if (debug) {
+                telemetry.addData("Board assist enabled", boardAssistEnabled);
+                telemetry.addData("Board assist active", boardAssistActive);
                 telemetry.addData("Scoring state", scoringState.name());
                 drive.displayDebug(telemetry);
                 lift.disalayDebug(telemetry);
@@ -171,26 +188,35 @@ public class Teleop extends LinearOpMode {
             case INTAKING:
                 arm.pivotGoToIntake();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (armTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
+                if (pivotTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
                 // Open the grippers so we can actually intake
                 arm.setBothGrippersState(false);
+                // Put up the stopper so pixels don't fly out the back
+                arm.setStopperState(true);
+
                 // Switch states when bumper pressed
-                if (!prevLiftInput && gamepad1.right_bumper){
-                    scoringState = ScoringState.PREMOVED;
-                }
                 // Or, (and this'll happen 99% of the time) when it has both pixels
-                if (arm.pixelIsInBottom() && arm.pixelIsInTop()){
+                if ((autoPremove && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad1.right_bumper)){
                     // Automatically grab 'em and move the arm up
                     arm.setBothGrippersState(true);
+                    gripperTimer.reset();
+                    scoringState = ScoringState.WAITING_FOR_GRIPPERS;
+                }
+                break;
+
+            case WAITING_FOR_GRIPPERS:
+                if (gripperTimer.milliseconds() > Arm.gripperActuationTime){
                     scoringState = ScoringState.PREMOVED;
                 }
                 break;
+
             case PREMOVED:
                 arm.preMove();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (armTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
+                if (pivotTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
+                arm.setStopperState(false);
                 // Switch states when bumper pressed
                 if (!prevLiftInput && gamepad1.right_bumper){
                     scoringState = ScoringState.SCORING;
@@ -199,6 +225,7 @@ public class Teleop extends LinearOpMode {
             case SCORING:
                 arm.pivotScore();
                 lift.extend();
+                arm.setStopperState(false);
                 // Release the top and bottom individually if we wish
                 if (gamepad1.square) arm.setBottomGripperState(false);
                 if (gamepad1.triangle)arm.setTopGripperState(false);
@@ -207,11 +234,9 @@ public class Teleop extends LinearOpMode {
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
                 if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && !(arm.pixelIsInBottom() && arm.pixelIsInTop()))){
-                    // If we haven't dropped the pixels premove instead
-                    if (arm.pixelIsInTop() || arm.pixelIsInBottom()) scoringState = ScoringState.PREMOVED;
-                    else scoringState = ScoringState.INTAKING;
+                    scoringState = ScoringState.INTAKING;
                     // Reset timer so the clock ticks on the arm being away from the board
-                    armTimer.reset();
+                    pivotTimer.reset();
                 }
                 break;
         }

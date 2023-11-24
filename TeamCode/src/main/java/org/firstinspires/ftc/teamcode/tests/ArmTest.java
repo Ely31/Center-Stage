@@ -29,6 +29,9 @@ public class ArmTest extends LinearOpMode {
             if (gamepad1.x) arm.setBottomGripperState(true);
             if (gamepad1.y) arm.setBottomGripperState(false);
 
+            if (gamepad1.left_bumper) arm.setStopperState(false);
+            if (gamepad1.right_bumper) arm.setStopperState(true);
+
             arm.displayDebug(telemetry);
             telemetry.update();
         }

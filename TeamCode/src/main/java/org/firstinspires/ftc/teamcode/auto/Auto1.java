@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ScoringMech;
+import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
 
 @Config
@@ -94,7 +95,8 @@ public class Auto1 extends LinearOpMode {
         // Stop the camera because we don't need it and it takes computation
         camera.stopStreaming();
         actionTimer.reset();
-
+        // Save this for tele
+        AutoToTele.allianceSide = autoConstants.getAlliance();
         while (opModeIsActive()){
             // One big fsm
             switch (autoState){
@@ -102,7 +104,7 @@ public class Auto1 extends LinearOpMode {
                     // Grab the preload
                     scoringMech.grabJustForPreload();
                     // Once the claw is shut, premove the v4b, then move on to the next state
-                    if (actionTimer.milliseconds() > Arm.pixelActuationTime){
+                    if (actionTimer.milliseconds() > Arm.gripperActuationTime){
                         // Set the drive on it's next trajectory
                         drive.followTrajectorySequenceAsync(autoConstants.dropOffPurplePixel);
                         actionTimer.reset();
@@ -112,7 +114,7 @@ public class Auto1 extends LinearOpMode {
 
                 case PUSHING_PURPLE:
                         if (actionTimer.seconds() > 2){
-                            scoringMech.openPurplePixel();
+                            scoringMech.setPPPState(false);
                         }
                         if (scoringMech.liftIsMostlyDown()){
                             // Send it off again

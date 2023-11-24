@@ -17,6 +17,7 @@ public class Arm {
     ServoImplEx pivot;
     Servo bottomPixel;
     Servo topPixel;
+    Servo stopper;
     ColorSensor bottomPixelSensor;
     ColorSensor topPixelSensor;
     Rev2mDistanceSensor boardSensor;
@@ -25,20 +26,22 @@ public class Arm {
     boolean topState = false;
 
     // Constants
-    public static double pivotMax = 0.85;
-    public static double pivotMin = 0.02;
-    double pivotIntakingPos = pivotMin;
-    double pivotScoringPos = pivotMax;
-    public static double pivotPremovePos = 0.36;
+    double pivotIntakingPos = 0.02;
+    double pivotScoringPos = 0.85;
+    public static double pivotPremovePos = 0.3;
     public static double pivotActuationTime = 300;
     public static double pivotAwayFromBordTime = 200;
 
-    public static double pixelClosedPos = 0.88;
-    public static double pixelOpenPos = 0.6;
-    public static double pixelPosOffset = -0.05;
-    public static double pixelActuationTime = 250; // In milliseconds
+    public static double gripperClosedPos = 0.88;
+    public static double gripperOpenPos = 0.6;
+    public static double gripperPosOffset = -0.05;
+    public static double gripperActuationTime = 250; // In milliseconds
 
-    public static double sensorThreshold = 6000;
+    public static double stopperClosedPos = 0.13;
+    public static double stopperOpenPos = 0.9;
+    boolean stopperState = false;
+
+    public static double sensorThreshold = 3000;
 
     public Arm(HardwareMap hwmap){
         // Hardwaremap stuff
@@ -50,17 +53,19 @@ public class Arm {
         bottomPixelSensor = hwmap.get(ColorSensor.class, "bottomSensor");
         topPixelSensor = hwmap.get(ColorSensor.class, "topSensor");
         boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
+        stopper = hwmap.get(Servo.class, "stopper");
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
         setBothGrippersState(false);
+        setStopperState(true);
     }
 
     // Control each
     public void setBottomGripperState(boolean state){
         bottomState = state;
-        if (state) bottomPixel.setPosition(pixelClosedPos + pixelPosOffset);
-        else bottomPixel.setPosition(pixelOpenPos + pixelPosOffset);
+        if (state) bottomPixel.setPosition(gripperClosedPos + gripperPosOffset);
+        else bottomPixel.setPosition(gripperOpenPos + gripperPosOffset);
     }
     public boolean getBottomGripperState(){
         return bottomState;
@@ -68,8 +73,8 @@ public class Arm {
 
     public void setTopGripperState(boolean state){
         topState = state;
-        if (state) topPixel.setPosition(pixelClosedPos);
-        else topPixel.setPosition(pixelOpenPos);
+        if (state) topPixel.setPosition(gripperClosedPos);
+        else topPixel.setPosition(gripperOpenPos);
     }
     public boolean getTopGripperState(){
         return topState;
@@ -86,7 +91,7 @@ public class Arm {
 
     public void setPivotPos(double pos){
         // Make sure it's a safe move
-        double finalPos = Utility.clipValue(pivotMin, pivotMax, pos);
+        double finalPos = Utility.clipValue(pivotIntakingPos, pivotScoringPos, pos);
         pivot.setPosition(finalPos);
     }
     public double getPivotPos(){
@@ -103,6 +108,14 @@ public class Arm {
     public void preMove(){
         setPivotPos(pivotPremovePos);
     }
+
+    public void setStopperState(boolean state){
+        // True for closed, false for open
+        if (state) stopper.setPosition(stopperClosedPos);
+        else stopper.setPosition(stopperOpenPos);
+        stopperState = state;
+    }
+    public boolean getStopperState() {return stopperState;}
 
     public boolean pixelIsInBottom(){
         return bottomPixelSensor.alpha() > sensorThreshold;
@@ -126,6 +139,7 @@ public class Arm {
         telemetry.addData("Top state", getTopGripperState());
         telemetry.addData("Top sensor val", topPixelSensor.alpha());
         telemetry.addData("Pixel in top", pixelIsInTop());
+        telemetry.addData("Stopper state", getStopperState());
         telemetry.addData("Board distance", getBoardDistance());
     }
 }

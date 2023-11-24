@@ -111,9 +111,9 @@ public class AutoConstants1 {
     public void updateTrajectories(int spikeMarkIndex) {
 
         if (isWingSide()) {
-            startPos = new Pose2d(-35.25, -63 * alliance, Math.toRadians(-90 * alliance));
+            startPos = new Pose2d(-35.25, -61.5 * alliance, Math.toRadians(90 * alliance));
         } else {
-            startPos = new Pose2d(11.75, -63 * alliance, Math.toRadians(-90 * alliance));
+            startPos = new Pose2d(11.75, -61.5 * alliance, Math.toRadians(90 * alliance));
         }
 
         // Ahhhh we have to have six unique purple pixel trajectories
