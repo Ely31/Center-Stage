@@ -49,7 +49,7 @@ public class AutoTrainerAdv {
     void initializeWriter(){
         try {
             writer = new BufferedWriter(new FileWriter(file));
-            writer.write("time taken after running, pose, code");
+            writer.write("timestamp, pose, code");
             writer.write("\n");
 
         } catch (IOException e) {
@@ -109,7 +109,7 @@ public class AutoTrainerAdv {
             e.printStackTrace();
         }
 
-        trajSequenceString += latestPathSegment;
+        trajSequenceString += latestPathSegment + "\n";
         lastCapturedPose = lastPose;
     }
 }

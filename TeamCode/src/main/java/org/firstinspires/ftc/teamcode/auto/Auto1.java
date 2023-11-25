@@ -64,6 +64,9 @@ public class Auto1 extends LinearOpMode {
             // This isn't the best choice of buttons right now
             if (gamepad1.left_bumper) autoConstants.setWingSide(true);
             if (gamepad1.right_bumper) autoConstants.setWingSide(false);
+            // Park options
+            if (gamepad1.left_trigger > 0.5) autoConstants.setParkingClose(true);
+            if (gamepad1.right_trigger > 0.5) autoConstants.setParkingClose(false);
 
             // Buncha rising edge detectors
             if (gamepad1.dpad_up && !prevCycleIncrease) autoConstants.setNumCycles(autoConstants.getNumCycles() + 1);
@@ -76,12 +79,11 @@ public class Auto1 extends LinearOpMode {
             prevDelayIncrease = gamepad1.dpad_right;
             prevDelayDecrease = gamepad1.dpad_left;
 
-            // Recompute trajectories when the gamepad is touched or every few seconds to be safe
-            if (pipelineThrottle.seconds() > 10 || !gamepad1.atRest()){
+            // Recompute trajectories every second
+            if (pipelineThrottle.seconds() > 1){
                 // Update stuff
-                autoConstants.updateDropLocationFromVisionResult(propPipeline.getAnalysis());
-                autoConstants.updateScoringPositions(autoConstants.getDropLocation());
-                autoConstants.updateTrajectories(propPipeline.getAnalysis());
+                autoConstants.updateCorrectedSpikeMarkPos(propPipeline.getAnalysis());
+                autoConstants.updateTrajectories();
 
                 drive.setPoseEstimate(autoConstants.startPos);
                 // Display auto configuration to telemetry
@@ -103,6 +105,7 @@ public class Auto1 extends LinearOpMode {
                 case GRABBING_PRELOADS:
                     // Grab the preload
                     scoringMech.grabJustForPreload();
+                    scoringMech.setPPPState(true);
                     // Once the claw is shut, premove the v4b, then move on to the next state
                     if (actionTimer.milliseconds() > Arm.gripperActuationTime){
                         // Set the drive on it's next trajectory
@@ -113,23 +116,30 @@ public class Auto1 extends LinearOpMode {
                     break;
 
                 case PUSHING_PURPLE:
-                        if (actionTimer.seconds() > 2){
+                        if (!drive.isBusy()){
+                            // Drop the pixel and send it off again
                             scoringMech.setPPPState(false);
-                        }
-                        if (scoringMech.liftIsMostlyDown()){
-                            // Send it off again
-                            drive.followTrajectorySequenceAsync(autoConstants.throughBridge);
+                            drive.followTrajectorySequenceAsync(autoConstants.scoreYellowPixel);
                             actionTimer.reset();
                             autoState = AutoState.SCORING_YELLOW;
                         }
                     break;
 
                 case SCORING_YELLOW:
-
+                    // If we're close to the board, raise the lift and stuff up
+                    // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
+                    if (drive.getPoseEstimate().getX() > 50){
+                        scoringMech.scoreAsync(5);
+                    }
+                    if (scoringMech.liftIsGoingDown()){
+                        drive.followTrajectorySequenceAsync(autoConstants.park);
+                        actionTimer.reset();
+                        autoState = AutoState.PARKING;
+                    }
                     break;
 
                 case PARKING:
-                    // Yay, done
+                    // Yay, done!
                     // Once the bot is parked, stop the OpMode
                     if (!drive.isBusy()){
                         stop();
@@ -146,7 +156,6 @@ public class Auto1 extends LinearOpMode {
             // Show telemetry because there are plenty of bugs it should help me fix
             telemetry.addData("auto state", autoState.name());
             telemetry.addData("cycle index", cycleIndex);
-            telemetry.addData("number of cycles", autoConstants.getNumCycles());
             scoringMech.displayDebug(telemetry);
             telemetry.update();
         } // End of while loop

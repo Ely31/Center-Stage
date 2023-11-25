@@ -173,5 +173,7 @@ public class ScoringMech {
         telemetry.addData("grabbing state", stackGrabbingState.name());
         arm.displayDebug(telemetry);
         lift.disalayDebug(telemetry);
+        ppp.displayDebug(telemetry);
+        intake.displayDebug(telemetry);
     }
 }

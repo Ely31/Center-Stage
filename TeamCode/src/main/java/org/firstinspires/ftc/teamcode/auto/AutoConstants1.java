@@ -32,9 +32,9 @@ public class AutoConstants1 {
         else return "Blue Alliance";
     }
 
-    private int zone = 1;
-    public int getDropLocation() {
-        return zone;
+    private int correctedSpikeMarkPos = 1;
+    public int getCorrectedSpikeMarkPos() {
+        return correctedSpikeMarkPos;
     }
     // This is used so we don't put our pixel in the same slot as our partner. Hopefully. We'll see.
     int dropOffset = 0;
@@ -45,6 +45,14 @@ public class AutoConstants1 {
     }
     public void setWingSide(boolean wingSide) {
         WingSide = wingSide;
+    }
+
+    boolean parkingClose = true;
+    public boolean isParkingClose() {
+        return parkingClose;
+    }
+    public void setParkingClose(boolean parkingClose) {
+        this.parkingClose = parkingClose;
     }
 
     private int numCycles = 4;
@@ -58,26 +66,26 @@ public class AutoConstants1 {
     }
 
 
-    public void updateDropLocationFromVisionResult(int visionResult){
+    public void updateCorrectedSpikeMarkPos(int visionResult){
         switch(visionResult){
-            case 0:
+            case 1:
                 // Switch 1 and 3 if we're on blue terminal
                 if (getAlliance() == 1){
-                    zone = 1;
+                    correctedSpikeMarkPos = 1;
                 } else {
-                    zone = 3;
+                    correctedSpikeMarkPos = 3;
                 }
                 break;
-            case 1:
+            case 2:
                 // We don't have to change the middle positon however
-                zone = 2;
+                correctedSpikeMarkPos = 2;
                 break;
             case 3:
                 // Switch 3 and 1 if we're on blue terminal
                 if (getAlliance() == 1) {
-                    zone = 3;
+                    correctedSpikeMarkPos = 3;
                 } else {
-                    zone = 1;
+                    correctedSpikeMarkPos = 1;
                 }
                 break;
         }
@@ -86,29 +94,11 @@ public class AutoConstants1 {
     // Pose2d's
     public Pose2d startPos = new Pose2d(-35.8, -63* alliance, Math.toRadians(-90* alliance));
 
-    // Set parkPos to a default to avoid null issues
-    public Pose2d dropPos = new Pose2d(-57, -12* alliance, Math.toRadians(180* alliance));
-
-    public Pose2d[] dropPositions;
-
-    public void updateScoringPositions(int posIndex){
-        dropPositions = new Pose2d[]{
-                // Pos 1
-                new Pose2d(54, -27 * alliance, Math.toRadians(0 * alliance)),
-                // Pos 2
-                new Pose2d(54, -34 * alliance, Math.toRadians(0 * alliance)),
-                // Pos 3
-                new Pose2d(54, -40 * alliance, Math.toRadians(0 * alliance))
-        };
-        dropPos = dropPositions[posIndex-1]; // Ahh so that's why I used 0-2 instead of 1-3
-    }
-
     public TrajectorySequence dropOffPurplePixel;
-    public TrajectorySequence throughBridge;
     public TrajectorySequence scoreYellowPixel;
     public TrajectorySequence park;
 
-    public void updateTrajectories(int spikeMarkIndex) {
+    public void updateTrajectories() {
 
         if (isWingSide()) {
             startPos = new Pose2d(-35.25, -61.5 * alliance, Math.toRadians(90 * alliance));
@@ -117,8 +107,10 @@ public class AutoConstants1 {
         }
 
         // Ahhhh we have to have six unique purple pixel trajectories
+        double yellowPixelYCoord = -29;
+        double yellowPixelXCoord = 53;
         if (isWingSide()){
-            switch (spikeMarkIndex){
+            switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .splineToSplineHeading(new Pose2d(-61, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
@@ -133,44 +125,44 @@ public class AutoConstants1 {
                             .build();
             }
         } else {
-            switch (spikeMarkIndex){
+            switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .splineToSplineHeading(new Pose2d(1, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .lineToSplineHeading(new Pose2d(9.66, -34.58*alliance, Math.toRadians(180*alliance)))
                             .build();
+                    yellowPixelYCoord = -29-dropOffset;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .splineToSplineHeading(new Pose2d(11.75, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .lineToSplineHeading(new Pose2d(14.87, -28.37*alliance, Math.toRadians(180*alliance)))
                             .build();
+                    yellowPixelYCoord = -29-6-dropOffset;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .splineToSplineHeading(new Pose2d(22, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
+                            .lineToSplineHeading(new Pose2d(28.50, -31.80*alliance, Math.toRadians(180*alliance)))
                             .build();
+                    yellowPixelYCoord = -29-12-dropOffset;
             }
+
+            scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
+                    // Having this wait at the beginning causes an empty sequence exception for some reason
+                    // I have a feeling Noah wrote it in a hacky way
+                    //.waitSeconds(0.5)
+                    .splineToSplineHeading(new Pose2d(46.48, -35.99*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
+                    .splineTo(new Vector2d(yellowPixelXCoord, yellowPixelYCoord*alliance), Math.toRadians(0*alliance))
+                    .build();
         }
 
-        if (isWingSide()){
-            throughBridge = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
-
-                    .build();
+        if (parkingClose){
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
-                    .setTangent(Math.toRadians(-130 * alliance))
-                    .splineToSplineHeading(new Pose2d(-58, -12.2 * alliance, Math.toRadians(180 * alliance)), Math.toRadians(180 * alliance))
-                    .lineTo(new Vector2d(-64.8, -12.2 * alliance))
+                    .setTangent(Math.toRadians(0 * alliance))
+                    .splineToSplineHeading(new Pose2d(50, -60 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(90 * alliance))
                     .build();
         } else {
-            throughBridge = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
-
-                    .build();
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
-                    .setTangent(Math.toRadians(-130 * alliance))
-                    .splineToSplineHeading(new Pose2d(-58, -12.2 * alliance, Math.toRadians(180 * alliance)), Math.toRadians(180 * alliance))
-                    .lineTo(new Vector2d(-64.8, -12.2 * alliance))
+                    .setTangent(Math.toRadians(0 * alliance))
+                    .splineToSplineHeading(new Pose2d(50, -13 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(-90 * alliance))
                     .build();
         }
-
-        scoreYellowPixel = drive.trajectorySequenceBuilder(throughBridge.end())
-                .build();
     }
 
     public void saveAutoPose(){
@@ -181,12 +173,13 @@ public class AutoConstants1 {
     // Telemetry stuff
     public void addTelemetry(Telemetry telemetry){
         // Write the alliance in its color
-        telemetry.addLine("<font color =#"+ (allianceToBool() ? "ff0000>" : "0000ff>") + allianceToString() + "</font>" );
+        telemetry.addLine("<font color =#"+ (allianceToBool() ? "ff0000>" : "0099ff>") + allianceToString() + "</font>" );
         telemetry.addData("Alliance side as integer", getAlliance());
         telemetry.addData("Side", (isWingSide() ? "Wing" : "Board")); // First time using this funny switchy thing
         telemetry.addData("Number of cycles", getNumCycles());
-        telemetry.addData("Delay in seconds", delaySeconds);
-        telemetry.addData("Zone", zone);
+        telemetry.addData("Delay in seconds", getDelaySeconds());
+        telemetry.addData("Parking close", isParkingClose());
+        telemetry.addData("Corrected Spike Mark Pos", getCorrectedSpikeMarkPos());
 
         telemetry.addLine(ramdomAutoCheckMessage());
     }

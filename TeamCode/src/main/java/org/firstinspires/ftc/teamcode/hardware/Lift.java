@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.actuators.LinearActuator;
+import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
 public class Lift {
@@ -61,6 +62,7 @@ public class Lift {
 
     public void editExtendedPos(double step){
         extendedPos += step;
+        extendedPos = Utility.clipValue(minHeight, maxHeight, extendedPos);
     }
     public void setExtendedPos(double height){
         extendedPos = height;

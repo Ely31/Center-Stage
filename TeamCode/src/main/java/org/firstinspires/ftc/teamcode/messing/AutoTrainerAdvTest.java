@@ -65,6 +65,6 @@ public class AutoTrainerAdvTest extends LinearOpMode {
     }
 
     double stickToAngle(Gamepad gamepad){
-        return Math.atan2(gamepad.left_stick_x, -gamepad.left_stick_y);
+        return Math.atan2(-gamepad.left_stick_y, gamepad.left_stick_x);
     }
 }

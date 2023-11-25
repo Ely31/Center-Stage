@@ -27,7 +27,7 @@ public class Teleop extends LinearOpMode {
     PIDFController boardDistanceController;
     public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.01,0,0);
     PIDFController boardHeadingController;
-    public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0,0,0);
+    public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.5,0,0);
     Lift lift;
     Arm arm;
     ElapsedTime pivotTimer = new ElapsedTime();
