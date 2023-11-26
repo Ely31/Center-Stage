@@ -38,11 +38,9 @@ public class ScoringMech {
         }
     }
 
-    public void grabJustForPreload(){
-        arm.setBothGrippersState(true);
-    }
+    public void grabJustForPreload(){arm.setBothGrippersState(true);}
     public void setPPPState(boolean state) {ppp.setState(state);}
-
+    public void premove(){arm.preMove();}
 
     // ESSENTIAL to call this function every loop
     public void update(){lift.update();}
@@ -116,7 +114,7 @@ public class ScoringMech {
                 break;
 
             case WAITING_FOR_ARM_PIVOT:
-                if (scoringWait.seconds() > 0.2){ // Wait for the arm to move all the way
+                if (scoringWait.seconds() > 0.4){ // Wait for the arm to move all the way
                     arm.setBothGrippersState(false); // Drop the pixels
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_PIXELS_DROP;
@@ -124,7 +122,7 @@ public class ScoringMech {
                 break;
 
             case WAITING_FOR_PIXELS_DROP:
-                if (scoringWait.seconds() > 0.3){ // Wait for them to fall out
+                if (scoringWait.seconds() > 0.5){ // Wait for them to fall out
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
                 }

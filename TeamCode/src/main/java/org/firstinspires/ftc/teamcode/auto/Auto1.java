@@ -41,20 +41,21 @@ public class Auto1 extends LinearOpMode {
     }
     AutoState autoState = AutoState.GRABBING_PRELOADS;
 
+    ElapsedTime pipelineThrottle = new ElapsedTime();
+    ElapsedTime actionTimer = new ElapsedTime();
+
     @Override
     public void runOpMode(){
         // Init
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
         scoringMech = new ScoringMech(hardwareMap);
+        scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new AutoConstants1(drive);
         // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
-
-        ElapsedTime pipelineThrottle = new ElapsedTime();
-        ElapsedTime actionTimer = new ElapsedTime();
 
         // Init loop
         while (!isStarted()&&!isStopRequested()){
@@ -85,6 +86,8 @@ public class Auto1 extends LinearOpMode {
                 autoConstants.updateCorrectedSpikeMarkPos(propPipeline.getAnalysis());
                 autoConstants.updateTrajectories();
 
+                // TODO: switch propPipeline between red and blue based on alliance selected
+
                 drive.setPoseEstimate(autoConstants.startPos);
                 // Display auto configuration to telemetry
                 autoConstants.addTelemetry(telemetry);
@@ -102,10 +105,9 @@ public class Auto1 extends LinearOpMode {
         while (opModeIsActive()){
             // One big fsm
             switch (autoState){
+                // This first state is vestigial and isn't needed
                 case GRABBING_PRELOADS:
-                    // Grab the preload
-                    scoringMech.grabJustForPreload();
-                    scoringMech.setPPPState(true);
+                    scoringMech.premove();
                     // Once the claw is shut, premove the v4b, then move on to the next state
                     if (actionTimer.milliseconds() > Arm.gripperActuationTime){
                         // Set the drive on it's next trajectory
@@ -129,9 +131,9 @@ public class Auto1 extends LinearOpMode {
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
                     if (drive.getPoseEstimate().getX() > 50){
-                        scoringMech.scoreAsync(5);
+                        scoringMech.scoreAsync(3);
                     }
-                    if (scoringMech.liftIsGoingDown()){
+                    if (scoringMech.liftIsMostlyDown()){
                         drive.followTrajectorySequenceAsync(autoConstants.park);
                         actionTimer.reset();
                         autoState = AutoState.PARKING;
@@ -140,9 +142,12 @@ public class Auto1 extends LinearOpMode {
 
                 case PARKING:
                     // Yay, done!
+                    // Keep the scoring mech running so it goes down
+                    scoringMech.scoreAsync(3);
                     // Once the bot is parked, stop the OpMode
                     if (!drive.isBusy()){
-                        stop();
+                        // I swear this method used to be called stop
+                        terminateOpModeNow();
                     }
                     break;
             }

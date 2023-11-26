@@ -27,7 +27,7 @@ public class Climber {
     public static PIDCoefficients coeffs = new PIDCoefficients(3,0.0,0.0);
 
     public Climber(HardwareMap hwmap){
-        climber = new LinearActuator(hwmap, "climber", 5.2, 0.31496);
+        climber = new LinearActuator(hwmap, "climber", 13.7, 0.31496);
         climber.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         climber.zero();
         climber.setLimits(retractedPos, extendedPos);

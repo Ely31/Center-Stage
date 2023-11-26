@@ -25,7 +25,6 @@ public class Lift {
     boolean state = false; // True for extended
     public boolean getState() {return state;}
 
-    double targetHeight;
 
     public Lift(HardwareMap hwmap){
         liftActuator = new LinearActuator(hwmap, "lift", 13.7, 5.93);
@@ -54,7 +53,7 @@ public class Lift {
         return liftActuator.getCurrentDistance();
     }
     public void retract(){
-        state = false;
+        setHeight(0);
     }
     public void extend(){
         state = true;
@@ -85,8 +84,6 @@ public class Lift {
     }
 
     public void update(){
-        if (state) targetHeight = extendedPos; else targetHeight = retractedPos;
-        setHeight(targetHeight);
         liftActuator.update();
     }
 

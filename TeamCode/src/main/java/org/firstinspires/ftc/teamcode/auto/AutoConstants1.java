@@ -108,62 +108,92 @@ public class AutoConstants1 {
 
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -29;
-        double yellowPixelXCoord = 53;
+        double yellowPixelXCoord = 54;
+
         if (isWingSide()){
+            // Wing side
+            double afterPurpleTangent = 180;
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .splineToSplineHeading(new Pose2d(-61, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
-                            .build();
-                case 2:
-                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .splineToSplineHeading(new Pose2d(-37, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
-                            .build();
-                default:
-                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .splineToSplineHeading(new Pose2d(-13, -11 * alliance, Math.toRadians(-90 * alliance)), Math.toRadians(-90))
-                            .build();
-            }
-        } else {
-            switch (correctedSpikeMarkPos){
-                case 1:
-                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(9.66, -34.58*alliance, Math.toRadians(180*alliance)))
+                            .lineToSplineHeading(new Pose2d(-46, -29 * alliance, Math.toRadians(-90 * alliance)))
                             .build();
                     yellowPixelYCoord = -29-dropOffset;
+                    afterPurpleTangent = 90;
+                    break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(14.87, -28.37*alliance, Math.toRadians(180*alliance)))
+                            //.lineToSplineHeading(new Pose2d(-38.5, -26 * alliance, Math.toRadians(0 * alliance)))
+                            .lineToSplineHeading(new Pose2d(-40, -18.5 * alliance, Math.toRadians(-89.9 * alliance))) // 89.9 so it turns CW
                             .build();
                     yellowPixelYCoord = -29-6-dropOffset;
+                    afterPurpleTangent = 90;
+                    break;
+                default:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .lineToSplineHeading(new Pose2d(-32.5, -36 * alliance, Math.toRadians(0 * alliance)))
+                            .build();
+                    yellowPixelYCoord = -29-12-dropOffset;
+                    break;
+            }
+
+            scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
+                    // Line up with the row os tiles to go under the stage door
+                    .setTangent(Math.toRadians(afterPurpleTangent*alliance))
+                    .splineToSplineHeading(new Pose2d(-29, -13*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
+                    // Drive under the door
+                    .splineTo(new Vector2d(12, -14*alliance), Math.toRadians(0*alliance))
+                    // To the board
+                    .splineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
+                    .build();
+
+        } else {
+            // Board side
+            switch (correctedSpikeMarkPos){
+                case 1:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .lineToSplineHeading(new Pose2d(10.5, -35*alliance, Math.toRadians(180*alliance)))
+                            .build();
+                    yellowPixelYCoord = -29-dropOffset;
+                    break;
+                case 2:
+                    dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .lineToSplineHeading(new Pose2d(17, -28*alliance, Math.toRadians(180*alliance)))
+                            .build();
+                    yellowPixelYCoord = -29-6-dropOffset;
+                    break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(28.50, -31.80*alliance, Math.toRadians(180*alliance)))
                             .build();
                     yellowPixelYCoord = -29-12-dropOffset;
+                    break;
             }
 
             scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
                     // Having this wait at the beginning causes an empty sequence exception for some reason
                     // I have a feeling Noah wrote it in a hacky way
                     //.waitSeconds(0.5)
-                    .splineToSplineHeading(new Pose2d(46.48, -35.99*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
-                    .splineTo(new Vector2d(yellowPixelXCoord, yellowPixelYCoord*alliance), Math.toRadians(0*alliance))
+                    //.setTangent(Math.toRadians(0*alliance))
+                    //.splineToSplineHeading(new Pose2d(46.48, -35.99*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
+                    //.splineTo(new Vector2d(yellowPixelXCoord, yellowPixelYCoord*alliance), Math.toRadians(0*alliance))
+                    // Go right to the board
+                    .lineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)))
                     .build();
         }
 
         if (parkingClose){
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
-                    .setTangent(Math.toRadians(0 * alliance))
+                    .setTangent(Math.toRadians(180 * alliance))
                     .splineToSplineHeading(new Pose2d(50, -60 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(90 * alliance))
                     .build();
         } else {
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
-                    .setTangent(Math.toRadians(0 * alliance))
+                    .setTangent(Math.toRadians(180 * alliance))
                     .splineToSplineHeading(new Pose2d(50, -13 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(-90 * alliance))
                     .build();
         }
-    }
+    } // End of updateTrajectories
 
     public void saveAutoPose(){
         AutoToTele.endOfAutoPose = drive.getPoseEstimate();

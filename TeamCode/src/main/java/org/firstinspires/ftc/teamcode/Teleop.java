@@ -51,7 +51,7 @@ public class Teleop extends LinearOpMode {
 
     // Configuration
     boolean autoRetract = true;
-    boolean autoPremove = false;
+    boolean autoPremove = true;
     boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
     boolean prevBoardAssistInput = false;
     boolean boardAssistActive = false;
@@ -141,7 +141,7 @@ public class Teleop extends LinearOpMode {
             // INTAKE CONTROL
             if (gamepad1.b) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
-            else if (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS) intake.toggle(gamepad1.a);
+            else if ((scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS) && lift.getHeight() < 0.5) intake.toggle(gamepad1.a);
             else intake.off();
 
             // CLIMBER CONTROL
@@ -233,7 +233,7 @@ public class Teleop extends LinearOpMode {
                 if (gamepad1.left_bumper) arm.setBothGrippersState(false);
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
-                if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && !(arm.pixelIsInBottom() && arm.pixelIsInTop()))){
+                if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))){
                     scoringState = ScoringState.INTAKING;
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
