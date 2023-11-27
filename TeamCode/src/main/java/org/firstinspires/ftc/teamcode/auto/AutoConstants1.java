@@ -23,7 +23,6 @@ public class AutoConstants1 {
     private int alliance = 1;
     public int getAlliance() {return alliance;}
     public void setAlliance(int alliance) {this.alliance = alliance;}
-
     public boolean allianceToBool(){
         return alliance == 1;
     }
@@ -32,19 +31,12 @@ public class AutoConstants1 {
         else return "Blue Alliance";
     }
 
-    private int correctedSpikeMarkPos = 1;
-    public int getCorrectedSpikeMarkPos() {
-        return correctedSpikeMarkPos;
-    }
-    // This is used so we don't put our pixel in the same slot as our partner. Hopefully. We'll see.
-    int dropOffset = 0;
-
-    boolean WingSide = false;
+    boolean wingSide = false;
     public boolean isWingSide() {
-        return WingSide;
+        return wingSide;
     }
     public void setWingSide(boolean wingSide) {
-        WingSide = wingSide;
+        this.wingSide = wingSide;
     }
 
     boolean parkingClose = true;
@@ -53,6 +45,21 @@ public class AutoConstants1 {
     }
     public void setParkingClose(boolean parkingClose) {
         this.parkingClose = parkingClose;
+    }
+
+    private int correctedSpikeMarkPos = 1;
+    public int getCorrectedSpikeMarkPos() {
+        return correctedSpikeMarkPos;
+    }
+
+    // This is used so we don't put our pixel in the same slot as our partner. Hopefully. We'll see.
+    int dropOffset = 0;
+    boolean dropIsOffset = false;
+    public void setDropIsOffset(boolean value){
+        dropIsOffset = value;
+    }
+    public boolean isDropOffset(){
+        return dropIsOffset;
     }
 
     private int numCycles = 4;
@@ -99,12 +106,14 @@ public class AutoConstants1 {
     public TrajectorySequence park;
 
     public void updateTrajectories() {
-
+        // Change start pose, pretty important
         if (isWingSide()) {
             startPos = new Pose2d(-35.25, -61.5 * alliance, Math.toRadians(90 * alliance));
         } else {
             startPos = new Pose2d(11.75, -61.5 * alliance, Math.toRadians(90 * alliance));
         }
+        // Switch this so we don't drop our pixel in the same spot as our partner
+        dropOffset = (isDropOffset() ? 3 : 0);
 
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -29;
@@ -211,6 +220,7 @@ public class AutoConstants1 {
         telemetry.addData("Parking close", isParkingClose());
         telemetry.addData("Corrected Spike Mark Pos", getCorrectedSpikeMarkPos());
 
+        telemetry.addLine(autoConfigToEnglish());
         telemetry.addLine(ramdomAutoCheckMessage());
     }
     String[] messageList = {
@@ -220,7 +230,7 @@ public class AutoConstants1 {
             "Is it red? is it blue?",
             "Is it left? is it right?",
             "Are you SURE this is the program you want?",
-            "Ejecute el auto correcto!",
+            "¡Ejecute el auto correcto!",
             "올바른 자동 실행",
             "Oi mate, didjya checkit eh?",
             "What do those numbers say, hmmmm? Hmmmm?",
@@ -244,5 +254,32 @@ public class AutoConstants1 {
     String ramdomAutoCheckMessage(){
         //look up the index of the randomly generated number in the array of messages and return that message
         return messageList[randomMessageIndex];
+    }
+    String autoConfigToEnglish(){
+        String spikeMarkDescription;
+        String yellowPixelDescription;
+        switch (getCorrectedSpikeMarkPos()){
+            case 1:
+                spikeMarkDescription = "closest to the wing";
+                yellowPixelDescription = "closest to the center of the field";
+                break;
+            case 2:
+                spikeMarkDescription = "in the center";
+                yellowPixelDescription = "in the center";
+                break;
+            default:
+                spikeMarkDescription = "closest to the board";
+                yellowPixelDescription = "closest to the wall";
+                break;
+        }
+        return (
+                "You are on the " + allianceToString() + " alliance."
+                + " You are on the side of the field closest to the " + (isWingSide() ? "wing" : "board") + "."
+                + " The bot will move the purple pixel to the spike mark " + spikeMarkDescription
+                + " and score the yellow pixel " + yellowPixelDescription + "."
+                + " The yellow pixel will be placed in that slot closest to " + (isDropOffset() ? "you" : "the center of the field") + "."
+                + " The bot will then park closest to " + (isParkingClose() ? "you" : "the center of the field") + "."
+                + "\n" + "Sound right?"
+                );
     }
 }

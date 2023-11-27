@@ -89,7 +89,7 @@ public class DriveConstants {
      */
 
     // These have been toned down a lot
-    public static double MAX_VEL = 55;
+    public static double MAX_VEL = 45; // Old val was 55, it couldn't do that when strafing a long distance
     public static double MAX_ACCEL = 40;
     public static double MAX_ANG_VEL = Math.toRadians(180);
     public static double MAX_ANG_ACCEL = Math.toRadians(180);

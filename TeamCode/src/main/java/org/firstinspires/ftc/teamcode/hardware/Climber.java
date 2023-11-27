@@ -24,7 +24,7 @@ public class Climber {
     public static double servoHoldPos = 0;
     public static double servoReleasePos = 0.6;
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(3,0.0,0.0);
+    public static PIDCoefficients coeffs = new PIDCoefficients(3,0.1,0.2);
 
     public Climber(HardwareMap hwmap){
         climber = new LinearActuator(hwmap, "climber", 13.7, 0.31496);

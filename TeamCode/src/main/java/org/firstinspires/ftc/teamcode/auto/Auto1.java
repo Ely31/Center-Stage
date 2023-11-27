@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ScoringMech;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
+import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
 
 @Config
@@ -19,8 +20,9 @@ public class Auto1 extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
     Camera camera;
-    TeamPropDetector propPipeline = new TeamPropDetector();
+    TeamPropDetector propPipeline = new TeamPropDetector(true);
     ScoringMech scoringMech;
+    TimeUtil timeUtil = new TimeUtil();
 
     AutoConstants1 autoConstants;
 
@@ -43,6 +45,7 @@ public class Auto1 extends LinearOpMode {
 
     ElapsedTime pipelineThrottle = new ElapsedTime();
     ElapsedTime actionTimer = new ElapsedTime();
+    ElapsedTime loopTimer = new ElapsedTime();
 
     @Override
     public void runOpMode(){
@@ -85,8 +88,8 @@ public class Auto1 extends LinearOpMode {
                 // Update stuff
                 autoConstants.updateCorrectedSpikeMarkPos(propPipeline.getAnalysis());
                 autoConstants.updateTrajectories();
-
-                // TODO: switch propPipeline between red and blue based on alliance selected
+                // switch propPipeline between red and blue based on alliance selected
+                propPipeline = new TeamPropDetector(autoConstants.allianceToBool());
 
                 drive.setPoseEstimate(autoConstants.startPos);
                 // Display auto configuration to telemetry
@@ -102,6 +105,8 @@ public class Auto1 extends LinearOpMode {
         actionTimer.reset();
         // Save this for tele
         AutoToTele.allianceSide = autoConstants.getAlliance();
+        // Used sometimes to avoid potential collisions with a partner
+        sleep(autoConstants.getDelaySeconds()*1000);
         while (opModeIsActive()){
             // One big fsm
             switch (autoState){
@@ -157,11 +162,14 @@ public class Auto1 extends LinearOpMode {
 
             // To be used to automatically calibrate field centric
             autoConstants.saveAutoPose();
+            // Because I'm curious about loop times
+            timeUtil.update(loopTimer.milliseconds());
 
             // Show telemetry because there are plenty of bugs it should help me fix
             telemetry.addData("auto state", autoState.name());
             telemetry.addData("cycle index", cycleIndex);
             scoringMech.displayDebug(telemetry);
+            timeUtil.displayDebug(telemetry, loopTimer);
             telemetry.update();
         } // End of while loop
     }

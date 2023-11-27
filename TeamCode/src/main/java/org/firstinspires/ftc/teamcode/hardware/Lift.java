@@ -54,9 +54,11 @@ public class Lift {
     }
     public void retract(){
         setHeight(0);
+        state = false;
     }
     public void extend(){
         state = true;
+        setHeight(extendedPos);
     }
 
     public void editExtendedPos(double step){

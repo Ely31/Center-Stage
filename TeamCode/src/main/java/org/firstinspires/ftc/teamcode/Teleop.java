@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.control.PIDFController;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -16,6 +17,8 @@ import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
+
+import java.util.List;
 
 @Config
 @TeleOp
@@ -78,14 +81,16 @@ public class Teleop extends LinearOpMode {
         // Have it up so that if a pixel does get in that area it doesn't break the ppp arm
         ppp.setState(false);
 
+        // Enable bulk reads
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : allHubs) {hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);}
+
         waitForStart();
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
         while (opModeIsActive()){
-            // Send signals to drivers when endgame approaches
-           timeUtil.updateAll(matchTimer.milliseconds(), gamepad1, gamepad2);
-
+            for (LynxModule hub : allHubs) {hub.clearBulkCache();}
             // DRIVING
             // Let board assist take control of the sticks if it's enabled and we're probably facing and close to the board
             boardAssistActive = (
@@ -158,6 +163,8 @@ public class Teleop extends LinearOpMode {
             // so we don't have to restart the program every time
             else launcher.hold();
 
+            // Send signals to drivers when endgame approaches
+            timeUtil.updateAll(matchTimer.milliseconds(), gamepad1, gamepad2);
             // TELEMETRY
             // Show the set height of the lift on a horizontal bar so driver 2 can see it easier than reading a number
             telemetry.addData("Lift target height", lift.getExtendedPos());
@@ -217,6 +224,8 @@ public class Teleop extends LinearOpMode {
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
                 arm.setStopperState(false);
+                // Toggle the intake off to prevent sucking in pixels when the arm isn't there
+                intake.forceToggleOff();
                 // Switch states when bumper pressed
                 if (!prevLiftInput && gamepad1.right_bumper){
                     scoringState = ScoringState.SCORING;

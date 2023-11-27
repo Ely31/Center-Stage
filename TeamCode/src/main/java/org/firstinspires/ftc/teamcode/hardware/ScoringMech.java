@@ -140,7 +140,7 @@ public class ScoringMech {
 
             case RETRACTING:
                 lift.retract();
-                arm.setStopperState(true);
+                //arm.setStopperState(true);
                 // Move on if the lift is all the way down
                 if (Utility.withinErrorOfValue(lift.getHeight(), 0, 1)) {
                     scoringState = ScoringState.DONE; // Finish

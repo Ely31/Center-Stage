@@ -48,22 +48,11 @@ public class Intake {
 
         lastInput = input;
     }
-/*
-    // Take the average of the values of both sensors
-    public double maxProximity(){
-        return Math.max(leftSensor.alpha(), rightSensor.alpha());
+    // Used in teleop whenever we extend because the arm servo doesn't have positional feedback
+    public void forceToggleOff(){
+        intakeToggledStatus = false;
     }
 
-    public boolean freightStatus(){
-        double maxProximity = maxProximity(); // So we don't make two i2c calls
-        return !(325 < maxProximity && maxProximity < 450);
-    }
-
-    public boolean isEmpty(){
-        double maxProximity = maxProximity(); // So we don't make two i2c calls
-        return (325 < maxProximity && maxProximity < 380);
-    }
-    */
     public void displayDebug(Telemetry telemetry){
         telemetry.addLine("INTAKE");
         telemetry.addData("Intake Power", intake.getPower());
