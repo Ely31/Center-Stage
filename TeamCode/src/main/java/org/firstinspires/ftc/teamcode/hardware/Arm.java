@@ -27,7 +27,7 @@ public class Arm {
 
     // Constants
     public static double pivotIntakingPos = 0.025;
-    public static double pivotScoringPos = 0.85;
+    public static double pivotScoringPos = 0.865;
     public static double pivotPremovePos = 0.3;
     public static double pivotActuationTime = 300;
     public static double pivotAwayFromBordTime = 200;

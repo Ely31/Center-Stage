@@ -30,7 +30,7 @@ public class Teleop extends LinearOpMode {
     PIDFController boardDistanceController;
     public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.01,0,0);
     PIDFController boardHeadingController;
-    public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.5,0,0);
+    public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.2,0,0);
     Lift lift;
     Arm arm;
     ElapsedTime pivotTimer = new ElapsedTime();
@@ -43,6 +43,8 @@ public class Teleop extends LinearOpMode {
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
     boolean prevHeadingResetInput = false;
+    boolean poking = false;
+    boolean prevPokingInput = false;
 
     enum ScoringState {
         INTAKING,
@@ -92,7 +94,7 @@ public class Teleop extends LinearOpMode {
         while (opModeIsActive()){
             for (LynxModule hub : allHubs) {hub.clearBulkCache();}
             // DRIVING
-            // Let board assist take control of the sticks if it's enabled and we're probably facing and close to the board
+            // Let board assist take control of the sticks if it's enabled and we're probably trying to score on the board
             boardAssistActive = (
                     boardAssistEnabled &&
                     arm.getBoardDistance() < 30 &&
@@ -103,7 +105,7 @@ public class Teleop extends LinearOpMode {
                 drive.driveBoardLocked(
                         gamepad1.left_stick_y,
                         -boardDistanceController.update(arm.getBoardDistance()),
-                        gamepad1.right_stick_x * 0.8,
+                        boardHeadingController.update(drive.getHeading()),
                         gamepad1.right_trigger
                 );
             } else {
@@ -231,19 +233,37 @@ public class Teleop extends LinearOpMode {
                     scoringState = ScoringState.SCORING;
                 }
                 break;
+
             case SCORING:
                 arm.pivotScore();
                 lift.extend();
                 arm.setStopperState(false);
                 // Release the top and bottom individually if we wish
-                if (gamepad1.square) arm.setBottomGripperState(false);
-                if (gamepad1.triangle)arm.setTopGripperState(false);
+                if (gamepad1.a) {
+                    arm.setBottomGripperState(false);
+                    poking = false;
+                }
+                if (gamepad1.y) {
+                    arm.setTopGripperState(false);
+                    poking = false;
+                }
                 // But more often used, drop them both at once
-                if (gamepad1.left_bumper) arm.setBothGrippersState(false);
+                if (gamepad1.left_bumper) {
+                    arm.setBothGrippersState(false);
+                    poking = false;
+                }
+
+                // Toggle the poker
+                if (gamepad2.a && !prevPokingInput){
+                    poking = !poking;
+                }
+                prevPokingInput = gamepad2.a;
+                arm.setStopperState(poking);
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
                 if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))){
                     scoringState = ScoringState.INTAKING;
+                    poking = false;
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
                 }

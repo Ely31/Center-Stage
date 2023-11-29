@@ -27,8 +27,8 @@ public class AutoConstants1 {
         return alliance == 1;
     }
     public String allianceToString(){
-        if (alliance == 1) return "Red Alliance";
-        else return "Blue Alliance";
+        if (alliance == 1) return "red alliance";
+        else return "blue alliance";
     }
 
     boolean wingSide = false;
@@ -161,7 +161,7 @@ public class AutoConstants1 {
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(10.5, -35*alliance, Math.toRadians(180*alliance)))
+                            .lineToSplineHeading(new Pose2d(9.5, -35*alliance, Math.toRadians(180*alliance)))
                             .build();
                     yellowPixelYCoord = -29-dropOffset;
                     break;
@@ -219,8 +219,9 @@ public class AutoConstants1 {
         telemetry.addData("Delay in seconds", getDelaySeconds());
         telemetry.addData("Parking close", isParkingClose());
         telemetry.addData("Corrected Spike Mark Pos", getCorrectedSpikeMarkPos());
-
+        telemetry.addLine();
         telemetry.addLine(autoConfigToEnglish());
+        telemetry.addLine();
         telemetry.addLine(ramdomAutoCheckMessage());
     }
     String[] messageList = {
@@ -273,7 +274,7 @@ public class AutoConstants1 {
                 break;
         }
         return (
-                "You are on the " + allianceToString() + " alliance."
+                "You are on the " + allianceToString() + "."
                 + " You are on the side of the field closest to the " + (isWingSide() ? "wing" : "board") + "."
                 + " The bot will move the purple pixel to the spike mark " + spikeMarkDescription
                 + " and score the yellow pixel " + yellowPixelDescription + "."

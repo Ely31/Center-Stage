@@ -84,12 +84,13 @@ public class Auto1 extends LinearOpMode {
             prevDelayDecrease = gamepad1.dpad_left;
 
             // Recompute trajectories every second
-            if (pipelineThrottle.seconds() > 1){
+            if (pipelineThrottle.seconds() > 5){
                 // Update stuff
                 autoConstants.updateCorrectedSpikeMarkPos(propPipeline.getAnalysis());
                 autoConstants.updateTrajectories();
                 // switch propPipeline between red and blue based on alliance selected
                 propPipeline = new TeamPropDetector(autoConstants.allianceToBool());
+                camera.setPipeline(propPipeline);
 
                 drive.setPoseEstimate(autoConstants.startPos);
                 // Display auto configuration to telemetry
