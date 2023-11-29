@@ -60,6 +60,7 @@ public class Teleop extends LinearOpMode {
     boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
     boolean prevBoardAssistInput = false;
     boolean boardAssistActive = false;
+    final boolean useBulkreads = true;
     // Telemetry options
     public static boolean debug = true;
     public static boolean instructionsOn = false;
@@ -83,16 +84,26 @@ public class Teleop extends LinearOpMode {
         // Have it up so that if a pixel does get in that area it doesn't break the ppp arm
         ppp.setState(false);
 
-        // Enable bulk reads
+        // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-        for (LynxModule hub : allHubs) {hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);}
+        if (useBulkreads) {
+            for (LynxModule hub : allHubs) {
+                hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+            }
+        }
 
         waitForStart();
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
         while (opModeIsActive()){
-            for (LynxModule hub : allHubs) {hub.clearBulkCache();}
+            // Bulk reads
+            if (useBulkreads) {
+                for (LynxModule hub : allHubs) {
+                    hub.clearBulkCache();
+                }
+            }
+
             // DRIVING
             // Let board assist take control of the sticks if it's enabled and we're probably trying to score on the board
             boardAssistActive = (
@@ -136,14 +147,15 @@ public class Teleop extends LinearOpMode {
             // But, if you press a special key combo, escape pid control and bring the lift down
             // With raw power to fix potential lift issues
             if (gamepad2.dpad_left && gamepad2.share){
-                lift.setRawPowerDangerous(-0.2);
+                lift.setRawPowerDangerous(-0.5);
                 lift.zero();
-            } else
-            if (gamepad2.dpad_right && gamepad2.share) {
+            } else if (gamepad2.dpad_right && gamepad2.share) {
                 lift.setRawPowerDangerous(1);
                 lift.zero();
             }
-            else lift.update();
+            else {lift.update();}
+            // Update arm
+            arm.update();
 
             // INTAKE CONTROL
             if (gamepad1.b) intake.reverse();
@@ -237,7 +249,7 @@ public class Teleop extends LinearOpMode {
             case SCORING:
                 arm.pivotScore();
                 lift.extend();
-                arm.setStopperState(false);
+                //arm.setStopperState(false);
                 // Release the top and bottom individually if we wish
                 if (gamepad1.a) {
                     arm.setBottomGripperState(false);

@@ -12,6 +12,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
+import java.util.Arrays;
+
 @Config
 public class Arm {
     ServoImplEx pivot;
@@ -42,6 +44,11 @@ public class Arm {
     boolean stopperState = false;
 
     public static double sensorThreshold = 3000;
+
+    double[] lastBottomSensorVals = new double[3];
+    double[] lastTopSensorVals = new double[3];
+
+    double lastBoardDistance;
 
     public Arm(HardwareMap hwmap){
         // Hardwaremap stuff
@@ -117,15 +124,29 @@ public class Arm {
     }
     public boolean getStopperState() {return stopperState;}
 
+    // Use averages of past values because we get little incorrect blips sometimes
     public boolean pixelIsInBottom(){
-        return bottomPixelSensor.alpha() > sensorThreshold;
+        return Arrays.stream(lastBottomSensorVals).average().orElse(Double.NaN) > sensorThreshold;
     }
     public boolean pixelIsInTop(){
-        return topPixelSensor.alpha() > sensorThreshold;
+        return Arrays.stream(lastTopSensorVals).average().orElse(Double.NaN) > sensorThreshold;
     }
 
     public double getBoardDistance(){
-        return boardSensor.getDistance(DistanceUnit.CM);
+        return lastBoardDistance;
+    }
+
+    public void update(){
+        // Shift vals back, this is terrible code and should be done with a for loop
+        lastBottomSensorVals[2] = lastBottomSensorVals[1];
+        lastBottomSensorVals[1] = lastBottomSensorVals[0];
+        lastBottomSensorVals[0] = bottomPixelSensor.alpha();
+        // Same thing for top
+        lastTopSensorVals[2] = lastTopSensorVals[1];
+        lastTopSensorVals[1] = lastTopSensorVals[0];
+        lastTopSensorVals[0] = topPixelSensor.alpha();
+
+        lastBoardDistance = boardSensor.getDistance(DistanceUnit.CM);
     }
 
     public void displayDebug(Telemetry telemetry){
@@ -133,13 +154,21 @@ public class Arm {
         telemetry.addData("Pivot pos", pivot.getPosition());
         telemetry.addData("Bottom pos", bottomPixel.getPosition());
         telemetry.addData("Bottom state", getBottomGripperState());
-        telemetry.addData("Bottom sensor val", bottomPixelSensor.alpha());
+        telemetry.addData("Bottom sensor val", lastBottomSensorVals[0]);
         telemetry.addData("Pixel in bottom", pixelIsInBottom());
         telemetry.addData("Top pos", topPixel.getPosition());
         telemetry.addData("Top state", getTopGripperState());
-        telemetry.addData("Top sensor val", topPixelSensor.alpha());
+        telemetry.addData("Top sensor val", lastTopSensorVals[0]);
         telemetry.addData("Pixel in top", pixelIsInTop());
         telemetry.addData("Stopper state", getStopperState());
         telemetry.addData("Board distance", getBoardDistance());
+        telemetry.addLine("Bottom sensor past vals");
+        for (double val : lastBottomSensorVals){
+            telemetry.addData("val", val);
+        }
+        telemetry.addLine("Top sensor past vals");
+        for (double val : lastTopSensorVals){
+            telemetry.addData("val", val);
+        }
     }
 }

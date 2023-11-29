@@ -26,7 +26,7 @@ public class Intake {
     }
 
     public void on(){
-        intake.setPower(1);
+        intake.setPower(0.75);
     }
     public void off(){
         intake.setPower(0);

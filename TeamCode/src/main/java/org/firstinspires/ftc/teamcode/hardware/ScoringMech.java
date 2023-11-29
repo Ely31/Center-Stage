@@ -43,7 +43,10 @@ public class ScoringMech {
     public void premove(){arm.preMove();}
 
     // ESSENTIAL to call this function every loop
-    public void update(){lift.update();}
+    public void update() {
+        lift.update();
+        arm.update();
+    }
 
     ElapsedTime scoringWait = new ElapsedTime();
     ElapsedTime stackGrabbingWait = new ElapsedTime();

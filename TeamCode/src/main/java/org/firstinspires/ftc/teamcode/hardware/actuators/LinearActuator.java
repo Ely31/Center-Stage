@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 import java.util.Objects;
@@ -81,9 +80,9 @@ public class LinearActuator {
     // so we don't hurt loop times by grabbing it multiple times.
     public void update(){
         currentPosition = motor.getCurrentPosition();
-        currentCurrent = motor.getCurrent(CurrentUnit.AMPS);
+        //currentCurrent = motor.getCurrent(CurrentUnit.AMPS);
         currentPower = motor.getPower();
-        currentDirection = motor.getDirection();
+        //currentDirection = motor.getDirection();
         currentMode = motor.getMode();
 
         Controller.setTargetPosition(targetDistance);
@@ -138,6 +137,7 @@ public class LinearActuator {
         telemetry.addData("Ticks per inch", "%.3f",TICKS_PER_INCH);
         telemetry.addData("Ticks per rev", "%.3f",TICKS_PER_REV);
         telemetry.addData("Gearbox ratio", "%.1f",GEARBOX_RATIO);
-        telemetry.addData("Power", motor.getPower());
+        telemetry.addData("Power", currentPower);
+        //telemetry.addData("Mode", currentMode);
     }
 }
