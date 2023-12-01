@@ -116,7 +116,8 @@ public class AutoConstants1 {
         dropOffset = (isDropOffset() ? 3 : 0);
 
         // Ahhhh we have to have six unique purple pixel trajectories
-        double yellowPixelYCoord = -29;
+        double yellowPixelYCoord = -28;
+        final double baseYellowPixelYCoord = -28;
         double yellowPixelXCoord = 54;
 
         if (isWingSide()){
@@ -127,7 +128,7 @@ public class AutoConstants1 {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-46, -29 * alliance, Math.toRadians(-90 * alliance)))
                             .build();
-                    yellowPixelYCoord = -29-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 case 2:
@@ -135,14 +136,14 @@ public class AutoConstants1 {
                             //.lineToSplineHeading(new Pose2d(-38.5, -26 * alliance, Math.toRadians(0 * alliance)))
                             .lineToSplineHeading(new Pose2d(-40, -18.5 * alliance, Math.toRadians(-89.9 * alliance))) // 89.9 so it turns CW
                             .build();
-                    yellowPixelYCoord = -29-6-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-7-dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-32.5, -36 * alliance, Math.toRadians(0 * alliance)))
                             .build();
-                    yellowPixelYCoord = -29-12-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-13-dropOffset;
                     break;
             }
 
@@ -151,7 +152,7 @@ public class AutoConstants1 {
                     .setTangent(Math.toRadians(afterPurpleTangent*alliance))
                     .splineToSplineHeading(new Pose2d(-29, -13*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
                     // Drive under the door
-                    .splineTo(new Vector2d(12, -14*alliance), Math.toRadians(0*alliance))
+                    .splineTo(new Vector2d(5, -14*alliance), Math.toRadians(0*alliance))
                     // To the board
                     .splineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
                     .build();
@@ -163,30 +164,24 @@ public class AutoConstants1 {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(9.5, -35*alliance, Math.toRadians(180*alliance)))
                             .build();
-                    yellowPixelYCoord = -29-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-dropOffset;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(17, -28*alliance, Math.toRadians(180*alliance)))
                             .build();
-                    yellowPixelYCoord = -29-6-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-7.2-dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(28.50, -31.80*alliance, Math.toRadians(180*alliance)))
                             .build();
-                    yellowPixelYCoord = -29-12-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-13.5-dropOffset;
                     break;
             }
 
             scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
-                    // Having this wait at the beginning causes an empty sequence exception for some reason
-                    // I have a feeling Noah wrote it in a hacky way
-                    //.waitSeconds(0.5)
-                    //.setTangent(Math.toRadians(0*alliance))
-                    //.splineToSplineHeading(new Pose2d(46.48, -35.99*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
-                    //.splineTo(new Vector2d(yellowPixelXCoord, yellowPixelYCoord*alliance), Math.toRadians(0*alliance))
-                    // Go right to the board
+                    // Go straight to the board
                     .lineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)))
                     .build();
         }
@@ -194,12 +189,12 @@ public class AutoConstants1 {
         if (parkingClose){
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                     .setTangent(Math.toRadians(180 * alliance))
-                    .splineToSplineHeading(new Pose2d(50, -60 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(90 * alliance))
+                    .splineToLinearHeading(new Pose2d(50, -61 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(90 * alliance))
                     .build();
         } else {
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                     .setTangent(Math.toRadians(180 * alliance))
-                    .splineToSplineHeading(new Pose2d(50, -13 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(-90 * alliance))
+                    .splineToLinearHeading(new Pose2d(50, -12 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(-90 * alliance))
                     .build();
         }
     } // End of updateTrajectories
@@ -218,6 +213,7 @@ public class AutoConstants1 {
         telemetry.addData("Number of cycles", getNumCycles());
         telemetry.addData("Delay in seconds", getDelaySeconds());
         telemetry.addData("Parking close", isParkingClose());
+        telemetry.addData("Drop is offset", isDropOffset());
         telemetry.addData("Corrected Spike Mark Pos", getCorrectedSpikeMarkPos());
         telemetry.addLine();
         telemetry.addLine(autoConfigToEnglish());

@@ -19,7 +19,7 @@ public class Lift {
     public static double retractedPos = 0;
     public static double extendedPos = 7;
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(0.5,0.04,0.04);
+    public static PIDCoefficients coeffs = new PIDCoefficients(0.5,0.15,0.04);
     public static double f = 0.0;
 
     boolean state = false; // True for extended

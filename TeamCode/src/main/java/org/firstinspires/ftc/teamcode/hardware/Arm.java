@@ -153,15 +153,11 @@ public class Arm {
         telemetry.addLine("ARM");
         telemetry.addData("Pivot pos", pivot.getPosition());
         telemetry.addData("Bottom pos", bottomPixel.getPosition());
-        telemetry.addData("Bottom state", getBottomGripperState());
-        telemetry.addData("Bottom sensor val", lastBottomSensorVals[0]);
-        telemetry.addData("Pixel in bottom", pixelIsInBottom());
         telemetry.addData("Top pos", topPixel.getPosition());
-        telemetry.addData("Top state", getTopGripperState());
+        telemetry.addData("Bottom gripper state", getBottomGripperState());
+        telemetry.addData("Top gripper state", getTopGripperState());
+        telemetry.addData("Bottom sensor val", lastBottomSensorVals[0]);
         telemetry.addData("Top sensor val", lastTopSensorVals[0]);
-        telemetry.addData("Pixel in top", pixelIsInTop());
-        telemetry.addData("Stopper state", getStopperState());
-        telemetry.addData("Board distance", getBoardDistance());
         telemetry.addLine("Bottom sensor past vals");
         for (double val : lastBottomSensorVals){
             telemetry.addData("val", val);
@@ -170,5 +166,9 @@ public class Arm {
         for (double val : lastTopSensorVals){
             telemetry.addData("val", val);
         }
+        telemetry.addData("Pixel in bottom", pixelIsInBottom());
+        telemetry.addData("Pixel in top", pixelIsInTop());
+        telemetry.addData("Stopper state", getStopperState());
+        telemetry.addData("Board distance", getBoardDistance());
     }
 }

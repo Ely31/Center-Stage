@@ -93,9 +93,12 @@ public class Teleop extends LinearOpMode {
         }
 
         waitForStart();
+
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
+
+        // START OF TELEOP LOOP
         while (opModeIsActive()){
             // Bulk reads
             if (useBulkreads) {
@@ -109,14 +112,14 @@ public class Teleop extends LinearOpMode {
             boardAssistActive = (
                     boardAssistEnabled &&
                     arm.getBoardDistance() < 30 &&
-                    scoringState == ScoringState.SCORING &&
-                    Math.abs(drive.getNormalizedHeading()) < 0.17
+                    scoringState == ScoringState.SCORING
+                    //&& Math.abs(drive.getNormalizedHeading()) < 0.17
             );
             if (boardAssistActive){
                 drive.driveBoardLocked(
                         gamepad1.left_stick_y,
                         -boardDistanceController.update(arm.getBoardDistance()),
-                        boardHeadingController.update(drive.getHeading()),
+                        gamepad1.right_stick_x,
                         gamepad1.right_trigger
                 );
             } else {
@@ -147,7 +150,7 @@ public class Teleop extends LinearOpMode {
             // But, if you press a special key combo, escape pid control and bring the lift down
             // With raw power to fix potential lift issues
             if (gamepad2.dpad_left && gamepad2.share){
-                lift.setRawPowerDangerous(-0.5);
+                lift.setRawPowerDangerous(-0.7);
                 lift.zero();
             } else if (gamepad2.dpad_right && gamepad2.share) {
                 lift.setRawPowerDangerous(1);
@@ -203,6 +206,7 @@ public class Teleop extends LinearOpMode {
         } // End of the loop
     }
 
+    boolean hadAnyPixelsWhenPremoved;
     // The big one
     void updateScoringMech(){
         switch (scoringState){
@@ -218,7 +222,7 @@ public class Teleop extends LinearOpMode {
                 // Switch states when bumper pressed
                 // Or, (and this'll happen 99% of the time) when it has both pixels
                 if ((autoPremove && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad1.right_bumper)){
-                    // Automatically grab 'em and move the arm up
+                    // Grab 'em and move the arm up
                     arm.setBothGrippersState(true);
                     gripperTimer.reset();
                     scoringState = ScoringState.WAITING_FOR_GRIPPERS;
@@ -243,6 +247,8 @@ public class Teleop extends LinearOpMode {
                 // Switch states when bumper pressed
                 if (!prevLiftInput && gamepad1.right_bumper){
                     scoringState = ScoringState.SCORING;
+                    // Save this info to prevent it from going down right away if you have nothing
+                    hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
                 }
                 break;
 
@@ -273,7 +279,7 @@ public class Teleop extends LinearOpMode {
                 arm.setStopperState(poking);
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
-                if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))){
+                if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && hadAnyPixelsWhenPremoved && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))){
                     scoringState = ScoringState.INTAKING;
                     poking = false;
                     // Reset timer so the clock ticks on the arm being away from the board

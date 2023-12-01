@@ -33,6 +33,7 @@ public class Auto1 extends LinearOpMode {
     boolean prevCycleDecrease = false;
     boolean prevDelayIncrease = false;
     boolean prevDelayDecrease = false;
+    boolean prevToggleOffset = false;
 
     // For the giant fsm to run everything asynchronously
     enum AutoState{
@@ -43,7 +44,7 @@ public class Auto1 extends LinearOpMode {
     }
     AutoState autoState = AutoState.GRABBING_PRELOADS;
 
-    ElapsedTime pipelineThrottle = new ElapsedTime();
+    ElapsedTime pipelineThrottle = new ElapsedTime(1000000000*5); // Start it at 5s so the telemetry pops up right away
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
 
@@ -77,11 +78,13 @@ public class Auto1 extends LinearOpMode {
             if (gamepad1.dpad_down && !prevCycleDecrease) autoConstants.setNumCycles(autoConstants.getNumCycles() - 1);
             if (gamepad1.dpad_right && !prevDelayIncrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() + 1);
             if (gamepad1.dpad_left && !prevDelayDecrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() - 1);
+            if (gamepad1.y && !prevToggleOffset) autoConstants.setDropIsOffset(!autoConstants.isDropOffset());
 
             prevCycleIncrease = gamepad1.dpad_up;
             prevCycleDecrease = gamepad1.dpad_down;
             prevDelayIncrease = gamepad1.dpad_right;
             prevDelayDecrease = gamepad1.dpad_left;
+            prevToggleOffset = gamepad1.y;
 
             // Recompute trajectories every second
             if (pipelineThrottle.seconds() > 5){
@@ -137,7 +140,7 @@ public class Auto1 extends LinearOpMode {
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
                     if (drive.getPoseEstimate().getX() > 50){
-                        scoringMech.scoreAsync(3);
+                        scoringMech.scoreAsync(2.75);
                     }
                     if (scoringMech.liftIsMostlyDown()){
                         drive.followTrajectorySequenceAsync(autoConstants.park);
