@@ -12,8 +12,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
-import java.util.Arrays;
-
 @Config
 public class Arm {
     ServoImplEx pivot;
@@ -28,7 +26,7 @@ public class Arm {
     boolean topState = false;
 
     // Constants
-    public static double pivotIntakingPos = 0.025;
+    public static double pivotIntakingPos = 0.015;
     public static double pivotScoringPos = 0.865;
     public static double pivotPremovePos = 0.3;
     public static double pivotActuationTime = 300;
@@ -43,7 +41,8 @@ public class Arm {
     public static double stopperOpenPos = 0.9;
     boolean stopperState = false;
 
-    public static double sensorThreshold = 3000;
+    public static double bottomSensorThreshold = 1100;
+    public static double topSensorThreshold = 1100;
 
     double[] lastBottomSensorVals = new double[3];
     double[] lastTopSensorVals = new double[3];
@@ -126,10 +125,20 @@ public class Arm {
 
     // Use averages of past values because we get little incorrect blips sometimes
     public boolean pixelIsInBottom(){
-        return Arrays.stream(lastBottomSensorVals).average().orElse(Double.NaN) > sensorThreshold;
+        boolean answer = true;
+        for (double val : lastBottomSensorVals){
+            if (val < bottomSensorThreshold) answer = false;
+        }
+        return answer;
+        //return Arrays.stream(lastBottomSensorVals).average().orElse(Double.NaN) > sensorThreshold;
     }
     public boolean pixelIsInTop(){
-        return Arrays.stream(lastTopSensorVals).average().orElse(Double.NaN) > sensorThreshold;
+        boolean answer = true;
+        for (double val : lastTopSensorVals){
+            if (val < topSensorThreshold) answer = false;
+        }
+        return answer;
+        //return Arrays.stream(lastTopSensorVals).average().orElse(Double.NaN) > sensorThreshold;
     }
 
     public double getBoardDistance(){

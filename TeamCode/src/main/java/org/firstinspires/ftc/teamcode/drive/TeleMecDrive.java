@@ -140,10 +140,10 @@ public class TeleMecDrive {
         // So that the control loops on heading and board distance don't get affected
         slowInput = ((-1 + slowFactor) * slowInput)+1;
 
-        double lfPower = y + x*slowInput + turn;
-        double lbPower = y - x*slowInput + turn;
-        double rfPower = y - x*slowInput - turn;
-        double rbPower = y + x*slowInput - turn;
+        double lfPower = y + x*slowInput + turn*slowInput;
+        double lbPower = y - x*slowInput + turn*slowInput;
+        double rfPower = y - x*slowInput - turn*slowInput;
+        double rbPower = y + x*slowInput - turn*slowInput;
 
         lf.setPower(lfPower);
         lb.setPower(lbPower);

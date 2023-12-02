@@ -28,7 +28,7 @@ public class Teleop extends LinearOpMode {
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
     PIDFController boardDistanceController;
-    public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.01,0,0);
+    public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.03,0.001,0.001);
     PIDFController boardHeadingController;
     public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.2,0,0);
     Lift lift;
@@ -72,7 +72,7 @@ public class Teleop extends LinearOpMode {
         // Bind hardware to the hardwaremap
         drive = new TeleMecDrive(hardwareMap, 0.4, false);
         boardDistanceController = new PIDFController(boardDistanceCoeffs);
-        boardDistanceController.setTargetPosition(5);
+        boardDistanceController.setTargetPosition(3);
         boardHeadingController = new PIDFController(boardHeadingCoeffs);
         boardHeadingController.setTargetPosition(0);
         lift = new Lift(hardwareMap);
@@ -111,7 +111,7 @@ public class Teleop extends LinearOpMode {
             // Let board assist take control of the sticks if it's enabled and we're probably trying to score on the board
             boardAssistActive = (
                     boardAssistEnabled &&
-                    arm.getBoardDistance() < 30 &&
+                    arm.getBoardDistance() < 20 &&
                     scoringState == ScoringState.SCORING
                     //&& Math.abs(drive.getNormalizedHeading()) < 0.17
             );
@@ -136,7 +136,8 @@ public class Teleop extends LinearOpMode {
             prevHeadingResetInput = gamepad1.share;
             // Enable/disable board assist in case it causes problems
             if (!prevBoardAssistInput && gamepad1.touchpad){
-                boardAssistEnabled = !boardAssistEnabled;
+                // Disable for comp, not ready yet
+                //boardAssistEnabled = !boardAssistEnabled;
             }
             prevBoardAssistInput = gamepad1.touchpad;
 
@@ -190,6 +191,9 @@ public class Teleop extends LinearOpMode {
                 telemetry.addData("Board assist enabled", boardAssistEnabled);
                 telemetry.addData("Board assist active", boardAssistActive);
                 telemetry.addData("Scoring state", scoringState.name());
+                telemetry.addData("Board distance target", boardDistanceController.getTargetPosition());
+                telemetry.addData("Board distance", arm.getBoardDistance());
+                telemetry.addData("Board distance error", boardDistanceController.getLastError());
                 drive.displayDebug(telemetry);
                 lift.disalayDebug(telemetry);
                 intake.displayDebug(telemetry);
@@ -279,7 +283,10 @@ public class Teleop extends LinearOpMode {
                 arm.setStopperState(poking);
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
-                if ((!prevLiftInput && gamepad1.right_bumper) || (autoRetract && hadAnyPixelsWhenPremoved && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))){
+                if (
+                        (!prevLiftInput && gamepad1.right_bumper) ||
+                        (autoRetract && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
+                ){
                     scoringState = ScoringState.INTAKING;
                     poking = false;
                     // Reset timer so the clock ticks on the arm being away from the board
