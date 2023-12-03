@@ -55,7 +55,7 @@ public class Teleop extends LinearOpMode {
     ScoringState scoringState = ScoringState.INTAKING;
 
     // Configuration
-    boolean autoRetract = true;
+    boolean autoRetract = false;
     boolean autoPremove = true;
     boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
     boolean prevBoardAssistInput = false;

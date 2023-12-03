@@ -168,7 +168,7 @@ public class AutoConstants1 {
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(17, -28*alliance, Math.toRadians(180*alliance)))
+                            .lineToSplineHeading(new Pose2d(17, -27*alliance, Math.toRadians(180*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-7.2-dropOffset;
                     break;
