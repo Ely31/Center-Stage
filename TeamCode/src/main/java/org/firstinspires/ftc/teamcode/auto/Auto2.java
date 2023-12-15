@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
 
 @Config
 @Autonomous
-public class Auto1 extends LinearOpMode {
+public class Auto2 extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
     Camera camera;

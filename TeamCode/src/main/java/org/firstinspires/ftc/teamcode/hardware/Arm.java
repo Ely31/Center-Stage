@@ -26,9 +26,9 @@ public class Arm {
     boolean topState = false;
 
     // Constants
-    public static double pivotIntakingPos = 0.015;
-    public static double pivotScoringPos = 0.865;
-    public static double pivotPremovePos = 0.3;
+    public static double pivotIntakingPos = 0.04;
+    public static double pivotScoringPos = 0.89;
+    public static double pivotPremovePos = 0.25;
     public static double pivotActuationTime = 300;
     public static double pivotAwayFromBordTime = 200;
 

@@ -10,11 +10,11 @@ import org.firstinspires.ftc.teamcode.util.AutoToTele;
 
 import java.util.Random;
 
-public class AutoConstants1 {
+public class AutoConstants2 {
     SampleMecanumDrive drive;
     int randomMessageIndex;
     // Constructor
-    public AutoConstants1(SampleMecanumDrive drive){
+    public AutoConstants2(SampleMecanumDrive drive){
         this.drive = drive;
         randomMessageIndex = new Random().nextInt(messageList.length);
     }
@@ -118,7 +118,7 @@ public class AutoConstants1 {
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -28;
         final double baseYellowPixelYCoord = -28;
-        double yellowPixelXCoord = 54;
+        double yellowPixelXCoord = 52;
 
         if (isWingSide()){
             // Wing side
