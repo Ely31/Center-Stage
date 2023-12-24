@@ -24,7 +24,7 @@ public class Auto2 extends LinearOpMode {
     ScoringMech scoringMech;
     TimeUtil timeUtil = new TimeUtil();
 
-    AutoConstants1 autoConstants;
+    AutoConstants2 autoConstants;
 
     int cycleIndex = 0;
 
@@ -56,7 +56,7 @@ public class Auto2 extends LinearOpMode {
         scoringMech = new ScoringMech(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
-        autoConstants = new AutoConstants1(drive);
+        autoConstants = new AutoConstants2(drive);
         // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);

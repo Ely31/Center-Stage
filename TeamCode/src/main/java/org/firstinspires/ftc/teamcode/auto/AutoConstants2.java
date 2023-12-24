@@ -118,7 +118,7 @@ public class AutoConstants2 {
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -28;
         final double baseYellowPixelYCoord = -28;
-        double yellowPixelXCoord = 52;
+        double yellowPixelXCoord = 51.5;
 
         if (isWingSide()){
             // Wing side

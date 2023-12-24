@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
+import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 
@@ -97,6 +98,8 @@ public class Teleop extends LinearOpMode {
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
+        drive.resetHeading();
+        drive.setHeadingOffset(AutoToTele.endOfAutoHeading + Math.toRadians(90*AutoToTele.allianceSide));
 
         // START OF TELEOP LOOP
         while (opModeIsActive()){

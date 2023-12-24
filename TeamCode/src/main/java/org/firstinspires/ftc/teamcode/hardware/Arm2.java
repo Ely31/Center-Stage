@@ -13,13 +13,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
-public class Arm {
+public class Arm2 {
     ServoImplEx pivot;
     Servo bottomPixel;
     Servo topPixel;
     Servo stopper;
     ColorSensor bottomPixelSensor;
     ColorSensor topPixelSensor;
+    ColorSensor armDownSensor;
     Rev2mDistanceSensor boardSensor;
 
     boolean bottomState = false; // True is closed, false open
@@ -43,13 +44,15 @@ public class Arm {
 
     public static double bottomSensorThreshold = 1100;
     public static double topSensorThreshold = 1100;
+    public static double armSensorThreshold = 1000;
 
     double[] lastBottomSensorVals = new double[3];
     double[] lastTopSensorVals = new double[3];
 
     double lastBoardDistance;
+    double lastArmSensorVal;
 
-    public Arm(HardwareMap hwmap){
+    public Arm2(HardwareMap hwmap){
         // Hardwaremap stuff
         pivot = hwmap.get(ServoImplEx.class, "pivot");
         pivot.setDirection(Servo.Direction.REVERSE);
@@ -60,6 +63,7 @@ public class Arm {
         topPixelSensor = hwmap.get(ColorSensor.class, "topSensor");
         boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
         stopper = hwmap.get(Servo.class, "stopper");
+        armDownSensor = hwmap.get(ColorSensor.class, "armSensor");
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
@@ -140,6 +144,9 @@ public class Arm {
         return answer;
         //return Arrays.stream(lastTopSensorVals).average().orElse(Double.NaN) > sensorThreshold;
     }
+    public boolean armIsDown(){
+        return lastArmSensorVal > armSensorThreshold;
+    }
 
     public double getBoardDistance(){
         return lastBoardDistance;
@@ -156,6 +163,7 @@ public class Arm {
         lastTopSensorVals[0] = topPixelSensor.alpha();
 
         lastBoardDistance = boardSensor.getDistance(DistanceUnit.CM);
+        lastArmSensorVal = armDownSensor.alpha();
     }
 
     public void displayDebug(Telemetry telemetry){
@@ -179,5 +187,6 @@ public class Arm {
         telemetry.addData("Pixel in top", pixelIsInTop());
         telemetry.addData("Stopper state", getStopperState());
         telemetry.addData("Board distance", getBoardDistance());
+        telemetry.addData("Arm sensor val", lastArmSensorVal);
     }
 }

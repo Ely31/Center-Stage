@@ -10,8 +10,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
+import org.firstinspires.ftc.teamcode.hardware.Arm2;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
-import org.firstinspires.ftc.teamcode.hardware.Intake2;
+import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
@@ -32,10 +33,10 @@ public class Teleop2 extends LinearOpMode {
     PIDFController boardHeadingController;
     public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.2,0,0);
     Lift lift;
-    Arm arm;
+    Arm2 arm;
     ElapsedTime pivotTimer = new ElapsedTime();
     ElapsedTime gripperTimer = new ElapsedTime();
-    Intake2 intake;
+    Intake intake;
     DroneLauncher launcher;
     IntegratedClimber climber;
     PurplePixelPusher ppp;
@@ -43,8 +44,11 @@ public class Teleop2 extends LinearOpMode {
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
     boolean prevHeadingResetInput = false;
+    boolean intakeToggledStatus = false;
     boolean poking = false;
     boolean prevPokingInput = false;
+    boolean isClimbing = false;
+    boolean prevClimbingInput = false;
 
     enum ScoringState {
         INTAKING,
@@ -55,8 +59,8 @@ public class Teleop2 extends LinearOpMode {
     ScoringState scoringState = ScoringState.INTAKING;
 
     // Configuration
-    boolean autoRetract = true;
-    boolean autoPremove = true;
+    boolean usePixelSensors = true;
+    boolean prevUsePixelSensorsInput = false;
     boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
     boolean prevBoardAssistInput = false;
     boolean boardAssistActive = false;
@@ -76,8 +80,8 @@ public class Teleop2 extends LinearOpMode {
         boardHeadingController = new PIDFController(boardHeadingCoeffs);
         boardHeadingController.setTargetPosition(0);
         lift = new Lift(hardwareMap);
-        arm = new Arm(hardwareMap);
-        intake = new Intake2(hardwareMap);
+        arm = new Arm2(hardwareMap);
+        intake = new Intake(hardwareMap);
         climber = new IntegratedClimber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
         ppp = new PurplePixelPusher(hardwareMap);
@@ -137,41 +141,52 @@ public class Teleop2 extends LinearOpMode {
             // Enable/disable board assist in case it causes problems
             if (!prevBoardAssistInput && gamepad1.touchpad){
                 boardAssistEnabled = !boardAssistEnabled;
-                autoPremove = !autoPremove;
-                autoRetract = !autoRetract;
             }
             prevBoardAssistInput = gamepad1.touchpad;
 
-            // ARM AND LIFT CONTROL
-            // This method here does most of the heavy work
-            updateScoringMech();
-            // Edit the extended position with the joystick on gamepad two
-            // This works even when the lift is down
-            lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
-            // Update the lift so its pid controller runs, very important
-            // But, if you press a special key combo, escape pid control and bring the lift down
-            // With raw power to fix potential lift issues
-            if (gamepad2.dpad_left && gamepad2.share){
-                lift.setRawPowerDangerous(-0.7);
-                lift.zero();
-            } else if (gamepad2.dpad_right && gamepad2.share) {
-                lift.setRawPowerDangerous(1);
-                lift.zero();
+            // Enable/disable autoPremove and autoRetract in case they causes problems
+            if (!prevUsePixelSensorsInput && gamepad2.ps){
+                usePixelSensors = !usePixelSensors;
             }
-            else {lift.update();}
-            // Update arm
-            arm.update();
+            prevUsePixelSensorsInput = gamepad2.ps;
+
+            // ARM AND LIFT CONTROL
+            if (!isClimbing) {
+                // This method here does most of the heavy work
+                updateScoringMech();
+                // Edit the extended position with the joystick on gamepad two
+                // Only works when the lift is up
+                if (scoringState == ScoringState.SCORING)
+                    lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
+                // Update the lift so its pid controller runs, very important
+                // But, if you press a special key combo, escape pid control and bring the lift down
+                // With raw power to fix potential lift issues
+                if (gamepad2.dpad_left && gamepad2.share) {
+                    lift.setRawPowerDangerous(-0.85);
+                    lift.zero();
+                } else if (gamepad2.dpad_right && gamepad2.share) {
+                    lift.setRawPowerDangerous(1);
+                    lift.zero();
+                } else {
+                    lift.update();
+                }
+                // Update arm
+                arm.update();
+            } else {
+                // CLIMBER CONTROL
+                // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
+                arm.pivotGoToIntake();
+                // Move the lift up if you move the stick up
+                if (-gamepad2.left_stick_y > 0.2) lift.setRawPowerDangerous(-gamepad2.left_stick_y);
+                // Pull down with the climber if you move the stick down
+                if (-gamepad2.left_stick_y > -0.2) climber.setPower(-gamepad2.left_stick_y);
+            }
 
             // INTAKE CONTROL
             if (gamepad1.b) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
-            else if ((scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS) && lift.getHeight() < 0.5) intake.toggle(gamepad1.a);
+            else if (arm.armIsDown()) intake.toggle(gamepad1.a);
             else intake.off();
-
-            // CLIMBER CONTROL
-            // Require pressing two keys at once to reduce accidental input
-            climber.toggle(gamepad2.left_bumper && gamepad2.right_bumper);
-            climber.update();
 
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it
@@ -180,13 +195,15 @@ public class Teleop2 extends LinearOpMode {
             // so we don't have to restart the program every time
             else launcher.hold();
 
-            // Send signals to drivers when endgame approaches
-            timeUtil.updateAll(matchTimer.milliseconds(), gamepad1, gamepad2);
-            // TELEMETRY
-            // Show the set height of the lift on a horizontal bar so driver 2 can see it easier than reading a number
-            telemetry.addData("Lift target height", lift.getExtendedPos());
+            // TOGGLE CLIMBING
+            if ((gamepad2.left_bumper && gamepad2.right_bumper) && !prevClimbingInput){
+                isClimbing = !isClimbing;
+            }
+            prevClimbingInput = gamepad2.left_bumper && gamepad2.right_bumper;
 
+            // TELEMETRY
             if (debug) {
+                telemetry.addData("Using pixel sensors", usePixelSensors);
                 telemetry.addData("Board assist enabled", boardAssistEnabled);
                 telemetry.addData("Board assist active", boardAssistActive);
                 telemetry.addData("Scoring state", scoringState.name());
@@ -198,6 +215,7 @@ public class Teleop2 extends LinearOpMode {
                 intake.displayDebug(telemetry);
                 arm.displayDebug(telemetry);
                 climber.disalayDebug(telemetry);
+                timeUtil.update(matchTimer.milliseconds());
                 timeUtil.displayDebug(telemetry, matchTimer);
             }
             // Someone should be able to learn how to drive without looking at the source code
@@ -217,14 +235,16 @@ public class Teleop2 extends LinearOpMode {
                 arm.pivotGoToIntake();
                 // Wait to retract the lift until the arm is safely away from the board
                 if (pivotTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
-                // Open the grippers so we can actually intake
-                arm.setBothGrippersState(false);
                 // Put up the stopper so pixels don't fly out the back
                 arm.setStopperState(true);
+                // If we had pixels when premoved and now moved back down to intaking,
+                // hold onto them until the arm gets all the way down so they don't fly out.
+                // Open them to intake once the arm gets all the way there.
+                arm.setBothGrippersState(!arm.armIsDown());
 
                 // Switch states when bumper pressed
                 // Or, (and this'll happen 99% of the time) when it has both pixels
-                if ((autoPremove && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad1.right_bumper)){
+                if ((usePixelSensors && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad1.right_bumper)){
                     // Grab 'em and move the arm up
                     arm.setBothGrippersState(true);
                     gripperTimer.reset();
@@ -246,7 +266,7 @@ public class Teleop2 extends LinearOpMode {
                 arm.setBothGrippersState(true);
                 arm.setStopperState(false);
                 // Toggle the intake off to prevent sucking in pixels when the arm isn't there
-                intake.forceToggleOff();
+                intakeToggledStatus = false;
                 // Switch states when bumper pressed
                 if (!prevLiftInput && gamepad1.right_bumper){
                     scoringState = ScoringState.SCORING;
@@ -258,33 +278,33 @@ public class Teleop2 extends LinearOpMode {
             case SCORING:
                 arm.pivotScore();
                 lift.extend();
-                //arm.setStopperState(false);
+                arm.setStopperState(false);
                 // Release the top and bottom individually if we wish
-                if (gamepad1.a) {
+                if (gamepad2.a) {
                     arm.setBottomGripperState(false);
                     poking = false;
                 }
-                if (gamepad1.y) {
+                if (gamepad2.y) {
                     arm.setTopGripperState(false);
                     poking = false;
                 }
                 // But more often used, drop them both at once
-                if (gamepad1.left_bumper) {
+                if (gamepad2.left_bumper) {
                     arm.setBothGrippersState(false);
                     poking = false;
                 }
 
                 // Toggle the poker
-                if (gamepad2.a && !prevPokingInput){
+                if (gamepad2.b && !prevPokingInput){
                     poking = !poking;
                 }
-                prevPokingInput = gamepad2.a;
+                prevPokingInput = gamepad2.b;
                 arm.setStopperState(poking);
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
                 if (
                         (!prevLiftInput && gamepad1.right_bumper) ||
-                        (autoRetract && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
+                        (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
                 ){
                     scoringState = ScoringState.INTAKING;
                     poking = false;

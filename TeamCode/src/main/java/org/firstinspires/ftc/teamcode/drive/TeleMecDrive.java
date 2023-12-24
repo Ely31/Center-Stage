@@ -104,7 +104,7 @@ public class TeleMecDrive {
 
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
 
-        heading = (orientation.getYaw(AngleUnit.RADIANS) + headingOffset + AutoToTele.endOfAutoHeading);
+        heading = (orientation.getYaw(AngleUnit.RADIANS) + headingOffset);
 
         // Matrix math I don't understand to rotate the joystick input by the heading
         rotX = x * Math.cos(-heading) - -y * Math.sin(-heading);
@@ -152,8 +152,11 @@ public class TeleMecDrive {
     }
 
     public void resetHeading(){
-        // TODO: Will need to fix this
         headingOffset = -(getHeading() - headingOffset);
+    }
+
+    public void setHeadingOffset(double headingOffset){
+        this.headingOffset = headingOffset;
     }
 
     public void displayDebug(Telemetry telemetry){
@@ -161,5 +164,8 @@ public class TeleMecDrive {
         telemetry.addData("Heading in radians", getHeading());
         telemetry.addData("Heading in degrees", Math.toDegrees(getHeading()));
         telemetry.addData("Normalized heading in radians", getNormalizedHeading());
+        telemetry.addData("End of auto heading", AutoToTele.endOfAutoHeading);
+        telemetry.addData("End of auto heading in degrees", Math.toDegrees(AutoToTele.endOfAutoHeading));
+        telemetry.addData("End of auto side", AutoToTele.allianceSide);
     }
 }
