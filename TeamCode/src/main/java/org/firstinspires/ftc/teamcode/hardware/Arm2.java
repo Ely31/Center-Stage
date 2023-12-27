@@ -20,7 +20,7 @@ public class Arm2 {
     Servo stopper;
     ColorSensor bottomPixelSensor;
     ColorSensor topPixelSensor;
-    ColorSensor armDownSensor;
+    ColorSensor armSensor;
     Rev2mDistanceSensor boardSensor;
 
     boolean bottomState = false; // True is closed, false open
@@ -63,7 +63,7 @@ public class Arm2 {
         topPixelSensor = hwmap.get(ColorSensor.class, "topSensor");
         boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
         stopper = hwmap.get(Servo.class, "stopper");
-        armDownSensor = hwmap.get(ColorSensor.class, "armSensor");
+        armSensor = hwmap.get(ColorSensor.class, "armSensor");
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
@@ -163,7 +163,7 @@ public class Arm2 {
         lastTopSensorVals[0] = topPixelSensor.alpha();
 
         lastBoardDistance = boardSensor.getDistance(DistanceUnit.CM);
-        lastArmSensorVal = armDownSensor.alpha();
+        lastArmSensorVal = armSensor.alpha();
     }
 
     public void displayDebug(Telemetry telemetry){
@@ -188,5 +188,6 @@ public class Arm2 {
         telemetry.addData("Stopper state", getStopperState());
         telemetry.addData("Board distance", getBoardDistance());
         telemetry.addData("Arm sensor val", lastArmSensorVal);
+        telemetry.addData("Arm is down", armIsDown());
     }
 }

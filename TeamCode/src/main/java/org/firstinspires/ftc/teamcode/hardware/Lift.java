@@ -27,7 +27,7 @@ public class Lift {
 
 
     public Lift(HardwareMap hwmap){
-        liftActuator = new LinearActuator(hwmap, "lift", 13.7, 5.93);
+        liftActuator = new LinearActuator(hwmap, "lift", 19.2, 5.93);
         liftActuator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         liftActuator.zero();
         liftActuator.setLimits(minHeight, maxHeight);

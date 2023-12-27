@@ -12,7 +12,9 @@ import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ScoringMech;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
-import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
+import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
+
+import java.util.Objects;
 
 @Config
 @Autonomous
@@ -20,7 +22,7 @@ public class Auto2 extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
     Camera camera;
-    TeamPropDetector propPipeline = new TeamPropDetector(true);
+    TeamPropDetector2 propPipeline = new TeamPropDetector2(true);
     ScoringMech scoringMech;
     TimeUtil timeUtil = new TimeUtil();
 
@@ -87,12 +89,12 @@ public class Auto2 extends LinearOpMode {
             prevToggleOffset = gamepad1.y;
 
             // Recompute trajectories every few seconds or every time you make a change
-            if (pipelineThrottle.seconds() > 5 || !(autoConstants.autoConfigToEnglish() == autoConstants.prevConfigToEnglish)){
+            if (pipelineThrottle.seconds() > 5 || !(Objects.equals(autoConstants.autoConfigToEnglish(), autoConstants.prevConfigToEnglish))){
                 // Update stuff
                 autoConstants.updateCorrectedSpikeMarkPos(propPipeline.getAnalysis());
                 autoConstants.updateTrajectories();
                 // switch propPipeline between red and blue based on alliance selected
-                propPipeline = new TeamPropDetector(autoConstants.allianceToBool());
+                propPipeline = new TeamPropDetector2(autoConstants.allianceToBool());
                 camera.setPipeline(propPipeline);
 
                 drive.setPoseEstimate(autoConstants.startPos);

@@ -10,6 +10,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class IntegratedClimber {
     DcMotor climberMotor;
     public IntegratedClimber(HardwareMap hwmap){
+        climberMotor = hwmap.get(DcMotor.class, "climber");
         climberMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         zero();
     }

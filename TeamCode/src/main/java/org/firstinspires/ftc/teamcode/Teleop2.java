@@ -30,8 +30,8 @@ public class Teleop2 extends LinearOpMode {
     TeleMecDrive drive;
     PIDFController boardDistanceController;
     public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.03,0.001,0.001);
-    PIDFController boardHeadingController;
-    public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.2,0,0);
+    //PIDFController boardHeadingController;
+    //public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.2,0,0);
     Lift lift;
     Arm2 arm;
     ElapsedTime pivotTimer = new ElapsedTime();
@@ -44,11 +44,16 @@ public class Teleop2 extends LinearOpMode {
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
     boolean prevHeadingResetInput = false;
-    boolean intakeToggledStatus = false;
     boolean poking = false;
     boolean prevPokingInput = false;
     boolean isClimbing = false;
     boolean prevClimbingInput = false;
+    boolean usePixelSensors = true;
+    boolean prevUsePixelSensorsInput = false;
+    boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
+    boolean prevBoardAssistInput = false;
+    boolean boardAssistActive = false;
+    final boolean useBulkreads = true;
 
     enum ScoringState {
         INTAKING,
@@ -58,13 +63,6 @@ public class Teleop2 extends LinearOpMode {
     }
     ScoringState scoringState = ScoringState.INTAKING;
 
-    // Configuration
-    boolean usePixelSensors = true;
-    boolean prevUsePixelSensorsInput = false;
-    boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
-    boolean prevBoardAssistInput = false;
-    boolean boardAssistActive = false;
-    final boolean useBulkreads = true;
     // Telemetry options
     public static boolean debug = true;
     public static boolean instructionsOn = false;
@@ -77,8 +75,8 @@ public class Teleop2 extends LinearOpMode {
         drive = new TeleMecDrive(hardwareMap, 0.4, false);
         boardDistanceController = new PIDFController(boardDistanceCoeffs);
         boardDistanceController.setTargetPosition(3);
-        boardHeadingController = new PIDFController(boardHeadingCoeffs);
-        boardHeadingController.setTargetPosition(0);
+        //boardHeadingController = new PIDFController(boardHeadingCoeffs);
+        //boardHeadingController.setTargetPosition(0);
         lift = new Lift(hardwareMap);
         arm = new Arm2(hardwareMap);
         intake = new Intake(hardwareMap);
@@ -157,7 +155,12 @@ public class Teleop2 extends LinearOpMode {
                 // Edit the extended position with the joystick on gamepad two
                 // Only works when the lift is up
                 if (scoringState == ScoringState.SCORING)
-                    lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
+                    // If you press the trigger, change the lift height slower
+                    if (gamepad2.right_trigger > 0.2) {
+                        lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep * 0.5);
+                    } else {
+                        lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
+                    }
                 // Update the lift so its pid controller runs, very important
                 // But, if you press a special key combo, escape pid control and bring the lift down
                 // With raw power to fix potential lift issues
@@ -243,7 +246,7 @@ public class Teleop2 extends LinearOpMode {
                 arm.setBothGrippersState(!arm.armIsDown());
 
                 // Switch states when bumper pressed
-                // Or, (and this'll happen 99% of the time) when it has both pixels
+                // Or, (and this'll happen 95% of the time) when it has both pixels
                 if ((usePixelSensors && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad1.right_bumper)){
                     // Grab 'em and move the arm up
                     arm.setBothGrippersState(true);
@@ -266,19 +269,19 @@ public class Teleop2 extends LinearOpMode {
                 arm.setBothGrippersState(true);
                 arm.setStopperState(false);
                 // Toggle the intake off to prevent sucking in pixels when the arm isn't there
-                intakeToggledStatus = false;
+                intake.forceToggleOff();
                 // Switch states when bumper pressed
                 if (!prevLiftInput && gamepad1.right_bumper){
                     scoringState = ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
+                    poking = false;
                 }
                 break;
 
             case SCORING:
                 arm.pivotScore();
                 lift.extend();
-                arm.setStopperState(false);
                 // Release the top and bottom individually if we wish
                 if (gamepad2.a) {
                     arm.setBottomGripperState(false);

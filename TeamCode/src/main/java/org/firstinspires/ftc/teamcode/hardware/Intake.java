@@ -21,14 +21,14 @@ public class Intake {
     }
 
     public void on(){
-        intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setPower(0.75);
     }
     public void off(){
         intakeMotor.setPower(0);
     }
     public void reverse(){
-        intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setPower(-1);
     }
 
