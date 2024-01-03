@@ -30,8 +30,6 @@ public class Teleop2 extends LinearOpMode {
     TeleMecDrive drive;
     PIDFController boardDistanceController;
     public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.03,0.001,0.001);
-    //PIDFController boardHeadingController;
-    //public static PIDCoefficients boardHeadingCoeffs = new PIDCoefficients(0.2,0,0);
     Lift lift;
     Arm2 arm;
     ElapsedTime pivotTimer = new ElapsedTime();
@@ -75,8 +73,6 @@ public class Teleop2 extends LinearOpMode {
         drive = new TeleMecDrive(hardwareMap, 0.4, false);
         boardDistanceController = new PIDFController(boardDistanceCoeffs);
         boardDistanceController.setTargetPosition(3);
-        //boardHeadingController = new PIDFController(boardHeadingCoeffs);
-        //boardHeadingController.setTargetPosition(0);
         lift = new Lift(hardwareMap);
         arm = new Arm2(hardwareMap);
         intake = new Intake(hardwareMap);
@@ -179,10 +175,10 @@ public class Teleop2 extends LinearOpMode {
                 // CLIMBER CONTROL
                 // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
                 arm.pivotGoToIntake();
-                // Move the lift up if you move the stick up
-                if (-gamepad2.left_stick_y > 0.2) lift.setRawPowerDangerous(-gamepad2.left_stick_y);
-                // Pull down with the climber if you move the stick down
-                if (-gamepad2.left_stick_y > -0.2) climber.setPower(-gamepad2.left_stick_y);
+                // Control lift with left stick
+                lift.setRawPowerDangerous(-gamepad2.left_stick_y);
+                // And climber with right
+                climber.setPower(-gamepad2.right_stick_y);
             }
 
             // INTAKE CONTROL
@@ -200,6 +196,10 @@ public class Teleop2 extends LinearOpMode {
 
             // TOGGLE CLIMBING
             if ((gamepad2.left_bumper && gamepad2.right_bumper) && !prevClimbingInput){
+                // Reset pid controllers because otherwise the integral part gets extremely high
+                if (isClimbing) {
+                    lift.setCoefficients(Lift.coeffs);
+                }
                 isClimbing = !isClimbing;
             }
             prevClimbingInput = gamepad2.left_bumper && gamepad2.right_bumper;

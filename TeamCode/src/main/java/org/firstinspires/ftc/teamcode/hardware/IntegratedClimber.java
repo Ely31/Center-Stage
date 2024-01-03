@@ -12,7 +12,7 @@ public class IntegratedClimber {
     public IntegratedClimber(HardwareMap hwmap){
         climberMotor = hwmap.get(DcMotor.class, "climber");
         climberMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        zero();
+        //zero();
     }
 
     public void zero(){

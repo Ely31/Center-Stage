@@ -43,7 +43,7 @@ public class Arm2 {
     boolean stopperState = false;
 
     public static double bottomSensorThreshold = 1100;
-    public static double topSensorThreshold = 1100;
+    public static double topSensorThreshold = 1550;
     public static double armSensorThreshold = 1000;
 
     double[] lastBottomSensorVals = new double[3];
