@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
@@ -9,7 +8,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
@@ -21,14 +19,14 @@ public class Arm2 {
     ColorSensor bottomPixelSensor;
     ColorSensor topPixelSensor;
     ColorSensor armSensor;
-    Rev2mDistanceSensor boardSensor;
+    //Rev2mDistanceSensor boardSensor;
 
     boolean bottomState = false; // True is closed, false open
     boolean topState = false;
 
     // Constants
     public static double pivotIntakingPos = 0.0;
-    public static double pivotScoringPos = 0.89;
+    public static double pivotScoringPos = 0.87;
     public static double pivotPremovePos = 0.25;
     public static double pivotActuationTime = 300;
     public static double pivotAwayFromBordTime = 200;
@@ -49,7 +47,7 @@ public class Arm2 {
     double[] lastBottomSensorVals = new double[3];
     double[] lastTopSensorVals = new double[3];
 
-    double lastBoardDistance;
+    //double lastBoardDistance;
     double lastArmSensorVal;
 
     public Arm2(HardwareMap hwmap){
@@ -61,7 +59,7 @@ public class Arm2 {
         topPixel = hwmap.get(Servo.class, "topPixel");
         bottomPixelSensor = hwmap.get(ColorSensor.class, "bottomSensor");
         topPixelSensor = hwmap.get(ColorSensor.class, "topSensor");
-        boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
+        //boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
         stopper = hwmap.get(Servo.class, "stopper");
         armSensor = hwmap.get(ColorSensor.class, "armSensor");
 
@@ -149,7 +147,8 @@ public class Arm2 {
     }
 
     public double getBoardDistance(){
-        return lastBoardDistance;
+        //return lastBoardDistance;
+        return 0;
     }
 
     public void update(){
@@ -162,7 +161,7 @@ public class Arm2 {
         lastTopSensorVals[1] = lastTopSensorVals[0];
         lastTopSensorVals[0] = topPixelSensor.alpha();
 
-        lastBoardDistance = boardSensor.getDistance(DistanceUnit.CM);
+        //lastBoardDistance = boardSensor.getDistance(DistanceUnit.CM);
         lastArmSensorVal = armSensor.alpha();
     }
 

@@ -119,6 +119,7 @@ public class Auto2 extends LinearOpMode {
                 // This first state is vestigial and isn't needed
                 case GRABBING_PRELOADS:
                     scoringMech.premove();
+                    scoringMech.grabJustForPreload();
                     // Once the claw is shut, premove the v4b, then move on to the next state
                     if (actionTimer.milliseconds() > Arm.gripperActuationTime){
                         // Set the drive on it's next trajectory

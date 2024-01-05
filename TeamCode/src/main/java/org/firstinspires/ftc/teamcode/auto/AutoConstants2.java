@@ -108,16 +108,16 @@ public class AutoConstants2 {
     public void updateTrajectories() {
         // Change start pose, pretty important
         if (isWingSide()) {
-            startPos = new Pose2d(-35.25, -61.5 * alliance, Math.toRadians(90 * alliance));
+            startPos = new Pose2d(-35.25, -63.5 * alliance, Math.toRadians(-90 * alliance));
         } else {
-            startPos = new Pose2d(11.75, -61.5 * alliance, Math.toRadians(90 * alliance));
+            startPos = new Pose2d(11.75, -63.5 * alliance, Math.toRadians(-90 * alliance));
         }
         // Switch this so we don't drop our pixel in the same spot as our partner
         dropOffset = (isDropOffset() ? 3 : 0);
 
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -28;
-        final double baseYellowPixelYCoord = -28;
+        final double baseYellowPixelYCoord = -29;
         double yellowPixelXCoord = 51.5;
 
         if (isWingSide()){
@@ -126,21 +126,21 @@ public class AutoConstants2 {
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(-46, -29 * alliance, Math.toRadians(-90 * alliance)))
+                            .lineToSplineHeading(new Pose2d(-46, -29 * alliance, Math.toRadians(90 * alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(-40, -18.5 * alliance, Math.toRadians(-89.9 * alliance))) // 89.9 so it turns CW
+                            .lineToSplineHeading(new Pose2d(-40, -14.5 * alliance, Math.toRadians(89.9 * alliance))) // 89.9 so it turns CW
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-7-dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(-32.5, -36 * alliance, Math.toRadians(0 * alliance)))
+                            .lineToSplineHeading(new Pose2d(-35.5, -36 * alliance, Math.toRadians(180 * alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-13-dropOffset;
                     break;
@@ -161,19 +161,19 @@ public class AutoConstants2 {
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(9.5, -35*alliance, Math.toRadians(180*alliance)))
+                            .lineToSplineHeading(new Pose2d(10.5, -35*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-dropOffset;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(17, -27*alliance, Math.toRadians(180*alliance)))
+                            .lineToSplineHeading(new Pose2d(22, -24*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-7.2-dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(28.50, -31.80*alliance, Math.toRadians(180*alliance)))
+                            .lineToSplineHeading(new Pose2d(33.5, -31.80*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-13.5-dropOffset;
                     break;

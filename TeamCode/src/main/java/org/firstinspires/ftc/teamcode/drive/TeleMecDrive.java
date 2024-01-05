@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 
 // This has way more functions than you really need
@@ -93,6 +92,7 @@ public class TeleMecDrive {
         //initialize imu
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(orientationOnRobot));
+        resetIMU();
 
         this.slowFactor = slowFactor;
     }
@@ -102,9 +102,7 @@ public class TeleMecDrive {
 
         slowInput = ((-1 + slowFactor) * slowInput)+1;
 
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-
-        heading = (orientation.getYaw(AngleUnit.RADIANS) + headingOffset);
+        heading = (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + headingOffset);
 
         // Matrix math I don't understand to rotate the joystick input by the heading
         rotX = x * Math.cos(-heading) - -y * Math.sin(-heading);
@@ -151,12 +149,14 @@ public class TeleMecDrive {
         rb.setPower(rbPower);
     }
 
-    public void resetHeading(){
-        headingOffset = -(getHeading() - headingOffset);
+    public void resetIMU(){
+        imu.resetYaw();
     }
-
     public void setHeadingOffset(double headingOffset){
         this.headingOffset = headingOffset;
+    }
+    public void resetHeadingOffset(){
+        headingOffset = 0;
     }
 
     public void displayDebug(Telemetry telemetry){

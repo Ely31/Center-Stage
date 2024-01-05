@@ -33,7 +33,7 @@ public class BaseTeleOp extends LinearOpMode {
                     gamepad1.right_stick_x,
                     gamepad1.right_trigger);
 
-            if (gamepad1.back) drive.resetHeading();
+            if (gamepad1.back) drive.resetIMU();
 
             telemetry.addData("avg loop time (ms)", timeUtil.getAverageLoopTime());
             telemetry.addData("period", timeUtil.getPeriod());

@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
+import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 
@@ -48,9 +49,9 @@ public class Teleop2 extends LinearOpMode {
     boolean prevClimbingInput = false;
     boolean usePixelSensors = true;
     boolean prevUsePixelSensorsInput = false;
-    boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
-    boolean prevBoardAssistInput = false;
-    boolean boardAssistActive = false;
+    //boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
+    //boolean prevBoardAssistInput = false;
+    //boolean boardAssistActive = false;
     final boolean useBulkreads = true;
 
     enum ScoringState {
@@ -95,6 +96,8 @@ public class Teleop2 extends LinearOpMode {
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
+        // Automatic feild centric calibration
+        drive.setHeadingOffset(AutoToTele.endOfAutoHeading + Math.toRadians(-90*AutoToTele.allianceSide));
 
         // START OF TELEOP LOOP
         while (opModeIsActive()){
@@ -107,12 +110,13 @@ public class Teleop2 extends LinearOpMode {
 
             // DRIVING
             // Let board assist take control of the sticks if it's enabled and we're probably trying to score on the board
-            boardAssistActive = (
+            /*boardAssistActive = (
                     boardAssistEnabled &&
                     arm.getBoardDistance() < 20 &&
                     scoringState == ScoringState.SCORING
                     //&& Math.abs(drive.getNormalizedHeading()) < 0.17
             );
+
             if (boardAssistActive){
                 drive.driveBoardLocked(
                         gamepad1.left_stick_y,
@@ -129,15 +133,27 @@ public class Teleop2 extends LinearOpMode {
                         gamepad1.right_trigger
                 );
             }
+             */
+            // Drive the bot normally
+            drive.driveFieldCentric(
+                    gamepad1.left_stick_x,
+                    gamepad1.left_stick_y,
+                    gamepad1.right_stick_x * 0.8,
+                    gamepad1.right_trigger
+            );
             // Manually calibrate field centric with a button
-            if (gamepad1.share && !prevHeadingResetInput) drive.resetHeading();
+            if (gamepad1.share && !prevHeadingResetInput) {
+                drive.resetIMU();
+                drive.resetHeadingOffset();
+            }
             prevHeadingResetInput = gamepad1.share;
+            /*
             // Enable/disable board assist in case it causes problems
             if (!prevBoardAssistInput && gamepad1.touchpad){
                 boardAssistEnabled = !boardAssistEnabled;
             }
             prevBoardAssistInput = gamepad1.touchpad;
-
+            */
             // Enable/disable autoPremove and autoRetract in case they causes problems
             if (!prevUsePixelSensorsInput && gamepad2.ps){
                 usePixelSensors = !usePixelSensors;
@@ -207,12 +223,16 @@ public class Teleop2 extends LinearOpMode {
             // TELEMETRY
             if (debug) {
                 telemetry.addData("Using pixel sensors", usePixelSensors);
-                telemetry.addData("Board assist enabled", boardAssistEnabled);
-                telemetry.addData("Board assist active", boardAssistActive);
+                telemetry.addData("Climbing", isClimbing);
+                //telemetry.addData("Board assist enabled", boardAssistEnabled);
+                //telemetry.addData("Board assist active", boardAssistActive);
                 telemetry.addData("Scoring state", scoringState.name());
                 telemetry.addData("Board distance target", boardDistanceController.getTargetPosition());
                 telemetry.addData("Board distance", arm.getBoardDistance());
                 telemetry.addData("Board distance error", boardDistanceController.getLastError());
+                telemetry.addLine();
+                telemetry.addLine("SUBSYSTEMS");
+                telemetry.addLine();
                 drive.displayDebug(telemetry);
                 lift.disalayDebug(telemetry);
                 intake.displayDebug(telemetry);
@@ -244,10 +264,11 @@ public class Teleop2 extends LinearOpMode {
                 // hold onto them until the arm gets all the way down so they don't fly out.
                 // Open them to intake once the arm gets all the way there.
                 arm.setBothGrippersState(!arm.armIsDown());
-
+                // Reset poker
+                poking = false;
                 // Switch states when bumper pressed
                 // Or, (and this'll happen 95% of the time) when it has both pixels
-                if ((usePixelSensors && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad1.right_bumper)){
+                if ((usePixelSensors && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad2.right_bumper)){
                     // Grab 'em and move the arm up
                     arm.setBothGrippersState(true);
                     gripperTimer.reset();
@@ -270,12 +291,17 @@ public class Teleop2 extends LinearOpMode {
                 arm.setStopperState(false);
                 // Toggle the intake off to prevent sucking in pixels when the arm isn't there
                 intake.forceToggleOff();
+                // Reset poker
+                poking = false;
                 // Switch states when bumper pressed
-                if (!prevLiftInput && gamepad1.right_bumper){
+                if (!prevLiftInput && gamepad2.right_bumper){
                     scoringState = ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
-                    poking = false;
+                }
+                // Go back to intaking if the arm pulled up before getting both pixels
+                if (gamepad2.dpad_left){
+                    scoringState = ScoringState.INTAKING;
                 }
                 break;
 
@@ -306,16 +332,20 @@ public class Teleop2 extends LinearOpMode {
 
                 // Switch states when bumper pressed or both pixels are gone if autoRetract is on
                 if (
-                        (!prevLiftInput && gamepad1.right_bumper) ||
+                        (!prevLiftInput && gamepad2.right_bumper) ||
                         (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
                 ){
                     scoringState = ScoringState.INTAKING;
-                    poking = false;
                     // Reset timer so the clock ticks on the arm being away from the board
+                    pivotTimer.reset();
+                }
+                // Go back to premoved if we wish
+                if (gamepad2.dpad_left){
+                    scoringState = ScoringState.PREMOVED;
                     pivotTimer.reset();
                 }
                 break;
         }
-        prevLiftInput = gamepad1.right_bumper;
+        prevLiftInput = gamepad2.right_bumper;
     }
 }

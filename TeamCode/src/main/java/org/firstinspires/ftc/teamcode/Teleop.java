@@ -98,7 +98,7 @@ public class Teleop extends LinearOpMode {
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
-        drive.resetHeading();
+        drive.resetIMU();
         drive.setHeadingOffset(AutoToTele.endOfAutoHeading + Math.toRadians(90*AutoToTele.allianceSide));
 
         // START OF TELEOP LOOP
@@ -135,7 +135,7 @@ public class Teleop extends LinearOpMode {
                 );
             }
             // Manually calibrate field centric with a button
-            if (gamepad1.share && !prevHeadingResetInput) drive.resetHeading();
+            if (gamepad1.share && !prevHeadingResetInput) drive.resetIMU();
             prevHeadingResetInput = gamepad1.share;
             // Enable/disable board assist in case it causes problems
             if (!prevBoardAssistInput && gamepad1.touchpad){

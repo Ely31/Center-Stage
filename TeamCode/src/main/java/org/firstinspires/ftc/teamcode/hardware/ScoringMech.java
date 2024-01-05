@@ -109,6 +109,7 @@ public class ScoringMech {
                 lift.setHeight(height);
                 arm.pivotScore();
                 arm.setStopperState(false);
+                arm.setBothGrippersState(true);
                 // Move on if the lift is all the way up
                 if (Utility.withinErrorOfValue(lift.getHeight(), height, 0.5)) {
                     scoringWait.reset();
@@ -117,7 +118,7 @@ public class ScoringMech {
                 break;
 
             case WAITING_FOR_ARM_PIVOT:
-                if (scoringWait.seconds() > 0.4){ // Wait for the arm to move all the way
+                if (scoringWait.seconds() > 1) { // Wait for the arm to move all the way
                     arm.setBothGrippersState(false); // Drop the pixels
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_PIXELS_DROP;

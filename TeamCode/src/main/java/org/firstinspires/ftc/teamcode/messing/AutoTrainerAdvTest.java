@@ -34,7 +34,7 @@ public class AutoTrainerAdvTest extends LinearOpMode {
             else {
                 teleDrive.driveFieldCentric(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_trigger);
             }
-            if (gamepad1.back) teleDrive.resetHeading();
+            if (gamepad1.back) teleDrive.resetIMU();
 
             // Make a lineTo
             if (!lastCaptureLineToInput && gamepad1.a && gamepad1.left_bumper){

@@ -31,7 +31,7 @@ public class AutoTrainerTest extends LinearOpMode {
         while (opModeIsActive()){
 
             teleDrive.driveFieldCentric(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_trigger);
-            if (gamepad1.back) teleDrive.resetHeading();
+            if (gamepad1.back) teleDrive.resetIMU();
 
             if (!lastCapturePoseInput && gamepad1.a){
                 trainer.addPoseToFile();
