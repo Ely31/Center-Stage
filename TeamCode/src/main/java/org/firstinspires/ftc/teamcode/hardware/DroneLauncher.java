@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class DroneLauncher {
     Servo launcher;
     public static double releasePos = 0.8;
-    public static double holdPos = 0.5;
+    public static double holdPos = 0.53;
 
     public DroneLauncher(HardwareMap hwmap){
         launcher = hwmap.get(Servo.class, "launcher");

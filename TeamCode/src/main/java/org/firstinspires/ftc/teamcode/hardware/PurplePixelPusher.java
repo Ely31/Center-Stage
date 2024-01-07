@@ -9,8 +9,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @Config
 public class PurplePixelPusher {
     Servo ppp;
-    public static double pppClampPos = 0.065;
-    public static double pppOpenPos = 0.15;
+    public static double pppClampPos = 0.6;
+    public static double pppOpenPos = 0;
 
     boolean state;
 

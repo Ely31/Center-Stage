@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.control.PIDCoefficients;
-import com.acmerobotics.roadrunner.control.PIDFController;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -15,7 +13,6 @@ import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
-import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
@@ -23,14 +20,13 @@ import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import java.util.List;
 
 @Config
+//@Photon
 @TeleOp
 public class Teleop2 extends LinearOpMode {
     // Pre init
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
-    PIDFController boardDistanceController;
-    public static PIDCoefficients boardDistanceCoeffs = new PIDCoefficients(0.03,0.001,0.001);
     Lift lift;
     Arm2 arm;
     ElapsedTime pivotTimer = new ElapsedTime();
@@ -38,7 +34,6 @@ public class Teleop2 extends LinearOpMode {
     Intake intake;
     DroneLauncher launcher;
     IntegratedClimber climber;
-    PurplePixelPusher ppp;
 
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
@@ -49,9 +44,6 @@ public class Teleop2 extends LinearOpMode {
     boolean prevClimbingInput = false;
     boolean usePixelSensors = true;
     boolean prevUsePixelSensorsInput = false;
-    //boolean boardAssistEnabled = false; // Use the distance sensor and imu to position the bot to the board automatially
-    //boolean prevBoardAssistInput = false;
-    //boolean boardAssistActive = false;
     final boolean useBulkreads = true;
 
     enum ScoringState {
@@ -71,17 +63,12 @@ public class Teleop2 extends LinearOpMode {
         // Init
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
-        drive = new TeleMecDrive(hardwareMap, 0.4, false);
-        boardDistanceController = new PIDFController(boardDistanceCoeffs);
-        boardDistanceController.setTargetPosition(3);
+        drive = new TeleMecDrive(hardwareMap, 0.3, false);
         lift = new Lift(hardwareMap);
         arm = new Arm2(hardwareMap);
         intake = new Intake(hardwareMap);
         climber = new IntegratedClimber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
-        ppp = new PurplePixelPusher(hardwareMap);
-        // Have it up so that if a pixel does get in that area it doesn't break the ppp arm
-        ppp.setState(false);
 
         // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -109,31 +96,6 @@ public class Teleop2 extends LinearOpMode {
             }
 
             // DRIVING
-            // Let board assist take control of the sticks if it's enabled and we're probably trying to score on the board
-            /*boardAssistActive = (
-                    boardAssistEnabled &&
-                    arm.getBoardDistance() < 20 &&
-                    scoringState == ScoringState.SCORING
-                    //&& Math.abs(drive.getNormalizedHeading()) < 0.17
-            );
-
-            if (boardAssistActive){
-                drive.driveBoardLocked(
-                        gamepad1.left_stick_y,
-                        -boardDistanceController.update(arm.getBoardDistance()),
-                        gamepad1.right_stick_x,
-                        gamepad1.right_trigger
-                );
-            } else {
-                // Drive the bot normally
-                drive.driveFieldCentric(
-                        gamepad1.left_stick_x,
-                        gamepad1.left_stick_y,
-                        gamepad1.right_stick_x * 0.8,
-                        gamepad1.right_trigger
-                );
-            }
-             */
             // Drive the bot normally
             drive.driveFieldCentric(
                     gamepad1.left_stick_x,
@@ -147,13 +109,7 @@ public class Teleop2 extends LinearOpMode {
                 drive.resetHeadingOffset();
             }
             prevHeadingResetInput = gamepad1.share;
-            /*
-            // Enable/disable board assist in case it causes problems
-            if (!prevBoardAssistInput && gamepad1.touchpad){
-                boardAssistEnabled = !boardAssistEnabled;
-            }
-            prevBoardAssistInput = gamepad1.touchpad;
-            */
+
             // Enable/disable autoPremove and autoRetract in case they causes problems
             if (!prevUsePixelSensorsInput && gamepad2.ps){
                 usePixelSensors = !usePixelSensors;
@@ -166,13 +122,14 @@ public class Teleop2 extends LinearOpMode {
                 updateScoringMech();
                 // Edit the extended position with the joystick on gamepad two
                 // Only works when the lift is up
-                if (scoringState == ScoringState.SCORING)
+                if (scoringState == ScoringState.SCORING) {
                     // If you press the trigger, change the lift height slower
                     if (gamepad2.right_trigger > 0.2) {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep * 0.5);
                     } else {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
                     }
+                }
                 // Update the lift so its pid controller runs, very important
                 // But, if you press a special key combo, escape pid control and bring the lift down
                 // With raw power to fix potential lift issues
@@ -224,12 +181,6 @@ public class Teleop2 extends LinearOpMode {
             if (debug) {
                 telemetry.addData("Using pixel sensors", usePixelSensors);
                 telemetry.addData("Climbing", isClimbing);
-                //telemetry.addData("Board assist enabled", boardAssistEnabled);
-                //telemetry.addData("Board assist active", boardAssistActive);
-                telemetry.addData("Scoring state", scoringState.name());
-                telemetry.addData("Board distance target", boardDistanceController.getTargetPosition());
-                telemetry.addData("Board distance", arm.getBoardDistance());
-                telemetry.addData("Board distance error", boardDistanceController.getLastError());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -245,7 +196,6 @@ public class Teleop2 extends LinearOpMode {
             if (instructionsOn) {
               DrivingInstructions.printDrivingInstructions(telemetry);
             }
-
             telemetry.update();
         } // End of the loop
     }

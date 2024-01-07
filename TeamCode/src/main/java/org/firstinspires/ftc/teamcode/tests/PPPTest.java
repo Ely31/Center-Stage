@@ -18,7 +18,7 @@ public class PPPTest extends LinearOpMode {
         // Pre-run
         while (opModeIsActive()) {
             // TeleOp loop
-            ppp.setState(gamepad1.a);
+            ppp.setState(!gamepad1.a);
 
             ppp.displayDebug(telemetry);
             telemetry.update();

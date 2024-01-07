@@ -22,8 +22,8 @@ public class TeamPropDetector2 extends OpenCvPipeline {
     }
     public TeamPropDetector2(boolean isRedAlliance){
         if (isRedAlliance){
-            lower = orangeLower;
-            upper = orangeUpper;
+            lower = redLower;
+            upper = redUpper;
         } else {
             lower = blueLower;
             upper = blueUpper;
@@ -39,9 +39,9 @@ public class TeamPropDetector2 extends OpenCvPipeline {
     public final Scalar WHITE = new Scalar(255,255,255);
 
     // Min and max values for the threshold
-    public Scalar orangeLower = new Scalar(0, 185, 40);
-    public Scalar orangeUpper = new Scalar(30, 255, 255);
-    public Scalar blueLower = new Scalar(90, 180, 90);
+    public Scalar redLower = new Scalar(0, 20, 20);
+    public Scalar redUpper = new Scalar(30, 255, 255);
+    public Scalar blueLower = new Scalar(90, 150, 20);
     public Scalar blueUpper = new Scalar(120, 255, 255);
     public Scalar lower;
     public Scalar upper;
@@ -51,9 +51,9 @@ public class TeamPropDetector2 extends OpenCvPipeline {
     // Variables that determine the placement of the boxes
     final static int frameWidth = 240;
     final static int center = frameWidth/2;
-    final static int topOfSides = 200;
+    final static int topOfSides = 205;
     final static int topOfMiddle = topOfSides-5;
-    final static int sidesSpan = 100;
+    final static int sidesSpan = 105;
     static final int REGION_WIDTH = 30;
     static final int REGION_HEIGHT = 30;
 
