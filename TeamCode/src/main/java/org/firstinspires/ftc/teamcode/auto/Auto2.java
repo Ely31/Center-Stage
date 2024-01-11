@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
 import java.util.Objects;
 
 @Config
+//@Photon
 @Autonomous
 public class Auto2 extends LinearOpMode {
     // Pre init

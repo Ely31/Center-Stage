@@ -53,7 +53,7 @@ public class AutoConstants2 {
     }
 
     // This is used so we don't put our pixel in the same slot as our partner. Hopefully. We'll see.
-    int dropOffset = 0;
+    double dropOffset = 0;
     boolean dropIsOffset = false;
     public void setDropIsOffset(boolean value){
         dropIsOffset = value;
@@ -113,7 +113,7 @@ public class AutoConstants2 {
             startPos = new Pose2d(11.75, -63.5 * alliance, Math.toRadians(-90 * alliance));
         }
         // Switch this so we don't drop our pixel in the same spot as our partner
-        dropOffset = (isDropOffset() ? 3 : 0);
+        dropOffset = (isDropOffset() ? 2.4 : 0);
 
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -28;
@@ -140,7 +140,7 @@ public class AutoConstants2 {
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(-34.5, -34 * alliance, Math.toRadians(180 * alliance)))
+                            .lineToSplineHeading(new Pose2d(-34, -34 * alliance, Math.toRadians(180 * alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-13-dropOffset;
                     break;
@@ -153,7 +153,7 @@ public class AutoConstants2 {
                     // Drive under the door
                     .splineTo(new Vector2d(5, -14*alliance), Math.toRadians(0*alliance))
                     // To the board
-                    .splineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
+                    .splineToSplineHeading(new Pose2d(yellowPixelXCoord + 0.6, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
                     .build();
 
         } else {
@@ -169,13 +169,13 @@ public class AutoConstants2 {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(22, -24*alliance, Math.toRadians(0*alliance)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord-7.2-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-5-dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(33.5, -31.80*alliance, Math.toRadians(0*alliance)))
+                            .lineToSplineHeading(new Pose2d(32.5, -31.80*alliance, Math.toRadians(0*alliance)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord-13.5-dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord-10.4-dropOffset;
                     break;
             }
 

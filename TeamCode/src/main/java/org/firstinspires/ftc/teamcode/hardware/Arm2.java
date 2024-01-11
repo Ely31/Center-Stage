@@ -25,8 +25,8 @@ public class Arm2 {
     boolean topState = false;
 
     // Constants
-    public static double pivotIntakingPos = 0.015;
-    public static double pivotScoringPos = 0.89;
+    public static double pivotIntakingPos = 0.013;
+    public static double pivotScoringPos = 0.905;
     public static double pivotPremovePos = 0.25;
     public static double pivotActuationTime = 300;
     public static double pivotAwayFromBordTime = 200;
@@ -40,8 +40,8 @@ public class Arm2 {
     public static double stopperOpenPos = 0.9;
     boolean stopperState = false;
 
-    public static double bottomSensorThreshold = 1100;
-    public static double topSensorThreshold = 1550;
+    public static double bottomSensorThreshold = 800;
+    public static double topSensorThreshold = 600;
     public static double armSensorThreshold = 1000;
 
     double[] lastBottomSensorVals = new double[3];
