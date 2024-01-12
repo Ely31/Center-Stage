@@ -4,17 +4,18 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 
 import java.util.Random;
 
-public class AutoConstants2 {
+public class AutoConstantsCycles {
     SampleMecanumDrive drive;
     int randomMessageIndex;
     // Constructor
-    public AutoConstants2(SampleMecanumDrive drive){
+    public AutoConstantsCycles(SampleMecanumDrive drive){
         this.drive = drive;
         randomMessageIndex = new Random().nextInt(messageList.length);
     }
@@ -99,10 +100,13 @@ public class AutoConstants2 {
     }
 
     // Pose2d's
-    public Pose2d startPos;
+    Pose2d startPos;
 
     public TrajectorySequence dropOffPurplePixel;
     public TrajectorySequence scoreYellowPixel;
+    public TrajectorySequence toStack;
+    public TrajectorySequence inTakingStack;
+    public TrajectorySequence scoreWhitePixels;
     public TrajectorySequence park;
 
     public void updateTrajectories() {
@@ -154,6 +158,25 @@ public class AutoConstants2 {
                     .splineTo(new Vector2d(5, -14*alliance), Math.toRadians(0*alliance))
                     // To the board
                     .splineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
+                    .build();
+
+            toStack = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
+                    .lineToSplineHeading(new Pose2d(27.11, -12.93*alliance, Math.toRadians(0*alliance)))
+                    .splineToSplineHeading(new Pose2d(-46.02, -15.07*alliance, Math.toRadians(0*alliance)), Math.toRadians(-173.2*alliance))
+                    .splineToSplineHeading(new Pose2d(-57.52, -16.48*alliance, Math.toRadians(35.7*alliance)), Math.toRadians(-139.1*alliance))
+                    .build();
+
+
+            inTakingStack = drive.trajectorySequenceBuilder(toStack.end())
+                    .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
+                    .lineTo(new Vector2d(-60, -26*alliance))
+                    .resetVelConstraint()
+                    .build();
+
+            scoreWhitePixels = drive.trajectorySequenceBuilder(inTakingStack.end())
+                    .lineToSplineHeading(new Pose2d(-24, -12*alliance, Math.toRadians(0*alliance)))
+                    .splineToSplineHeading(new Pose2d(24, -12*alliance, Math.toRadians(0*alliance)),0*alliance)
+                    .splineTo(new Vector2d(yellowPixelXCoord, yellowPixelYCoord),0)
                     .build();
 
         } else {
@@ -272,9 +295,10 @@ public class AutoConstants2 {
         return (
                 "You are on the " + allianceToString() + "."
                 + " You are on the side of the field closest to the " + (isWingSide() ? "wing" : "board") + "."
-                + " The bot will wait " + getDelaySeconds() + " before moving the purple pixel to the spike mark " + spikeMarkDescription
+                + " The bot will wait " + getDelaySeconds() + " Seconds before moving the purple pixel to the spike mark " + spikeMarkDescription
                 + " and scoring the yellow pixel " + yellowPixelDescription + "."
                 + " The yellow pixel will be placed in that slot closest to " + (isDropOffset() ? "you" : "the center of the field") + "."
+                + " It'll do " + getNumCycles() + " Cycles."
                 + " The bot will then park closest to " + (isParkingClose() ? "you" : "the center of the field") + "."
                 + "\n" + "Sound right?"
                 );

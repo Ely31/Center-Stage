@@ -19,7 +19,7 @@ import java.util.Objects;
 @Config
 //@Photon
 @Autonomous
-public class Auto2 extends LinearOpMode {
+public class CyclesAuto extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
     Camera camera;
@@ -27,9 +27,7 @@ public class Auto2 extends LinearOpMode {
     ScoringMech scoringMech;
     TimeUtil timeUtil = new TimeUtil();
 
-    AutoConstants2 autoConstants;
-
-    int cycleIndex = 0;
+    AutoConstantsCycles autoConstants;
 
     // For the rising egde detectors
     boolean prevCycleIncrease = false;
@@ -43,6 +41,9 @@ public class Auto2 extends LinearOpMode {
         GRABBING_PRELOADS,
         PUSHING_PURPLE,
         SCORING_YELLOW,
+        TO_STACK,
+        GRABBING_OFF_STACK,
+        SCORING_WHITE,
         PARKING
     }
     AutoState autoState = AutoState.GRABBING_PRELOADS;
@@ -59,7 +60,7 @@ public class Auto2 extends LinearOpMode {
         scoringMech = new ScoringMech(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
-        autoConstants = new AutoConstants2(drive);
+        autoConstants = new AutoConstantsCycles(drive);
         // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
@@ -147,9 +148,55 @@ public class Auto2 extends LinearOpMode {
                         scoringMech.scoreAsync(2.75);
                     }
                     if (scoringMech.liftIsMostlyDown()){
-                        drive.followTrajectorySequenceAsync(autoConstants.park);
+
                         actionTimer.reset();
-                        autoState = AutoState.PARKING;
+                        // If not doing cycles, park
+                        if (autoConstants.getNumCycles() > 0){
+                            autoState = AutoState.TO_STACK;
+                            drive.followTrajectorySequenceAsync(autoConstants.toStack);
+                        } else {
+                            autoState = AutoState.PARKING;
+                            drive.followTrajectorySequenceAsync(autoConstants.park);
+                        }
+                    }
+                    break;
+
+                case TO_STACK:
+
+                    scoringMech.scoreAsync(3);
+
+                    if (!drive.isBusy()){
+                        autoState = AutoState.GRABBING_OFF_STACK;
+                        drive.followTrajectorySequenceAsync(autoConstants.inTakingStack);
+                        actionTimer.reset();
+                    }
+                    break;
+
+                case GRABBING_OFF_STACK:
+                    scoringMech.grabOffStackAsync();
+                    if (!drive.isBusy()){
+                        autoState = AutoState.SCORING_WHITE;
+                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
+                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
+                        actionTimer.reset();
+                    }
+                    break;
+
+                case SCORING_WHITE:
+                    if (drive.getPoseEstimate().getX() > 44){
+                        scoringMech.scoreAsync(6);
+                    }
+
+                    if (!scoringMech.liftIsMostlyDown()){
+                        if (autoConstants.getNumCycles() > 0){
+                            autoState = AutoState.TO_STACK;
+                            drive.followTrajectorySequenceAsync(autoConstants.toStack);
+                            actionTimer.reset();
+                        } else {
+                            autoState = AutoState.PARKING;
+                            drive.followTrajectorySequenceAsync(autoConstants.park);
+                            actionTimer.reset();
+                        }
                     }
                     break;
 
@@ -175,7 +222,7 @@ public class Auto2 extends LinearOpMode {
 
             // Show telemetry because there are plenty of bugs it should help me fix
             telemetry.addData("auto state", autoState.name());
-            telemetry.addData("cycle index", cycleIndex);
+            telemetry.addData("cycle index", autoConstants.getNumCycles());
             drive.displayDeug(telemetry);
             scoringMech.displayDebug(telemetry);
             timeUtil.displayDebug(telemetry, loopTimer);

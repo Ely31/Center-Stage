@@ -37,8 +37,8 @@ public class AutoTrainerAdv {
     public AutoTrainerAdv(HardwareMap hwmap, Telemetry telemetry, boolean isWingSide){
         this.localizer = new StandardTrackingWheelLocalizer(hwmap);
         this.telemetry = telemetry;
-        if (isWingSide) startPose = new Pose2d(-35.25, -61.5, Math.toRadians(90));
-        else startPose = new Pose2d(11.75, -61.5, Math.toRadians(90));
+        if (isWingSide) startPose = new Pose2d(-35.25, -63.5, Math.toRadians(-90));
+        else startPose = new Pose2d(11.75, -63.5, Math.toRadians(-90));
         lastCapturedPose = startPose;
         trajSequenceString = "TrajectorySequence generatedTrajectory = drive.trajectorySequenceBuilder(" + poseToString(startPose) + ")\n";
         localizer.setPoseEstimate(startPose);

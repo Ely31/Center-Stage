@@ -65,33 +65,52 @@ public class ScoringMech {
     }
 
     public enum StackGrabbingState{
-        CREEPING,
+        KNOCKING,
+        INTAKING,
         GRABBING,
+        SPITTING,
         DONE
     }
-    StackGrabbingState stackGrabbingState = StackGrabbingState.CREEPING;
+    StackGrabbingState stackGrabbingState = StackGrabbingState.KNOCKING;
     StackGrabbingState getStackGrabbingState(){
         return stackGrabbingState;
     }
 
-    public void grabOffStackAsync(boolean hasPixels){
+    public void grabOffStackAsync(){
         // You have to call updateLift while using this for it to work
         switch (stackGrabbingState){
-            case CREEPING:
+            case KNOCKING:
                 arm.setBothGrippersState(false);
                 retract();
-                intake.on();
-                if (hasPixels){
+                intake.reverse();
+                if (stackGrabbingWait.seconds() > 1){
                     stackGrabbingWait.reset();
-                    arm.setBothGrippersState(true);
-                    stackGrabbingState = StackGrabbingState.GRABBING;
+                    stackGrabbingState = StackGrabbingState.INTAKING;
                 }
                 break;
+
+            case INTAKING:
+                retract();
+                intake.on();
+                if (stackGrabbingWait.seconds() > 1){
+                    stackGrabbingWait.reset();
+                    stackGrabbingState = StackGrabbingState.GRABBING;
+                    // Grab 'em
+                    arm.setBothGrippersState(true);
+                }
+                break;
+
             case GRABBING:
                 if (stackGrabbingWait.milliseconds() > Arm.gripperActuationTime){
                     stackGrabbingWait.reset();
                     arm.preMove();
-                    intake.off();
+                    stackGrabbingState = StackGrabbingState.SPITTING;
+                }
+                break;
+
+            case SPITTING:
+                intake.reverse();
+                if (stackGrabbingWait.seconds() > 1){
                     stackGrabbingState = StackGrabbingState.DONE;
                 }
                 break;
@@ -144,7 +163,6 @@ public class ScoringMech {
 
             case RETRACTING:
                 lift.retract();
-                //arm.setStopperState(true);
                 // Move on if the lift is all the way down
                 if (Utility.withinErrorOfValue(lift.getHeight(), 0, 1)) {
                     scoringState = ScoringState.DONE; // Finish
