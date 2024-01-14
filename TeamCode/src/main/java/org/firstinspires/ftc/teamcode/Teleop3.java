@@ -1,14 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.acmerobotics.roadrunner.control.PIDFController;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.drive.TeleMecDrive2;
+import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
-import org.firstinspires.ftc.teamcode.hardware.Arm2;
+import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
@@ -26,14 +30,18 @@ public class Teleop3 extends LinearOpMode {
     // Pre init
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
-    TeleMecDrive2 drive;
+    TeleMecDrive drive;
     Lift lift;
-    Arm2 arm;
+    Arm3 arm;
     ElapsedTime pivotTimer = new ElapsedTime();
     ElapsedTime gripperTimer = new ElapsedTime();
+    ElapsedTime doubleTapTimer = new ElapsedTime();
     Intake intake;
     DroneLauncher launcher;
     IntegratedClimber climber;
+
+    PIDFController headingController;
+    public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
 
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
@@ -45,6 +53,7 @@ public class Teleop3 extends LinearOpMode {
     boolean usePixelSensors = true;
     boolean prevUsePixelSensorsInput = false;
     final boolean useBulkreads = true;
+    public static boolean useHeadingLock = false;
 
     enum ScoringState {
         INTAKING,
@@ -54,6 +63,8 @@ public class Teleop3 extends LinearOpMode {
     }
     ScoringState scoringState = ScoringState.INTAKING;
 
+    int drivingState;
+
     // Telemetry options
     public static boolean debug = true;
     public static boolean instructionsOn = false;
@@ -61,14 +72,17 @@ public class Teleop3 extends LinearOpMode {
     @Override
     public void runOpMode(){
         // Init
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
-        drive = new TeleMecDrive2(hardwareMap, 0.3);
+        drive = new TeleMecDrive(hardwareMap, 0.3, false);
         lift = new Lift(hardwareMap);
-        arm = new Arm2(hardwareMap);
+        arm = new Arm3(hardwareMap);
         intake = new Intake(hardwareMap);
         climber = new IntegratedClimber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
+
+        headingController = new PIDFController(headingCoeffs);
 
         // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -83,6 +97,7 @@ public class Teleop3 extends LinearOpMode {
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
+        doubleTapTimer.reset();
         // Automatic feild centric calibration
         drive.setHeadingOffset(AutoToTele.endOfAutoHeading + Math.toRadians(-90*AutoToTele.allianceSide));
 
@@ -96,17 +111,36 @@ public class Teleop3 extends LinearOpMode {
             }
 
             // DRIVING
-            // Drive the bot normally
-            drive.driveFieldCentric(
-                    gamepad1.left_stick_x,
-                    gamepad1.left_stick_y,
-                    gamepad1.right_stick_x * 0.8,
-                    gamepad1.right_trigger
-            );
+            if (!(gamepad1.right_stick_x == 0) || !useHeadingLock) {
+                // Drive the bot normally when you give turning input
+                drive.driveFieldCentric(
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        gamepad1.right_stick_x * 0.8,
+                        gamepad1.right_trigger
+                );
+                // Reset heading controller so it doesn't do weird things when it turns back on
+                headingController = new PIDFController(headingCoeffs);
+                headingController.setTargetPosition(drive.getHeading());
+                drivingState = 0;
+
+            } else {
+                // Lock heading with pid controller if you aren't turning
+                drive.driveFieldCentric(
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        -headingController.update(drive.getHeading()),
+                        gamepad1.right_trigger
+                );
+                drivingState = 1;
+            }
             // Manually calibrate field centric with a button
             if (gamepad1.share && !prevHeadingResetInput) {
                 drive.resetIMU();
                 drive.resetHeadingOffset();
+                // Reset heading controller so it doesn't do weird things when it turns back on
+                headingController = new PIDFController(headingCoeffs);
+                headingController.setTargetPosition(drive.getHeading());
             }
             prevHeadingResetInput = gamepad1.share;
 
@@ -143,7 +177,11 @@ public class Teleop3 extends LinearOpMode {
                     lift.update();
                 }
                 // Update arm
-                arm.update();
+                // Only poll the sensors we need when we need them to reduce loop times
+                if (scoringState == ScoringState.SCORING) arm.update(true, false, true);
+                if (scoringState == ScoringState.INTAKING) arm.update(true, true, false);
+                if (scoringState == ScoringState.PREMOVED) arm.update(false, false, false);
+
             } else {
                 // CLIMBER CONTROL
                 // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
@@ -155,9 +193,9 @@ public class Teleop3 extends LinearOpMode {
             }
 
             // INTAKE CONTROL
-            if (gamepad1.b) intake.reverse();
+            if (gamepad1.right_stick_button) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
-            else if (arm.armIsDown()) intake.toggle(gamepad1.a);
+            else if (arm.armIsDown()) intake.toggle(gamepad1.left_stick_button);
             else intake.off();
 
             // DRONE LAUNCHER CONTROL
@@ -181,6 +219,10 @@ public class Teleop3 extends LinearOpMode {
             if (debug) {
                 telemetry.addData("Using pixel sensors", usePixelSensors);
                 telemetry.addData("Climbing", isClimbing);
+                telemetry.addData("Driving mode", drivingState);
+                telemetry.addData("Target heading", headingController.getTargetPosition());
+                telemetry.addData("Heading", drive.getHeading());
+                telemetry.addData("Heading error", headingController.getLastError());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -198,6 +240,11 @@ public class Teleop3 extends LinearOpMode {
             }
             telemetry.update();
         } // End of the loop
+
+        if (isStopRequested()){
+            // Open both grippers if you stop the program, makes it less work for us extracting pixels
+            arm.setBothGrippersState(false);
+        }
     }
 
     boolean hadAnyPixelsWhenPremoved;
@@ -229,6 +276,7 @@ public class Teleop3 extends LinearOpMode {
             case WAITING_FOR_GRIPPERS:
                 if (gripperTimer.milliseconds() > Arm.gripperActuationTime){
                     scoringState = ScoringState.PREMOVED;
+                    doubleTapTimer.reset();
                 }
                 break;
 
@@ -243,8 +291,11 @@ public class Teleop3 extends LinearOpMode {
                 intake.forceToggleOff();
                 // Reset poker
                 poking = false;
+
                 // Switch states when bumper pressed
-                if (!prevLiftInput && gamepad2.right_bumper){
+                // Don't go to scoring if the arm has just been premoved though, this happens when the automatic raises it but the driver
+                // tries to manually raise it at the same time. This timer prevents that.
+                if (!prevLiftInput && gamepad2.right_bumper && doubleTapTimer.milliseconds() > 450){
                     scoringState = ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
