@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
-import org.firstinspires.ftc.teamcode.hardware.ScoringMech;
+import org.firstinspires.ftc.teamcode.hardware.ScoringMech3;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
@@ -24,10 +24,10 @@ public class CyclesAuto extends LinearOpMode {
     SampleMecanumDrive drive;
     Camera camera;
     TeamPropDetector2 propPipeline = new TeamPropDetector2(true);
-    ScoringMech scoringMech;
+    ScoringMech3 scoringMech;
     TimeUtil timeUtil = new TimeUtil();
 
-    AutoConstantsCycles autoConstants;
+    CyclesAutoConstants autoConstants;
 
     // For the rising egde detectors
     boolean prevCycleIncrease = false;
@@ -57,10 +57,10 @@ public class CyclesAuto extends LinearOpMode {
         // Init
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
-        scoringMech = new ScoringMech(hardwareMap);
+        scoringMech = new ScoringMech3(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
-        autoConstants = new AutoConstantsCycles(drive);
+        autoConstants = new CyclesAutoConstants(drive);
         // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
@@ -144,7 +144,7 @@ public class CyclesAuto extends LinearOpMode {
                 case SCORING_YELLOW:
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
-                    if (drive.getPoseEstimate().getX() > 44){
+                    if (drive.getPoseEstimate().getX() > 49){
                         scoringMech.scoreAsync(2.75);
                     }
                     if (scoringMech.liftIsMostlyDown()){
@@ -152,12 +152,13 @@ public class CyclesAuto extends LinearOpMode {
                         actionTimer.reset();
                         // If not doing cycles, park
                         if (autoConstants.getNumCycles() > 0){
-                            autoState = AutoState.TO_STACK;
                             drive.followTrajectorySequenceAsync(autoConstants.toStack);
+                            autoState = AutoState.TO_STACK;
                         } else {
-                            autoState = AutoState.PARKING;
                             drive.followTrajectorySequenceAsync(autoConstants.park);
+                            autoState = AutoState.PARKING;
                         }
+                        actionTimer.reset();
                     }
                     break;
 
@@ -166,8 +167,8 @@ public class CyclesAuto extends LinearOpMode {
                     scoringMech.scoreAsync(3);
 
                     if (!drive.isBusy()){
+                        drive.followTrajectorySequenceAsync(autoConstants.intakingStack);
                         autoState = AutoState.GRABBING_OFF_STACK;
-                        drive.followTrajectorySequenceAsync(autoConstants.inTakingStack);
                         actionTimer.reset();
                     }
                     break;
@@ -175,28 +176,27 @@ public class CyclesAuto extends LinearOpMode {
                 case GRABBING_OFF_STACK:
                     scoringMech.grabOffStackAsync();
                     if (!drive.isBusy()){
+                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
                         autoState = AutoState.SCORING_WHITE;
                         autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
-                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
                         actionTimer.reset();
                     }
                     break;
 
                 case SCORING_WHITE:
-                    if (drive.getPoseEstimate().getX() > 44){
+                    if (drive.getPoseEstimate().getX() > 49){
                         scoringMech.scoreAsync(6);
                     }
 
-                    if (!scoringMech.liftIsMostlyDown()){
+                    if (scoringMech.liftIsMostlyDown()){
                         if (autoConstants.getNumCycles() > 0){
-                            autoState = AutoState.TO_STACK;
                             drive.followTrajectorySequenceAsync(autoConstants.toStack);
-                            actionTimer.reset();
+                            autoState = AutoState.TO_STACK;
                         } else {
-                            autoState = AutoState.PARKING;
                             drive.followTrajectorySequenceAsync(autoConstants.park);
-                            actionTimer.reset();
+                            autoState = AutoState.PARKING;
                         }
+                        actionTimer.reset();
                     }
                     break;
 
@@ -213,7 +213,7 @@ public class CyclesAuto extends LinearOpMode {
             }
             // Update all the things
             drive.update();
-            scoringMech.update();
+            scoringMech.update(false);
 
             // To be used to automatically calibrate field centric
             autoConstants.saveAutoPose();
@@ -221,8 +221,8 @@ public class CyclesAuto extends LinearOpMode {
             timeUtil.update(loopTimer.milliseconds());
 
             // Show telemetry because there are plenty of bugs it should help me fix
-            telemetry.addData("auto state", autoState.name());
-            telemetry.addData("cycle index", autoConstants.getNumCycles());
+            telemetry.addData("Auto state", autoState.name());
+            telemetry.addData("Number of cycles", autoConstants.getNumCycles());
             drive.displayDeug(telemetry);
             scoringMech.displayDebug(telemetry);
             timeUtil.displayDebug(telemetry, loopTimer);

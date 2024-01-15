@@ -194,7 +194,7 @@ public class Teleop3 extends LinearOpMode {
                 // Control lift with left stick
                 lift.setRawPowerDangerous(-gamepad2.left_stick_y);
                 // Retract the climbing string a bit when you first activate climbing so you don't have much slack to pull in when you hang
-                if (climberTimer.seconds() < 0.8){
+                if (climberTimer.seconds() < 0.75){
                     climber.setPower(-1);
                 } else {
                     // And control climber with right

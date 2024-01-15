@@ -11,11 +11,11 @@ import org.firstinspires.ftc.teamcode.util.AutoToTele;
 
 import java.util.Random;
 
-public class AutoConstantsCycles {
+public class CyclesAutoConstants {
     SampleMecanumDrive drive;
     int randomMessageIndex;
     // Constructor
-    public AutoConstantsCycles(SampleMecanumDrive drive){
+    public CyclesAutoConstants(SampleMecanumDrive drive){
         this.drive = drive;
         randomMessageIndex = new Random().nextInt(messageList.length);
     }
@@ -105,7 +105,7 @@ public class AutoConstantsCycles {
     public TrajectorySequence dropOffPurplePixel;
     public TrajectorySequence scoreYellowPixel;
     public TrajectorySequence toStack;
-    public TrajectorySequence inTakingStack;
+    public TrajectorySequence intakingStack;
     public TrajectorySequence scoreWhitePixels;
     public TrajectorySequence park;
 
@@ -167,13 +167,13 @@ public class AutoConstantsCycles {
                     .build();
 
 
-            inTakingStack = drive.trajectorySequenceBuilder(toStack.end())
+            intakingStack = drive.trajectorySequenceBuilder(toStack.end())
                     .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
                     .lineTo(new Vector2d(-60, -26*alliance))
                     .resetVelConstraint()
                     .build();
 
-            scoreWhitePixels = drive.trajectorySequenceBuilder(inTakingStack.end())
+            scoreWhitePixels = drive.trajectorySequenceBuilder(intakingStack.end())
                     .lineToSplineHeading(new Pose2d(-24, -12*alliance, Math.toRadians(0*alliance)))
                     .splineToSplineHeading(new Pose2d(24, -12*alliance, Math.toRadians(0*alliance)),0*alliance)
                     .splineTo(new Vector2d(yellowPixelXCoord, yellowPixelYCoord),0)
@@ -211,12 +211,12 @@ public class AutoConstantsCycles {
         if (parkingClose){
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                     .setTangent(Math.toRadians(180 * alliance))
-                    .splineToLinearHeading(new Pose2d(50, -61 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(90 * alliance))
+                    .splineToLinearHeading(new Pose2d(50, -61 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(-90 * alliance))
                     .build();
         } else {
             park = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                     .setTangent(Math.toRadians(180 * alliance))
-                    .splineToLinearHeading(new Pose2d(50, -12 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(-90 * alliance))
+                    .splineToLinearHeading(new Pose2d(50, -12 * alliance, Math.toRadians(0 * alliance)), Math.toRadians(90 * alliance))
                     .build();
         }
     } // End of updateTrajectories
