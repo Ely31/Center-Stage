@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
-import org.firstinspires.ftc.teamcode.hardware.Arm;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
@@ -20,6 +19,7 @@ import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
+import org.firstinspires.ftc.teamcode.util.Utility;
 
 import java.util.List;
 
@@ -39,6 +39,7 @@ public class Teleop3 extends LinearOpMode {
     Intake intake;
     DroneLauncher launcher;
     IntegratedClimber climber;
+    ElapsedTime climberTimer = new ElapsedTime();
 
     PIDFController headingController;
     public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
@@ -54,12 +55,14 @@ public class Teleop3 extends LinearOpMode {
     boolean prevUsePixelSensorsInput = false;
     final boolean useBulkreads = true;
     public static boolean useHeadingLock = false;
+    public static boolean useSlideUpStrategy = true;
 
     enum ScoringState {
         INTAKING,
         WAITING_FOR_GRIPPERS,
         PREMOVED,
-        SCORING
+        SCORING,
+        SLIDING_UP
     }
     ScoringState scoringState = ScoringState.INTAKING;
 
@@ -158,7 +161,7 @@ public class Teleop3 extends LinearOpMode {
                 // Only works when the lift is up
                 if (scoringState == ScoringState.SCORING) {
                     // If you press the trigger, change the lift height slower
-                    if (gamepad2.right_trigger > 0.2) {
+                    if (gamepad2.left_trigger > 0.2) {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep * 0.5);
                     } else {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
@@ -182,14 +185,21 @@ public class Teleop3 extends LinearOpMode {
                 if (scoringState == ScoringState.INTAKING) arm.update(true, true, false);
                 if (scoringState == ScoringState.PREMOVED) arm.update(false, false, false);
 
+                // Keep this at 0 until climbing mode is on
+                climberTimer.reset();
             } else {
                 // CLIMBER CONTROL
                 // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
                 arm.pivotGoToIntake();
                 // Control lift with left stick
                 lift.setRawPowerDangerous(-gamepad2.left_stick_y);
-                // And climber with right
-                climber.setPower(-gamepad2.right_stick_y);
+                // Retract the climbing string a bit when you first activate climbing so you don't have much slack to pull in when you hang
+                if (climberTimer.seconds() < 0.8){
+                    climber.setPower(-1);
+                } else {
+                    // And control climber with right
+                    climber.setPower(-gamepad2.right_stick_y);
+                }
             }
 
             // INTAKE CONTROL
@@ -223,6 +233,7 @@ public class Teleop3 extends LinearOpMode {
                 telemetry.addData("Target heading", headingController.getTargetPosition());
                 telemetry.addData("Heading", drive.getHeading());
                 telemetry.addData("Heading error", headingController.getLastError());
+                telemetry.addData("Scoring state", scoringState.name());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -254,9 +265,13 @@ public class Teleop3 extends LinearOpMode {
             case INTAKING:
                 arm.pivotGoToIntake();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
-                // Put up the stopper so pixels don't fly out the back
-                arm.setStopperState(true);
+                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
+                    lift.retract();
+                }
+                // Put up the stopper so pixels don't fly out the back, but only after the arm's back to avoid hooking a pixel on it
+                if (pivotTimer.milliseconds() > 500) {
+                    arm.setStopperState(true);
+                }
                 // If we had pixels when premoved and now moved back down to intaking,
                 // hold onto them until the arm gets all the way down so they don't fly out.
                 // Open them to intake once the arm gets all the way there.
@@ -274,7 +289,7 @@ public class Teleop3 extends LinearOpMode {
                 break;
 
             case WAITING_FOR_GRIPPERS:
-                if (gripperTimer.milliseconds() > Arm.gripperActuationTime){
+                if (gripperTimer.milliseconds() > Arm3.gripperActuationTime){
                     scoringState = ScoringState.PREMOVED;
                     doubleTapTimer.reset();
                 }
@@ -283,7 +298,7 @@ public class Teleop3 extends LinearOpMode {
             case PREMOVED:
                 arm.preMove();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
+                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
                 arm.setStopperState(false);
@@ -331,12 +346,16 @@ public class Teleop3 extends LinearOpMode {
                 prevPokingInput = gamepad2.b;
                 arm.setStopperState(poking);
 
-                // Switch states when bumper pressed or both pixels are gone if autoRetract is on
+                // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
                 if (
                         (!prevLiftInput && gamepad2.right_bumper) ||
                         (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
                 ){
-                    scoringState = ScoringState.INTAKING;
+                    if (useSlideUpStrategy) {
+                        scoringState = ScoringState.SLIDING_UP;
+                        lift.setExtendedPos(lift.getExtendedPos() + 2);
+                    }
+                    else scoringState = ScoringState.INTAKING;
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
                 }
@@ -346,6 +365,17 @@ public class Teleop3 extends LinearOpMode {
                     pivotTimer.reset();
                 }
                 break;
+
+            case SLIDING_UP:
+                lift.extend();
+                // Once it's gone up enough, switch states and retract
+                if (Utility.withinErrorOfValue(lift.getHeight(), lift.getExtendedPos(), 0.5)) {
+                    // Reset that back to normal because we temporarily changed it
+                    lift.setExtendedPos(lift.getExtendedPos() - 2);
+                    scoringState = ScoringState.INTAKING;
+                    // Reset timer so the clock ticks on the arm being away from the board
+                    pivotTimer.reset();
+                }
         }
         prevLiftInput = gamepad2.right_bumper;
     }

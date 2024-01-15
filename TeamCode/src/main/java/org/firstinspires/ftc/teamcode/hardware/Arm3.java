@@ -31,8 +31,7 @@ public class Arm3 {
     public static double pivotIntakingPos = 0.013;
     public static double pivotScoringPos = 0.905;
     public static double pivotPremovePos = 0.25;
-    public static double pivotActuationTime = 300;
-    public static double pivotAwayFromBordTime = 200;
+    public static double pivotAwayFromBordTime = 250;
 
     public static double gripperClosedPos = 0.88;
     public static double gripperOpenPos = 0.6;
@@ -43,8 +42,8 @@ public class Arm3 {
     public static double stopperOpenPos = 0.9;
     boolean stopperState = false;
 
-    public static double bottomSensorThreshold = 800;
-    public static double topSensorThreshold = 600;
+    public static double bottomSensorThreshold = 600;
+    public static double topSensorThreshold = 1300;
     public static double armSensorThreshold = 1000;
 
     double[] lastBottomSensorVals = new double[3];
