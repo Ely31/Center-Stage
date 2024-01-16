@@ -29,7 +29,7 @@ public class Arm3 {
 
     // Constants
     public static double pivotIntakingPos = 0.013;
-    public static double pivotScoringPos = 0.905;
+    public static double pivotScoringPos = 0.912;
     public static double pivotPremovePos = 0.25;
     public static double pivotAwayFromBordTime = 250;
 

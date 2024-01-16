@@ -63,6 +63,10 @@ public class ScoringMech3 {
     public ScoringState getScoringState() {
         return scoringState;
     }
+    // Have to call this before scoring again to get the state machine to run
+    public void resetScoringState(){
+        scoringState = ScoringState.EXTENDING;
+    }
 
     public enum StackGrabbingState{
         KNOCKING,
@@ -75,6 +79,10 @@ public class ScoringMech3 {
     StackGrabbingState getStackGrabbingState(){
         return stackGrabbingState;
     }
+    public void resetStackGrabbingState(){
+        stackGrabbingWait.reset();
+        stackGrabbingState = StackGrabbingState.KNOCKING;
+    }
 
     public void grabOffStackAsync(){
         // You have to call updateLift while using this for it to work
@@ -83,7 +91,7 @@ public class ScoringMech3 {
                 arm.setBothGrippersState(false);
                 retract();
                 intake.reverse();
-                if (stackGrabbingWait.seconds() > 1){
+                if (stackGrabbingWait.seconds() > 1.25){
                     stackGrabbingWait.reset();
                     stackGrabbingState = StackGrabbingState.INTAKING;
                 }
@@ -91,6 +99,7 @@ public class ScoringMech3 {
 
             case INTAKING:
                 retract();
+                arm.setStopperState(true);
                 intake.on();
                 if (stackGrabbingWait.seconds() > 1){
                     stackGrabbingWait.reset();
@@ -101,7 +110,7 @@ public class ScoringMech3 {
                 break;
 
             case GRABBING:
-                if (stackGrabbingWait.milliseconds() > Arm3.gripperActuationTime){
+                if (stackGrabbingWait.milliseconds() > 350){
                     stackGrabbingWait.reset();
                     arm.preMove();
                     stackGrabbingState = StackGrabbingState.SPITTING;
@@ -113,6 +122,10 @@ public class ScoringMech3 {
                 if (stackGrabbingWait.seconds() > 1){
                     stackGrabbingState = StackGrabbingState.DONE;
                 }
+                break;
+
+            case DONE:
+                intake.off();
                 break;
         }
     }
@@ -172,11 +185,6 @@ public class ScoringMech3 {
             case DONE:
                 break;
         }
-    }
-
-    // Have to call this before scoring again to get the state machine to run
-    public void resetScoringState(){
-        scoringState = ScoringState.EXTENDING;
     }
 
     public boolean liftIsGoingDown(){

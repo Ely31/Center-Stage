@@ -169,6 +169,7 @@ public class CyclesAuto extends LinearOpMode {
                     if (!drive.isBusy()){
                         drive.followTrajectorySequenceAsync(autoConstants.intakingStack);
                         autoState = AutoState.GRABBING_OFF_STACK;
+                        scoringMech.resetStackGrabbingState();
                         actionTimer.reset();
                     }
                     break;
@@ -180,12 +181,15 @@ public class CyclesAuto extends LinearOpMode {
                         autoState = AutoState.SCORING_WHITE;
                         autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
                         actionTimer.reset();
+                        scoringMech.resetScoringState();
                     }
                     break;
 
                 case SCORING_WHITE:
                     if (drive.getPoseEstimate().getX() > 49){
                         scoringMech.scoreAsync(6);
+                    } else {
+                        scoringMech.grabOffStackAsync();
                     }
 
                     if (scoringMech.liftIsMostlyDown()){

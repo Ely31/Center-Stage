@@ -161,15 +161,15 @@ public class CyclesAutoConstants {
                     .build();
 
             toStack = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
-                    .lineToSplineHeading(new Pose2d(27.11, -12.93*alliance, Math.toRadians(0*alliance)))
-                    .splineToSplineHeading(new Pose2d(-46.02, -15.07*alliance, Math.toRadians(0*alliance)), Math.toRadians(-173.2*alliance))
-                    .splineToSplineHeading(new Pose2d(-57.52, -16.48*alliance, Math.toRadians(35.7*alliance)), Math.toRadians(-139.1*alliance))
+                    .lineToSplineHeading(new Pose2d(27.11, -15*alliance, Math.toRadians(0*alliance)))
+                    .splineToSplineHeading(new Pose2d(-40, -15.07*alliance, Math.toRadians(0*alliance)), Math.toRadians(180*alliance))
+                    .splineToSplineHeading(new Pose2d(-56.5, -19.5*alliance, Math.toRadians(15*alliance)), Math.toRadians(-139*alliance))
                     .build();
 
 
             intakingStack = drive.trajectorySequenceBuilder(toStack.end())
-                    .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
-                    .lineTo(new Vector2d(-60, -26*alliance))
+                    .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
+                    .lineTo(new Vector2d(-58, -27.5*alliance))
                     .resetVelConstraint()
                     .build();
 
