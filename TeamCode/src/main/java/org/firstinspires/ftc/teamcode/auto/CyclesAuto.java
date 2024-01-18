@@ -42,7 +42,8 @@ public class CyclesAuto extends LinearOpMode {
         PUSHING_PURPLE,
         SCORING_YELLOW,
         TO_STACK,
-        GRABBING_OFF_STACK,
+        SWEEP_ONE,
+        SWEEP_TWO,
         SCORING_WHITE,
         PARKING
     }
@@ -118,7 +119,6 @@ public class CyclesAuto extends LinearOpMode {
         while (opModeIsActive()){
             // One big fsm
             switch (autoState){
-                // This first state is vestigial and isn't needed
                 case GRABBING_PRELOADS:
                     scoringMech.premove();
                     scoringMech.grabJustForPreload();
@@ -167,29 +167,50 @@ public class CyclesAuto extends LinearOpMode {
                     scoringMech.scoreAsync(3);
 
                     if (!drive.isBusy()){
-                        drive.followTrajectorySequenceAsync(autoConstants.intakingStack);
-                        autoState = AutoState.GRABBING_OFF_STACK;
+                        drive.followTrajectorySequenceAsync(autoConstants.sweepOne);
+                        autoState = AutoState.SWEEP_ONE;
                         scoringMech.resetStackGrabbingState();
                         actionTimer.reset();
                     }
                     break;
 
-                case GRABBING_OFF_STACK:
-                    scoringMech.grabOffStackAsync();
-                    if (!drive.isBusy()){
+                case SWEEP_ONE:
+                    scoringMech.grabOffStackAsync(scoringMech.hasBothPixels());
+                    if (scoringMech.hasBothPixels()){
+                        drive.breakFollowing();
                         drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
                         autoState = AutoState.SCORING_WHITE;
                         autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
                         actionTimer.reset();
                         scoringMech.resetScoringState();
                     }
+                    if (!drive.isBusy()) {
+                        drive.followTrajectorySequenceAsync(autoConstants.sweepTwo);
+                        autoState = AutoState.SWEEP_TWO;
+                    }
+                    break;
+
+                case SWEEP_TWO:
+                    scoringMech.grabOffStackAsync(scoringMech.hasBothPixels());
+                    if (scoringMech.hasBothPixels()){
+                        drive.breakFollowing();
+                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
+                        autoState = AutoState.SCORING_WHITE;
+                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
+                        actionTimer.reset();
+                        scoringMech.resetScoringState();
+                    }
+                    if (!drive.isBusy()) {
+                        drive.followTrajectorySequenceAsync(autoConstants.sweepOne);
+                        autoState = AutoState.SWEEP_ONE;
+                    }
                     break;
 
                 case SCORING_WHITE:
                     if (drive.getPoseEstimate().getX() > 49){
-                        scoringMech.scoreAsync(6);
+                        scoringMech.scoreAsync(10);
                     } else {
-                        scoringMech.grabOffStackAsync();
+                        scoringMech.grabOffStackAsync(true);
                     }
 
                     if (scoringMech.liftIsMostlyDown()){
@@ -217,7 +238,10 @@ public class CyclesAuto extends LinearOpMode {
             }
             // Update all the things
             drive.update();
-            scoringMech.update(false);
+            // Only use the sensors we need
+            if (autoState == AutoState.SWEEP_ONE) scoringMech.update(true, false);
+            //if (autoState == AutoState.SCORING_YELLOW || autoState == AutoState.SCORING_WHITE) scoringMech.update(false, true);
+            else scoringMech.update(false, false);
 
             // To be used to automatically calibrate field centric
             autoConstants.saveAutoPose();

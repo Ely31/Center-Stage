@@ -43,6 +43,8 @@ public class Teleop3 extends LinearOpMode {
 
     PIDFController headingController;
     public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
+    PIDFController boardDistanceController;
+    public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.005,0.0001,0);
 
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
@@ -56,6 +58,7 @@ public class Teleop3 extends LinearOpMode {
     final boolean useBulkreads = true;
     public static boolean useHeadingLock = false;
     public static boolean useSlideUpStrategy = true;
+    public static boolean useBoardSensor = true;
 
     enum ScoringState {
         INTAKING,
@@ -86,6 +89,8 @@ public class Teleop3 extends LinearOpMode {
         launcher = new DroneLauncher(hardwareMap);
 
         headingController = new PIDFController(headingCoeffs);
+        boardDistanceController = new PIDFController(boardCoeffs);
+        boardDistanceController.setTargetPosition(20);
 
         // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -114,7 +119,25 @@ public class Teleop3 extends LinearOpMode {
             }
 
             // DRIVING
-            if (!(gamepad1.right_stick_x == 0) || !useHeadingLock) {
+            if (useHeadingLock && gamepad1.right_stick_x == 0){
+                // Lock heading with pid controller if you aren't turning
+                drive.driveFieldCentric(
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        -headingController.update(drive.getHeading()),
+                        gamepad1.right_trigger
+                );
+                drivingState = 1;
+            } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistance() < 25){
+                // Lock heading with pid controller if you aren't turning
+                drive.driveRobotCentric(
+                        gamepad1.left_stick_y,
+                        boardDistanceController.update(arm.getBoardDistance()),
+                        gamepad1.right_stick_x,
+                        1
+                );
+                drivingState = 2;
+            } else {
                 // Drive the bot normally when you give turning input
                 drive.driveFieldCentric(
                         gamepad1.left_stick_x,
@@ -125,17 +148,11 @@ public class Teleop3 extends LinearOpMode {
                 // Reset heading controller so it doesn't do weird things when it turns back on
                 headingController = new PIDFController(headingCoeffs);
                 headingController.setTargetPosition(drive.getHeading());
+                // Reset this too
+                boardDistanceController = new PIDFController(boardCoeffs);
+
                 drivingState = 0;
 
-            } else {
-                // Lock heading with pid controller if you aren't turning
-                drive.driveFieldCentric(
-                        gamepad1.left_stick_x,
-                        gamepad1.left_stick_y,
-                        -headingController.update(drive.getHeading()),
-                        gamepad1.right_trigger
-                );
-                drivingState = 1;
             }
             // Manually calibrate field centric with a button
             if (gamepad1.share && !prevHeadingResetInput) {
@@ -181,7 +198,7 @@ public class Teleop3 extends LinearOpMode {
                 }
                 // Update arm
                 // Only poll the sensors we need when we need them to reduce loop times
-                if (scoringState == ScoringState.SCORING) arm.update(true, false, true);
+                if (scoringState == ScoringState.SCORING) arm.update(true, false, useBoardSensor);
                 if (scoringState == ScoringState.INTAKING) arm.update(true, true, false);
                 if (scoringState == ScoringState.PREMOVED) arm.update(false, false, false);
 

@@ -43,9 +43,13 @@ public class ScoringMech3 {
     public void premove(){arm.preMove();}
 
     // ESSENTIAL to call this function every loop
-    public void update(boolean useSensors) {
+    public void update(boolean usePixelSensors, boolean useBoardSesor) {
         lift.update();
-        arm.update(useSensors, false, false);
+        arm.update(usePixelSensors, false, useBoardSesor);
+    }
+
+    public boolean hasBothPixels(){
+        return arm.pixelIsInBottom() && arm.pixelIsInTop();
     }
 
     ElapsedTime scoringWait = new ElapsedTime();
@@ -84,7 +88,7 @@ public class ScoringMech3 {
         stackGrabbingState = StackGrabbingState.KNOCKING;
     }
 
-    public void grabOffStackAsync(){
+    public void grabOffStackAsync(boolean grasping){
         // You have to call updateLift while using this for it to work
         switch (stackGrabbingState){
             case KNOCKING:
@@ -101,7 +105,7 @@ public class ScoringMech3 {
                 retract();
                 arm.setStopperState(true);
                 intake.on();
-                if (stackGrabbingWait.seconds() > 1){
+                if (grasping){
                     stackGrabbingWait.reset();
                     stackGrabbingState = StackGrabbingState.GRABBING;
                     // Grab 'em

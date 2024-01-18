@@ -154,8 +154,7 @@ public class Arm3 {
     }
 
     public double getBoardDistance(){
-        //return lastBoardDistance;
-        return 0;
+        return lastBoardDistance;
     }
 
     public void update(boolean usePixelSensors, boolean useArmSensor, boolean useBoardSensor){

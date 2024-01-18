@@ -16,6 +16,7 @@ public class PurplePixelPusher {
 
     public PurplePixelPusher(HardwareMap hwmap){
         ppp = hwmap.get(Servo.class, "ppp");
+        setState(true);
     }
 
     public void setState(boolean state){
