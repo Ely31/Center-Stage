@@ -94,8 +94,8 @@ public class ScoringMech3 {
             case KNOCKING:
                 arm.setBothGrippersState(false);
                 retract();
-                intake.reverse();
-                if (stackGrabbingWait.seconds() > 1.25){
+                intake.reverse(0.5);
+                if (stackGrabbingWait.seconds() > 0.8){
                     stackGrabbingWait.reset();
                     stackGrabbingState = StackGrabbingState.INTAKING;
                 }
@@ -123,7 +123,7 @@ public class ScoringMech3 {
 
             case SPITTING:
                 intake.reverse();
-                if (stackGrabbingWait.seconds() > 1){
+                if (stackGrabbingWait.seconds() > 0.5){
                     stackGrabbingState = StackGrabbingState.DONE;
                 }
                 break;

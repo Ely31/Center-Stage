@@ -44,7 +44,7 @@ public class Teleop3 extends LinearOpMode {
     PIDFController headingController;
     public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
     PIDFController boardDistanceController;
-    public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.005,0.0001,0);
+    public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.05,0.005,0.01);
 
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
@@ -59,6 +59,8 @@ public class Teleop3 extends LinearOpMode {
     public static boolean useHeadingLock = false;
     public static boolean useSlideUpStrategy = true;
     public static boolean useBoardSensor = true;
+    public static double boardTargetDistance = 15;
+    public static double boardControllerEnableDistance = 45;
 
     enum ScoringState {
         INTAKING,
@@ -90,7 +92,7 @@ public class Teleop3 extends LinearOpMode {
 
         headingController = new PIDFController(headingCoeffs);
         boardDistanceController = new PIDFController(boardCoeffs);
-        boardDistanceController.setTargetPosition(20);
+        boardDistanceController.setTargetPosition(boardTargetDistance);
 
         // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -128,11 +130,11 @@ public class Teleop3 extends LinearOpMode {
                         gamepad1.right_trigger
                 );
                 drivingState = 1;
-            } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistance() < 25){
+            } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistance() < boardControllerEnableDistance){
                 // Lock heading with pid controller if you aren't turning
-                drive.driveRobotCentric(
+                drive.driveFieldCentric(
+                        -boardDistanceController.update(arm.getBoardDistance()),
                         gamepad1.left_stick_y,
-                        boardDistanceController.update(arm.getBoardDistance()),
                         gamepad1.right_stick_x,
                         1
                 );
@@ -148,8 +150,7 @@ public class Teleop3 extends LinearOpMode {
                 // Reset heading controller so it doesn't do weird things when it turns back on
                 headingController = new PIDFController(headingCoeffs);
                 headingController.setTargetPosition(drive.getHeading());
-                // Reset this too
-                boardDistanceController = new PIDFController(boardCoeffs);
+                resetBoardDistanceController();
 
                 drivingState = 0;
 
@@ -251,6 +252,9 @@ public class Teleop3 extends LinearOpMode {
                 telemetry.addData("Heading", drive.getHeading());
                 telemetry.addData("Heading error", headingController.getLastError());
                 telemetry.addData("Scoring state", scoringState.name());
+                telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistance()));
+                telemetry.addData("Board lock error", boardDistanceController.getLastError());
+                telemetry.addData("Board lock target pos", boardDistanceController.getTargetPosition());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -395,5 +399,10 @@ public class Teleop3 extends LinearOpMode {
                 }
         }
         prevLiftInput = gamepad2.right_bumper;
+    }
+
+    void resetBoardDistanceController(){
+        boardDistanceController = new PIDFController(boardCoeffs);
+        boardDistanceController.setTargetPosition(boardTargetDistance);
     }
 }

@@ -53,6 +53,8 @@ public class CyclesAuto extends LinearOpMode {
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
 
+    final double liftExtendXCoord = 25;
+
     @Override
     public void runOpMode(){
         // Init
@@ -144,7 +146,7 @@ public class CyclesAuto extends LinearOpMode {
                 case SCORING_YELLOW:
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
-                    if (drive.getPoseEstimate().getX() > 49){
+                    if (drive.getPoseEstimate().getX() > liftExtendXCoord){
                         scoringMech.scoreAsync(2.75);
                     }
                     if (scoringMech.liftIsMostlyDown()){
@@ -178,9 +180,12 @@ public class CyclesAuto extends LinearOpMode {
                     scoringMech.grabOffStackAsync(scoringMech.hasBothPixels());
                     if (scoringMech.hasBothPixels()){
                         drive.breakFollowing();
+                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
+                        autoConstants.addFinishedCycle();
+                        // Update the trajs because when you break following the start position has to be set to the bot's current position
+                        autoConstants.updateTrajectories();
                         drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
                         autoState = AutoState.SCORING_WHITE;
-                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
                         actionTimer.reset();
                         scoringMech.resetScoringState();
                     }
@@ -194,9 +199,12 @@ public class CyclesAuto extends LinearOpMode {
                     scoringMech.grabOffStackAsync(scoringMech.hasBothPixels());
                     if (scoringMech.hasBothPixels()){
                         drive.breakFollowing();
+                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
+                        autoConstants.addFinishedCycle();
+                        // Update the trajs because when you break following the start position has to be set to the bot's current position
+                        autoConstants.updateTrajectories();
                         drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
                         autoState = AutoState.SCORING_WHITE;
-                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
                         actionTimer.reset();
                         scoringMech.resetScoringState();
                     }
@@ -207,8 +215,8 @@ public class CyclesAuto extends LinearOpMode {
                     break;
 
                 case SCORING_WHITE:
-                    if (drive.getPoseEstimate().getX() > 49){
-                        scoringMech.scoreAsync(10);
+                    if (drive.getPoseEstimate().getX() > liftExtendXCoord){
+                        scoringMech.scoreAsync(8);
                     } else {
                         scoringMech.grabOffStackAsync(true);
                     }
@@ -239,7 +247,7 @@ public class CyclesAuto extends LinearOpMode {
             // Update all the things
             drive.update();
             // Only use the sensors we need
-            if (autoState == AutoState.SWEEP_ONE) scoringMech.update(true, false);
+            if (autoState == AutoState.SWEEP_ONE || autoState == AutoState.SWEEP_TWO) scoringMech.update(true, false);
             //if (autoState == AutoState.SCORING_YELLOW || autoState == AutoState.SCORING_WHITE) scoringMech.update(false, true);
             else scoringMech.update(false, false);
 

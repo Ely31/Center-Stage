@@ -27,9 +27,12 @@ public class Intake {
     public void off(){
         intakeMotor.setPower(0);
     }
-    public void reverse(){
+    public void reverse(double speed){
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeMotor.setPower(-1);
+        intakeMotor.setPower(-Math.abs(speed));
+    }
+    public void reverse(){
+        this.reverse(1);
     }
 
     public void setPower(double power){
