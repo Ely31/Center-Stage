@@ -13,6 +13,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
+import java.util.Arrays;
+
 @Config
 public class Arm3 {
     ServoImplEx pivot;
@@ -51,6 +53,9 @@ public class Arm3 {
 
     double lastBoardDistance;
     double lastArmSensorVal;
+
+    double[] lastBoardSensorVals = new double[5];
+    boolean useRollingBoardAvg = true;
 
     ElapsedTime pixelSensorsPollTimer = new ElapsedTime();
     int pixelSensorsPollInterval = 100;
@@ -156,6 +161,9 @@ public class Arm3 {
     public double getBoardDistance(){
         return lastBoardDistance;
     }
+    public double getBoardDistanceRollingAvg(){
+        return Arrays.stream(lastBoardSensorVals).average().getAsDouble();
+    }
 
     public void update(boolean usePixelSensors, boolean useArmSensor, boolean useBoardSensor){
         if (usePixelSensors && pixelSensorsPollTimer.milliseconds() > pixelSensorsPollInterval) {
@@ -172,6 +180,13 @@ public class Arm3 {
         }
         if (useBoardSensor) {
             lastBoardDistance = boardSensor.getDistance(DistanceUnit.CM);
+        }
+        if (useRollingBoardAvg) {
+            for(int i = 4; i >= 0; i--) {
+                if (i == 0) lastBoardSensorVals[i] = lastBoardDistance;
+                // Shift
+                else lastBoardSensorVals[i] = lastBoardSensorVals[i-1];
+            }
         }
         if (useArmSensor && armSensorPollTimer.milliseconds() > armSensorPollInterval) {
             lastArmSensorVal = armSensor.alpha();
@@ -196,10 +211,15 @@ public class Arm3 {
         for (double val : lastTopSensorVals){
             telemetry.addData("val", val);
         }
+        telemetry.addLine("Board sensor past vals");
+        for (double val : lastBoardSensorVals){
+            telemetry.addData("val", val);
+        }
         telemetry.addData("Pixel in bottom", pixelIsInBottom());
         telemetry.addData("Pixel in top", pixelIsInTop());
         telemetry.addData("Stopper state", getStopperState());
         telemetry.addData("Board distance", getBoardDistance());
+        telemetry.addData("Rolling board distance", getBoardDistanceRollingAvg());
         telemetry.addData("Arm sensor val", lastArmSensorVal);
         telemetry.addData("Arm is down", armIsDown());
     }

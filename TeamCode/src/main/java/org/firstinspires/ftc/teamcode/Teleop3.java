@@ -44,7 +44,7 @@ public class Teleop3 extends LinearOpMode {
     PIDFController headingController;
     public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
     PIDFController boardDistanceController;
-    public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.05,0.005,0.01);
+    public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.05,0.000,5); // Old i val 0.0001
 
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
@@ -130,10 +130,10 @@ public class Teleop3 extends LinearOpMode {
                         gamepad1.right_trigger
                 );
                 drivingState = 1;
-            } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistance() < boardControllerEnableDistance){
+            } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 // Lock heading with pid controller if you aren't turning
                 drive.driveFieldCentric(
-                        -boardDistanceController.update(arm.getBoardDistance()),
+                        -boardDistanceController.update(arm.getBoardDistanceRollingAvg()),
                         gamepad1.left_stick_y,
                         gamepad1.right_stick_x,
                         1
@@ -223,7 +223,7 @@ public class Teleop3 extends LinearOpMode {
             // INTAKE CONTROL
             if (gamepad1.right_stick_button) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
-            else if (arm.armIsDown()) intake.toggle(gamepad1.left_stick_button);
+            else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)) intake.toggle(gamepad1.left_stick_button);
             else intake.off();
 
             // DRONE LAUNCHER CONTROL
@@ -252,7 +252,7 @@ public class Teleop3 extends LinearOpMode {
                 telemetry.addData("Heading", drive.getHeading());
                 telemetry.addData("Heading error", headingController.getLastError());
                 telemetry.addData("Scoring state", scoringState.name());
-                telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistance()));
+                telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistanceRollingAvg()));
                 telemetry.addData("Board lock error", boardDistanceController.getLastError());
                 telemetry.addData("Board lock target pos", boardDistanceController.getTargetPosition());
                 telemetry.addLine();

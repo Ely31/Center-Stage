@@ -14,7 +14,7 @@ public class Lift {
     LinearActuator liftActuator;
 
     // Measurements are in inches
-    public static double maxHeight = 23;
+    public static double maxHeight = 24;
     public static double minHeight = 0;
     public static double retractedPos = 0;
     public static double extendedPos = 7;
