@@ -42,6 +42,7 @@ public class CyclesAuto extends LinearOpMode {
         PUSHING_PURPLE,
         SCORING_YELLOW,
         TO_STACK,
+        TO_STACKTWO,
         SWEEP_ONE,
         SWEEP_TWO,
         SCORING_WHITE,
@@ -149,12 +150,13 @@ public class CyclesAuto extends LinearOpMode {
                     if (drive.getPoseEstimate().getX() > liftExtendXCoord){
                         scoringMech.scoreAsync(2.75);
                     }
-                    if (scoringMech.liftIsMostlyDown()){
+                    if (scoringMech.liftIsGoingDown()){
 
                         actionTimer.reset();
                         // If not doing cycles, park
                         if (autoConstants.getNumCycles() > 0){
                             drive.followTrajectorySequenceAsync(autoConstants.toStack);
+                            scoringMech.resetStackGrabbingState();
                             autoState = AutoState.TO_STACK;
                         } else {
                             drive.followTrajectorySequenceAsync(autoConstants.park);
@@ -170,14 +172,27 @@ public class CyclesAuto extends LinearOpMode {
 
                     if (!drive.isBusy()){
                         drive.followTrajectorySequenceAsync(autoConstants.sweepOne);
-                        autoState = AutoState.SWEEP_ONE;
                         scoringMech.resetStackGrabbingState();
+                        autoState = AutoState.SWEEP_ONE;
+                        actionTimer.reset();
+                    }
+                    break;
+
+                case TO_STACKTWO:
+
+                    if (actionTimer.seconds() > 2){
+                        scoringMech.grabOffStackAsync(false, false);
+                    } else scoringMech.scoreAsync(3);
+
+                    if (!drive.isBusy()){
+                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
+                        autoState = AutoState.SCORING_WHITE;
                         actionTimer.reset();
                     }
                     break;
 
                 case SWEEP_ONE:
-                    scoringMech.grabOffStackAsync(scoringMech.hasBothPixels());
+                    scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(), true);
                     if (scoringMech.hasBothPixels()){
                         drive.breakFollowing();
                         autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
@@ -196,7 +211,7 @@ public class CyclesAuto extends LinearOpMode {
                     break;
 
                 case SWEEP_TWO:
-                    scoringMech.grabOffStackAsync(scoringMech.hasBothPixels());
+                    scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(), true);
                     if (scoringMech.hasBothPixels()){
                         drive.breakFollowing();
                         autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
@@ -218,13 +233,14 @@ public class CyclesAuto extends LinearOpMode {
                     if (drive.getPoseEstimate().getX() > liftExtendXCoord){
                         scoringMech.scoreAsync(8);
                     } else {
-                        scoringMech.grabOffStackAsync(true);
+                        scoringMech.grabOffStackAsync(true, true);
                     }
 
-                    if (scoringMech.liftIsMostlyDown()){
+                    if (scoringMech.liftIsGoingDown()){
                         if (autoConstants.getNumCycles() > 0){
-                            drive.followTrajectorySequenceAsync(autoConstants.toStack);
-                            autoState = AutoState.TO_STACK;
+                            drive.followTrajectorySequenceAsync(autoConstants.toStackTwo);
+                            scoringMech.resetStackGrabbingState();
+                            autoState = AutoState.TO_STACKTWO;
                         } else {
                             drive.followTrajectorySequenceAsync(autoConstants.park);
                             autoState = AutoState.PARKING;
@@ -247,9 +263,15 @@ public class CyclesAuto extends LinearOpMode {
             // Update all the things
             drive.update();
             // Only use the sensors we need
-            if (autoState == AutoState.SWEEP_ONE || autoState == AutoState.SWEEP_TWO) scoringMech.update(true, false);
-            //if (autoState == AutoState.SCORING_YELLOW || autoState == AutoState.SCORING_WHITE) scoringMech.update(false, true);
-            else scoringMech.update(false, false);
+            // Gosh the formatting on this if statement is ugly
+            if (
+                    scoringMech.getStackGrabbingState() == ScoringMech3.StackGrabbingState.INTAKING
+                    || scoringMech.getStackGrabbingState() == ScoringMech3.StackGrabbingState.KNOCKING
+            ){
+                scoringMech.update(true, false);
+            } else {
+                scoringMech.update(false, false);
+            }
 
             // To be used to automatically calibrate field centric
             autoConstants.saveAutoPose();

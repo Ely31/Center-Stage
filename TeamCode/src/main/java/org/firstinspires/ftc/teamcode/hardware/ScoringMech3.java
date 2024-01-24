@@ -43,9 +43,9 @@ public class ScoringMech3 {
     public void premove(){arm.preMove();}
 
     // ESSENTIAL to call this function every loop
-    public void update(boolean usePixelSensors, boolean useBoardSesor) {
+    public void update(boolean usePixelSensors, boolean useBoardSensor) {
         lift.update();
-        arm.update(usePixelSensors, false, useBoardSesor);
+        arm.update(usePixelSensors, false, useBoardSensor);
     }
 
     public boolean hasBothPixels(){
@@ -80,7 +80,7 @@ public class ScoringMech3 {
         DONE
     }
     StackGrabbingState stackGrabbingState = StackGrabbingState.KNOCKING;
-    StackGrabbingState getStackGrabbingState(){
+    public StackGrabbingState getStackGrabbingState(){
         return stackGrabbingState;
     }
     public void resetStackGrabbingState(){
@@ -88,14 +88,14 @@ public class ScoringMech3 {
         stackGrabbingState = StackGrabbingState.KNOCKING;
     }
 
-    public void grabOffStackAsync(boolean grasping){
-        // You have to call updateLift while using this for it to work
+    public void grabOffStackAsync(boolean grasping, boolean knockOverStack){
         switch (stackGrabbingState){
             case KNOCKING:
                 arm.setBothGrippersState(false);
                 retract();
                 intake.reverse(0.5);
-                if (stackGrabbingWait.seconds() > 0.8){
+                // Skip this state if we want, like when we're going for the second cycle
+                if (stackGrabbingWait.seconds() > 0.8 || !knockOverStack){
                     stackGrabbingWait.reset();
                     stackGrabbingState = StackGrabbingState.INTAKING;
                 }
@@ -139,7 +139,6 @@ public class ScoringMech3 {
     }
 
     public void scoreAsync(double height){
-        // You have to call updateLift while using this for it to work
         switch (scoringState){
             case EXTENDING:
                 lift.setHeight(height);

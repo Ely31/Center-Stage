@@ -113,9 +113,9 @@ public class CyclesAutoConstants {
     public TrajectorySequence dropOffPurplePixel;
     public TrajectorySequence scoreYellowPixel;
     public TrajectorySequence toStack;
+    public TrajectorySequence toStackTwo;
     public TrajectorySequence sweepOne;
     public TrajectorySequence sweepTwo;
-    public TrajectorySequence sweepThree;
     public TrajectorySequence scoreWhitePixels;
     public TrajectorySequence park;
 
@@ -173,7 +173,7 @@ public class CyclesAutoConstants {
                     .splineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
                     .build();
 
-            toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() > 1 ? scoreWhitePixels.end() : scoreYellowPixel.end())
+            toStack = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                     .lineToSplineHeading(new Pose2d(28, -15.5*alliance, Math.toRadians(0*alliance)))
                     .splineToConstantHeading(new Vector2d(-40, -15.5*alliance), Math.toRadians(180*alliance))
                     .splineToSplineHeading(new Pose2d(-56.5, -19*alliance, Math.toRadians(15*alliance)), Math.toRadians(-139*alliance))
@@ -226,10 +226,10 @@ public class CyclesAutoConstants {
                     .lineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)))
                     .build();
 
-            toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() > 1 ? scoreWhitePixels.end() : scoreYellowPixel.end())
+            toStack = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                     .lineToSplineHeading(new Pose2d(28, -50*alliance, Math.toRadians(0*alliance)))
                     .splineToConstantHeading(new Vector2d(-30, -55*alliance), Math.toRadians(180*alliance))
-                    .splineToSplineHeading(new Pose2d(-56.5, (getNumFinishedCycles() < 1 ? -40 : -35)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
+                    .splineToSplineHeading(new Pose2d(-56.5, (-40)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
                     .build();
 
             sweepOne = drive.trajectorySequenceBuilder(toStack.end())
@@ -248,6 +248,15 @@ public class CyclesAutoConstants {
                     .lineToSplineHeading(new Pose2d(-50, -50*alliance, Math.toRadians(0*alliance)))
                     .splineToConstantHeading(new Vector2d(12, -55*alliance),0*alliance)
                     .splineTo(new Vector2d(whitePixelXCoord, whitePixelYCoord*alliance),0*alliance)
+                    .build();
+
+            toStackTwo = drive.trajectorySequenceBuilder(scoreWhitePixels.end())
+                    .lineToSplineHeading(new Pose2d(28, -50*alliance, Math.toRadians(0*alliance)))
+                    .splineToConstantHeading(new Vector2d(-30, -55*alliance), Math.toRadians(180*alliance))
+                    .splineToSplineHeading(new Pose2d(-56.5, (-35)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
+                    .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
+                    .splineToConstantHeading(new Vector2d(-58, -28.5*alliance), Math.toRadians(90*alliance))
+                    .resetVelConstraint()
                     .build();
             // END OF BOARDSIDE
         }
