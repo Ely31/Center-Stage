@@ -75,8 +75,16 @@ public class CyclesAuto extends LinearOpMode {
             if (gamepad1.circle) autoConstants.setAlliance(1); // Red alliance
             if (gamepad1.cross) autoConstants.setAlliance(-1); // Blue alliance
             // This isn't the best choice of buttons right now
-            if (gamepad1.left_bumper) autoConstants.setWingSide(true);
-            if (gamepad1.right_bumper) autoConstants.setWingSide(false);
+            if (gamepad1.left_bumper){
+                autoConstants.setWingSide(true);
+                // Do this too for convenience
+                autoConstants.setParkingClose(false);
+            }
+            if (gamepad1.right_bumper){
+                autoConstants.setWingSide(false);
+                // Do this too for convenience
+                autoConstants.setParkingClose(true);
+            }
             // Park options
             if (gamepad1.left_trigger > 0.5) autoConstants.setParkingClose(true);
             if (gamepad1.right_trigger > 0.5) autoConstants.setParkingClose(false);
@@ -186,9 +194,12 @@ public class CyclesAuto extends LinearOpMode {
 
                     if (!drive.isBusy() || scoringMech.hasBothPixels()){
                         drive.breakFollowing();
+                        // Update the trajs because when you break following the start position has to be set to the bot's current position
+                        autoConstants.updateTrajectories();
                         drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
                         scoringMech.resetScoringState();
                         autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
+                        autoConstants.addFinishedCycle();
                         autoState = AutoState.SCORING_WHITE;
                         actionTimer.reset();
                     }
