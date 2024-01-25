@@ -95,7 +95,7 @@ public class ScoringMech3 {
                 retract();
                 intake.reverse(0.5);
                 // Skip this state if we want, like when we're going for the second cycle
-                if (stackGrabbingWait.seconds() > 0.8 || !knockOverStack){
+                if (stackGrabbingWait.seconds() > 0.95 || !knockOverStack){
                     stackGrabbingWait.reset();
                     stackGrabbingState = StackGrabbingState.INTAKING;
                 }
@@ -122,7 +122,7 @@ public class ScoringMech3 {
                 break;
 
             case SPITTING:
-                intake.reverse();
+                intake.reverse(0.5);
                 if (stackGrabbingWait.seconds() > 0.5){
                     stackGrabbingState = StackGrabbingState.DONE;
                 }

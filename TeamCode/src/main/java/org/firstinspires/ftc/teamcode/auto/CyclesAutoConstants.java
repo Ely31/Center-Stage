@@ -229,18 +229,18 @@ public class CyclesAutoConstants {
             toStack = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
                     .lineToSplineHeading(new Pose2d(28, -50*alliance, Math.toRadians(0*alliance)))
                     .splineToConstantHeading(new Vector2d(-30, -55*alliance), Math.toRadians(180*alliance))
-                    .splineToSplineHeading(new Pose2d(-56.5, (-40)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
+                    .splineToSplineHeading(new Pose2d(-57.5, (-41.5)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
                     .build();
 
             sweepOne = drive.trajectorySequenceBuilder(toStack.end())
                     .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
-                    .lineTo(new Vector2d(-58, -28.5*alliance))
+                    .lineTo(new Vector2d(-58, -30*alliance))
                     .resetVelConstraint()
                     .build();
 
             sweepTwo = drive.trajectorySequenceBuilder(sweepOne.end())
                     .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
-                    .lineTo(new Vector2d(-56.5, -40.5*alliance))
+                    .lineTo(new Vector2d(-58, -40*alliance))
                     .resetVelConstraint()
                     .build();
 
@@ -251,11 +251,11 @@ public class CyclesAutoConstants {
                     .build();
 
             toStackTwo = drive.trajectorySequenceBuilder(scoreWhitePixels.end())
-                    .lineToSplineHeading(new Pose2d(28, -50*alliance, Math.toRadians(0*alliance)))
+                    .lineToSplineHeading(new Pose2d(28, -51.5*alliance, Math.toRadians(0*alliance)))
                     .splineToConstantHeading(new Vector2d(-30, -55*alliance), Math.toRadians(180*alliance))
-                    .splineToSplineHeading(new Pose2d(-56.5, (-35)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
-                    .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
-                    .splineToConstantHeading(new Vector2d(-58, -28.5*alliance), Math.toRadians(90*alliance))
+                    .splineToSplineHeading(new Pose2d(-58.5, (-38)*alliance, Math.toRadians(-30*alliance)), Math.toRadians(110*alliance))
+                    .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(12, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
+                    .splineToConstantHeading(new Vector2d(-57.7, -30*alliance), Math.toRadians(90*alliance))
                     .resetVelConstraint()
                     .build();
             // END OF BOARDSIDE

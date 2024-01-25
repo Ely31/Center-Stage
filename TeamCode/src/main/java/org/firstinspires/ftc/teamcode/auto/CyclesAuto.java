@@ -118,7 +118,7 @@ public class CyclesAuto extends LinearOpMode {
         // Save this for tele
         AutoToTele.allianceSide = autoConstants.getAlliance();
         // Used sometimes to avoid potential collisions with a partner
-        sleep(autoConstants.getDelaySeconds()*1000);
+        sleep(Math.abs(autoConstants.getDelaySeconds()*1000));
         while (opModeIsActive()){
             // One big fsm
             switch (autoState){
@@ -181,11 +181,14 @@ public class CyclesAuto extends LinearOpMode {
                 case TO_STACKTWO:
 
                     if (actionTimer.seconds() > 2){
-                        scoringMech.grabOffStackAsync(false, false);
+                        scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(), false);
                     } else scoringMech.scoreAsync(3);
 
-                    if (!drive.isBusy()){
+                    if (!drive.isBusy() || scoringMech.hasBothPixels()){
+                        drive.breakFollowing();
                         drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
+                        scoringMech.resetScoringState();
+                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
                         autoState = AutoState.SCORING_WHITE;
                         actionTimer.reset();
                     }
