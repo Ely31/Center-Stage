@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
@@ -39,6 +40,7 @@ public class Teleop3 extends LinearOpMode {
     Intake intake;
     DroneLauncher launcher;
     IntegratedClimber climber;
+    PurplePixelPusher ppp;
     ElapsedTime climberTimer = new ElapsedTime();
 
     PIDFController headingController;
@@ -58,7 +60,8 @@ public class Teleop3 extends LinearOpMode {
     final boolean useBulkreads = true;
     public static boolean useHeadingLock = false;
     public static boolean useSlideUpStrategy = true;
-    public static boolean useBoardSensor = true;
+    public static boolean useBoardSensor = false;
+    public static boolean prevUseBoardSensorInput = false;
     public static double boardTargetDistance = 15;
     public static double boardControllerEnableDistance = 45;
 
@@ -89,6 +92,7 @@ public class Teleop3 extends LinearOpMode {
         intake = new Intake(hardwareMap);
         climber = new IntegratedClimber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
+        ppp = new PurplePixelPusher(hardwareMap);
 
         headingController = new PIDFController(headingCoeffs);
         boardDistanceController = new PIDFController(boardCoeffs);
@@ -133,7 +137,8 @@ public class Teleop3 extends LinearOpMode {
             } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 // Lock heading with pid controller if you aren't turning
                 drive.driveFieldCentric(
-                        -boardDistanceController.update(arm.getBoardDistanceRollingAvg()),
+                        // Multiply by alliance because the board is to the right on red and left on blue
+                        -boardDistanceController.update(arm.getBoardDistanceRollingAvg()) * AutoToTele.allianceSide,
                         gamepad1.left_stick_y,
                         gamepad1.right_stick_x,
                         1
@@ -153,8 +158,8 @@ public class Teleop3 extends LinearOpMode {
                 resetBoardDistanceController();
 
                 drivingState = 0;
-
             }
+
             // Manually calibrate field centric with a button
             if (gamepad1.share && !prevHeadingResetInput) {
                 drive.resetIMU();
@@ -170,6 +175,12 @@ public class Teleop3 extends LinearOpMode {
                 usePixelSensors = !usePixelSensors;
             }
             prevUsePixelSensorsInput = gamepad2.ps;
+
+            // Enable/disable using the board distance sensor
+            if (!prevUseBoardSensorInput && gamepad1.ps){
+                useBoardSensor = !useBoardSensor;
+            }
+            prevUseBoardSensorInput = gamepad1.ps;
 
             // ARM AND LIFT CONTROL
             if (!isClimbing) {
@@ -221,7 +232,7 @@ public class Teleop3 extends LinearOpMode {
             }
 
             // INTAKE CONTROL
-            if (gamepad1.right_stick_button) intake.reverse();
+            if (gamepad1.right_stick_button) intake.reverse(0.6);
             // Only allow intaking when the arm is there to catch the pixels
             else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)) intake.toggle(gamepad1.left_stick_button);
             else intake.off();
@@ -242,6 +253,9 @@ public class Teleop3 extends LinearOpMode {
                 isClimbing = !isClimbing;
             }
             prevClimbingInput = gamepad2.left_bumper && gamepad2.right_bumper;
+
+            // Keep ppp open in case the auto doesn't release it
+            ppp.setState(gamepad1.a);
 
             // TELEMETRY
             if (debug) {
@@ -325,6 +339,10 @@ public class Teleop3 extends LinearOpMode {
                 arm.setStopperState(false);
                 // Toggle the intake off to prevent sucking in pixels when the arm isn't there
                 intake.forceToggleOff();
+                // Spit out just a little to avoid dragging a third under the tubing
+                // Using the gripper timer for this is hacky but oh well
+                if (gripperTimer.milliseconds() < (Arm3.gripperActuationTime + 200)) intake.reverse(0.6);
+                else intake.off();
                 // Reset poker
                 poking = false;
 

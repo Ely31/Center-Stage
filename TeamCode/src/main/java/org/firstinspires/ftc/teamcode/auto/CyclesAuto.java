@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.auto;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -27,6 +28,9 @@ public class CyclesAuto extends LinearOpMode {
     ScoringMech3 scoringMech;
     TimeUtil timeUtil = new TimeUtil();
 
+    // Hacky but the stupid thing won't work otherwise and it's driving me mad why
+    Servo ppp;
+
     CyclesAutoConstants autoConstants;
 
     // For the rising egde detectors
@@ -40,6 +44,7 @@ public class CyclesAuto extends LinearOpMode {
     enum AutoState{
         GRABBING_PRELOADS,
         PUSHING_PURPLE,
+        WAITING_FOR_PPP,
         SCORING_YELLOW,
         TO_STACK,
         TO_STACKTWO,
@@ -54,7 +59,8 @@ public class CyclesAuto extends LinearOpMode {
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
 
-    final double liftExtendXCoord = 25;
+    final double liftExtendXCoord = 30;
+    final double pppOpenPos = 0;
 
     @Override
     public void runOpMode(){
@@ -64,6 +70,7 @@ public class CyclesAuto extends LinearOpMode {
         scoringMech = new ScoringMech3(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
+        ppp = hardwareMap.get(Servo.class, "ppp");
         autoConstants = new CyclesAutoConstants(drive);
         // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
@@ -145,11 +152,22 @@ public class CyclesAuto extends LinearOpMode {
                 case PUSHING_PURPLE:
                         if (!drive.isBusy()){
                             // Drop the pixel and send it off again
-                            scoringMech.setPPPState(false);
-                            drive.followTrajectorySequenceAsync(autoConstants.scoreYellowPixel);
+                            //scoringMech.setPPPState(false);
+                            ppp.setPosition(pppOpenPos);
                             actionTimer.reset();
-                            autoState = AutoState.SCORING_YELLOW;
+                            autoState = AutoState.WAITING_FOR_PPP;
                         }
+                    break;
+
+                case WAITING_FOR_PPP:
+                    // Why does the ppp not release, I'm telling you to release
+                    //scoringMech.setPPPState(false);
+                    ppp.setPosition(pppOpenPos);
+                    if (actionTimer.milliseconds() > 300){
+                        drive.followTrajectorySequenceAsync(autoConstants.scoreYellowPixel);
+                        autoState = AutoState.SCORING_YELLOW;
+                        actionTimer.reset();
+                    }
                     break;
 
                 case SCORING_YELLOW:

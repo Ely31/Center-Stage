@@ -199,7 +199,7 @@ public class CyclesAutoConstants {
             // END OF WINGSIDE
         } else {
             // Board side
-            whitePixelYCoord = -46;
+            whitePixelYCoord = -40.5;
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
@@ -231,12 +231,12 @@ public class CyclesAutoConstants {
                     .splineToConstantHeading(new Vector2d(28, -57*alliance), Math.toRadians(180*alliance))
                     .splineToConstantHeading(new Vector2d(-30, -56*alliance), Math.toRadians(180*alliance))
                     // Ok we're out of the truss now
-                    .splineToSplineHeading(new Pose2d(-57.5, (-40.5)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
+                    .splineToSplineHeading(new Pose2d(-57.5, (-41.25)*alliance, Math.toRadians(-15*alliance)), Math.toRadians(139*alliance))
                     .build();
 
             sweepOne = drive.trajectorySequenceBuilder(toStack.end())
                     .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH))
-                    .lineTo(new Vector2d(-58, -30*alliance))
+                    .lineTo(new Vector2d(-58, -32.5*alliance))
                     .resetVelConstraint()
                     .build();
 

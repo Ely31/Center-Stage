@@ -12,13 +12,13 @@ public class ScoringMech3 {
     Lift lift;
     Arm3 arm;
     Intake intake;
-    PurplePixelPusher ppp;
+    //PurplePixelPusher ppp;
     // Constructor
     public ScoringMech3(HardwareMap hwmap){
         lift = new Lift(hwmap);
         arm = new Arm3(hwmap);
         intake = new Intake(hwmap);
-        ppp = new PurplePixelPusher(hwmap);
+        //ppp = new PurplePixelPusher(hwmap);
     }
 
     public void score(){
@@ -39,7 +39,7 @@ public class ScoringMech3 {
     }
 
     public void grabJustForPreload(){arm.setBothGrippersState(true);}
-    public void setPPPState(boolean state) {ppp.setState(state);}
+    //public void setPPPState(boolean state) {ppp.setState(state);}
     public void premove(){arm.preMove();}
 
     // ESSENTIAL to call this function every loop
@@ -95,7 +95,7 @@ public class ScoringMech3 {
                 retract();
                 intake.reverse(0.5);
                 // Skip this state if we want, like when we're going for the second cycle
-                if (stackGrabbingWait.seconds() > 0.95 || !knockOverStack){
+                if (stackGrabbingWait.seconds() > 1.1 || !knockOverStack){
                     stackGrabbingWait.reset();
                     stackGrabbingState = StackGrabbingState.INTAKING;
                 }
@@ -204,7 +204,7 @@ public class ScoringMech3 {
         telemetry.addData("grabbing state", stackGrabbingState.name());
         arm.displayDebug(telemetry);
         lift.disalayDebug(telemetry);
-        ppp.displayDebug(telemetry);
+        //ppp.displayDebug(telemetry);
         intake.displayDebug(telemetry);
     }
 }

@@ -18,7 +18,7 @@ public class ScoringMechPPPTest extends LinearOpMode {
         // Pre-run
         while (opModeIsActive()) {
             // TeleOp loop
-            scoringMech.setPPPState(!gamepad1.a);
+            //scoringMech.setPPPState(!gamepad1.a);
 
             scoringMech.displayDebug(telemetry);
             telemetry.update();
