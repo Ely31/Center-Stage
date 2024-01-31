@@ -1,41 +1,52 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.acmerobotics.roadrunner.control.PIDFController;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
-import org.firstinspires.ftc.teamcode.hardware.Arm;
-import org.firstinspires.ftc.teamcode.hardware.Arm2;
+import org.firstinspires.ftc.teamcode.hardware.AdjustableIntake;
+import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
-import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
+import org.firstinspires.ftc.teamcode.util.Utility;
 
 import java.util.List;
 
-@Disabled
 @Config
 //@Photon
 @TeleOp
-public class SlowTeleop extends LinearOpMode {
+public class Teleop4 extends LinearOpMode {
     // Pre init
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
     Lift lift;
-    Arm2 arm;
+    Arm3 arm;
     ElapsedTime pivotTimer = new ElapsedTime();
     ElapsedTime gripperTimer = new ElapsedTime();
-    Intake intake;
+    ElapsedTime doubleTapTimer = new ElapsedTime();
+    AdjustableIntake intake;
     DroneLauncher launcher;
     IntegratedClimber climber;
+    PurplePixelPusher ppp;
+    ElapsedTime climberTimer = new ElapsedTime();
+
+    PIDFController headingController;
+    public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
+    PIDFController boardDistanceController;
+    public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.05,0.000,5); // Old i val 0.0001
 
     public static double liftPosEditStep = 0.6;
     boolean prevLiftInput = false;
@@ -46,15 +57,24 @@ public class SlowTeleop extends LinearOpMode {
     boolean prevClimbingInput = false;
     boolean usePixelSensors = true;
     boolean prevUsePixelSensorsInput = false;
-    final boolean useBulkreads = true;
+    final boolean useBulkreads = false;
+    public static boolean useHeadingLock = false;
+    public static boolean useSlideUpStrategy = true;
+    public static boolean useBoardSensor = false;
+    public static boolean prevUseBoardSensorInput = false;
+    public static double boardTargetDistance = 15;
+    public static double boardControllerEnableDistance = 45;
 
     enum ScoringState {
         INTAKING,
         WAITING_FOR_GRIPPERS,
         PREMOVED,
-        SCORING
+        SCORING,
+        SLIDING_UP
     }
     ScoringState scoringState = ScoringState.INTAKING;
+
+    int drivingState;
 
     // Telemetry options
     public static boolean debug = true;
@@ -63,14 +83,20 @@ public class SlowTeleop extends LinearOpMode {
     @Override
     public void runOpMode(){
         // Init
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.setMsTransmissionInterval(100);
         // Bind hardware to the hardwaremap
         drive = new TeleMecDrive(hardwareMap, 0.3, false);
         lift = new Lift(hardwareMap);
-        arm = new Arm2(hardwareMap);
-        intake = new Intake(hardwareMap);
+        arm = new Arm3(hardwareMap);
+        intake = new AdjustableIntake(hardwareMap);
         climber = new IntegratedClimber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
+        ppp = new PurplePixelPusher(hardwareMap);
+
+        headingController = new PIDFController(headingCoeffs);
+        boardDistanceController = new PIDFController(boardCoeffs);
+        boardDistanceController.setTargetPosition(boardTargetDistance);
 
         // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -85,6 +111,7 @@ public class SlowTeleop extends LinearOpMode {
         matchTimer.reset();
         pivotTimer.reset();
         gripperTimer.reset();
+        doubleTapTimer.reset();
         // Automatic feild centric calibration
         drive.setHeadingOffset(AutoToTele.endOfAutoHeading + Math.toRadians(-90*AutoToTele.allianceSide));
 
@@ -98,17 +125,48 @@ public class SlowTeleop extends LinearOpMode {
             }
 
             // DRIVING
-            // Drive the bot normally
-            drive.driveRobotCentric(
-                    -gamepad1.left_stick_x,
-                    gamepad1.left_stick_y,
-                    gamepad1.right_stick_x * 0.8,
-                    1
-            );
+            if (useHeadingLock && gamepad1.right_stick_x == 0){
+                // Lock heading with pid controller if you aren't turning
+                drive.driveFieldCentric(
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        -headingController.update(drive.getHeading()),
+                        gamepad1.right_trigger
+                );
+                drivingState = 1;
+            } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
+                // Lock heading with pid controller if you aren't turning
+                drive.driveFieldCentric(
+                        // Multiply by alliance because the board is to the right on red and left on blue
+                        -boardDistanceController.update(arm.getBoardDistanceRollingAvg()) * AutoToTele.allianceSide,
+                        gamepad1.left_stick_y,
+                        gamepad1.right_stick_x,
+                        1
+                );
+                drivingState = 2;
+            } else {
+                // Drive the bot normally when you give turning input
+                drive.driveFieldCentric(
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        gamepad1.right_stick_x * 0.8,
+                        gamepad1.right_trigger
+                );
+                // Reset heading controller so it doesn't do weird things when it turns back on
+                headingController = new PIDFController(headingCoeffs);
+                headingController.setTargetPosition(drive.getHeading());
+                resetBoardDistanceController();
+
+                drivingState = 0;
+            }
+
             // Manually calibrate field centric with a button
             if (gamepad1.share && !prevHeadingResetInput) {
                 drive.resetIMU();
                 drive.resetHeadingOffset();
+                // Reset heading controller so it doesn't do weird things when it turns back on
+                headingController = new PIDFController(headingCoeffs);
+                headingController.setTargetPosition(drive.getHeading());
             }
             prevHeadingResetInput = gamepad1.share;
 
@@ -118,6 +176,12 @@ public class SlowTeleop extends LinearOpMode {
             }
             prevUsePixelSensorsInput = gamepad2.ps;
 
+            // Enable/disable using the board distance sensor
+            if (!prevUseBoardSensorInput && gamepad1.ps){
+                useBoardSensor = !useBoardSensor;
+            }
+            prevUseBoardSensorInput = gamepad1.ps;
+
             // ARM AND LIFT CONTROL
             if (!isClimbing) {
                 // This method here does most of the heavy work
@@ -126,7 +190,7 @@ public class SlowTeleop extends LinearOpMode {
                 // Only works when the lift is up
                 if (scoringState == ScoringState.SCORING) {
                     // If you press the trigger, change the lift height slower
-                    if (gamepad2.right_trigger > 0.2) {
+                    if (gamepad2.left_trigger > 0.2) {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep * 0.5);
                     } else {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
@@ -145,21 +209,49 @@ public class SlowTeleop extends LinearOpMode {
                     lift.update();
                 }
                 // Update arm
-                arm.update();
+                // Only poll the sensors we need when we need them to reduce loop times
+                if (scoringState == ScoringState.SCORING) arm.update(true, false, useBoardSensor);
+                if (scoringState == ScoringState.INTAKING) arm.update(true, true, false);
+                if (scoringState == ScoringState.PREMOVED) arm.update(false, false, false);
+
+                // Keep this at 0 until climbing mode is on
+                climberTimer.reset();
+                // Reset the lift height that the climber will go to
+                IntegratedClimber.targetLiftHeight = IntegratedClimber.hangingHeight;
             } else {
                 // CLIMBER CONTROL
+                // This entire section of code is terrible
                 // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
                 arm.pivotGoToIntake();
-                // Control lift with left stick
-                lift.setRawPowerDangerous(-gamepad2.left_stick_y);
-                // And climber with right
-                climber.setPower(-gamepad2.right_stick_y);
+
+                // If you pull the climber, stop pid control of the lift
+                if (!(gamepad2.right_stick_y == 0)){ // If we pull the stick...
+                    climber.setPower(-gamepad2.right_stick_y);
+                    // Update the climbing pos so the lift holds its positon where the climber stops pulling it
+                    IntegratedClimber.targetLiftHeight = lift.getHeight();
+                    // Set the target pos to wherever it is so that it holds there when you stop using the stick
+                    climber.setTargetPos(climber.getPos());
+                    // Lift things
+                    // Let it coast and be pulled up if
+                    lift.setRawPowerDangerous(0);
+                    // Reset pid controller
+                    lift.setCoefficients(Lift.coeffs);
+                    // Update so we can get the lift's position
+                    lift.update(false);
+                } else {
+                    // Hold position to stop slowly falling
+                    climber.goToTargetPos();
+                    // Lift things
+                    lift.setHeight(IntegratedClimber.targetLiftHeight);
+                    // Only run the lift pid if we aren't moving the climber
+                    lift.update();
+                }
             }
 
             // INTAKE CONTROL
-            if (gamepad1.b) intake.reverse();
+            if (gamepad1.right_stick_button) intake.reverse(0.6);
             // Only allow intaking when the arm is there to catch the pixels
-            else if (arm.armIsDown()) intake.toggle(gamepad1.a);
+            else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)) intake.toggle(gamepad1.left_stick_button);
             else intake.off();
 
             // DRONE LAUNCHER CONTROL
@@ -171,18 +263,25 @@ public class SlowTeleop extends LinearOpMode {
 
             // TOGGLE CLIMBING
             if ((gamepad2.left_bumper && gamepad2.right_bumper) && !prevClimbingInput){
-                // Reset pid controllers because otherwise the integral part gets extremely high
-                if (isClimbing) {
-                    lift.setCoefficients(Lift.coeffs);
-                }
                 isClimbing = !isClimbing;
+                // Do this to prevent crashing by running to a pos before setting one
+                climber.setTargetPos(climber.getPos());
             }
             prevClimbingInput = gamepad2.left_bumper && gamepad2.right_bumper;
 
             // TELEMETRY
             if (debug) {
                 telemetry.addData("Using pixel sensors", usePixelSensors);
+                telemetry.addData("Using board distance", useBoardSensor);
                 telemetry.addData("Climbing", isClimbing);
+                telemetry.addData("Driving mode", drivingState);
+                telemetry.addData("Target heading", headingController.getTargetPosition());
+                telemetry.addData("Heading", drive.getHeading());
+                telemetry.addData("Heading error", headingController.getLastError());
+                telemetry.addData("Scoring state", scoringState.name());
+                telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistanceRollingAvg()));
+                telemetry.addData("Board lock error", boardDistanceController.getLastError());
+                telemetry.addData("Board lock target pos", boardDistanceController.getTargetPosition());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -200,6 +299,11 @@ public class SlowTeleop extends LinearOpMode {
             }
             telemetry.update();
         } // End of the loop
+
+        if (isStopRequested()){
+            // Open both grippers if you stop the program, makes it less work for us extracting pixels
+            arm.setBothGrippersState(false);
+        }
     }
 
     boolean hadAnyPixelsWhenPremoved;
@@ -209,9 +313,13 @@ public class SlowTeleop extends LinearOpMode {
             case INTAKING:
                 arm.pivotGoToIntake();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
-                // Put up the stopper so pixels don't fly out the back
-                arm.setStopperState(true);
+                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
+                    lift.retract();
+                }
+                // Put up the stopper so pixels don't fly out the back, but only after the arm's back to avoid hooking a pixel on it
+                if (pivotTimer.milliseconds() > 500) {
+                    arm.setStopperState(true);
+                }
                 // If we had pixels when premoved and now moved back down to intaking,
                 // hold onto them until the arm gets all the way down so they don't fly out.
                 // Open them to intake once the arm gets all the way there.
@@ -229,24 +337,32 @@ public class SlowTeleop extends LinearOpMode {
                 break;
 
             case WAITING_FOR_GRIPPERS:
-                if (gripperTimer.milliseconds() > Arm.gripperActuationTime){
+                if (gripperTimer.milliseconds() > Arm3.gripperActuationTime){
                     scoringState = ScoringState.PREMOVED;
+                    doubleTapTimer.reset();
                 }
                 break;
 
             case PREMOVED:
                 arm.preMove();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm.pivotAwayFromBordTime) lift.retract();
+                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
                 arm.setStopperState(false);
                 // Toggle the intake off to prevent sucking in pixels when the arm isn't there
                 intake.forceToggleOff();
+                // Spit out just a little to avoid dragging a third under the tubing
+                // Using the gripper timer for this is hacky but oh well
+                if (gripperTimer.milliseconds() < (Arm3.gripperActuationTime + 200)) intake.reverse(0.6);
+                else intake.off();
                 // Reset poker
                 poking = false;
+
                 // Switch states when bumper pressed
-                if (!prevLiftInput && gamepad2.right_bumper){
+                // Don't go to scoring if the arm has just been premoved though, this happens when the automatic raises it but the driver
+                // tries to manually raise it at the same time. This timer prevents that.
+                if (!prevLiftInput && gamepad2.right_bumper && doubleTapTimer.milliseconds() > 450){
                     scoringState = ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
@@ -282,12 +398,16 @@ public class SlowTeleop extends LinearOpMode {
                 prevPokingInput = gamepad2.b;
                 arm.setStopperState(poking);
 
-                // Switch states when bumper pressed or both pixels are gone if autoRetract is on
+                // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
                 if (
                         (!prevLiftInput && gamepad2.right_bumper) ||
                         (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
                 ){
-                    scoringState = ScoringState.INTAKING;
+                    if (useSlideUpStrategy) {
+                        scoringState = ScoringState.SLIDING_UP;
+                        lift.setExtendedPos(lift.getExtendedPos() + 2);
+                    }
+                    else scoringState = ScoringState.INTAKING;
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
                 }
@@ -297,7 +417,23 @@ public class SlowTeleop extends LinearOpMode {
                     pivotTimer.reset();
                 }
                 break;
+
+            case SLIDING_UP:
+                lift.extend();
+                // Once it's gone up enough, switch states and retract
+                if (Utility.withinErrorOfValue(lift.getHeight(), lift.getExtendedPos(), 0.5)) {
+                    // Reset that back to normal because we temporarily changed it
+                    lift.setExtendedPos(lift.getExtendedPos() - 2);
+                    scoringState = ScoringState.INTAKING;
+                    // Reset timer so the clock ticks on the arm being away from the board
+                    pivotTimer.reset();
+                }
         }
         prevLiftInput = gamepad2.right_bumper;
+    }
+
+    void resetBoardDistanceController(){
+        boardDistanceController = new PIDFController(boardCoeffs);
+        boardDistanceController.setTargetPosition(boardTargetDistance);
     }
 }

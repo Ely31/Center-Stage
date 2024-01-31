@@ -86,8 +86,12 @@ public class Lift {
         retractedPos = 0;
     }
 
+    public void update(boolean updatePidController){
+        // Hacky fix to make some of the climbing automation work
+        liftActuator.update(updatePidController);
+    }
     public void update(){
-        liftActuator.update();
+        this.update(true);
     }
 
     // DANGEROUS!

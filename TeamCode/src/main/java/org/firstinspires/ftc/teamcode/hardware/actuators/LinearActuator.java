@@ -78,15 +78,20 @@ public class LinearActuator {
     // you MUST call update EVERY loop for this stuff to work
     // it's done this way so that we only read from the motor once a loop, saving that data to variables,
     // so we don't hurt loop times by grabbing it multiple times.
-    public void update(){
+    public void update(boolean updatePidController){
         currentPosition = motor.getCurrentPosition();
         //currentCurrent = motor.getCurrent(CurrentUnit.AMPS);
         currentPower = motor.getPower();
         //currentDirection = motor.getDirection();
         currentMode = motor.getMode();
 
-        Controller.setTargetPosition(targetDistance);
-        motor.setPower(Controller.update(getCurrentDistance()) + fCoefficient);
+        if (updatePidController) {
+            Controller.setTargetPosition(targetDistance);
+            motor.setPower(Controller.update(getCurrentDistance()) + fCoefficient);
+        }
+    }
+    public void update(){
+        this.update(true);
     }
 
     // DANGEROUS!
