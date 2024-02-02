@@ -3,16 +3,16 @@ package org.firstinspires.ftc.teamcode.tests;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.hardware.Arm;
+import org.firstinspires.ftc.teamcode.hardware.Arm3;
 
 @TeleOp(name="",group="test")
 public class ArmTest extends LinearOpMode {
     // Pre-init
-    Arm arm;
+    Arm3 arm;
     @Override
     public void runOpMode() {
         // Init
-    arm = new Arm(hardwareMap);
+    arm = new Arm3(hardwareMap);
 
         waitForStart();
         // Pre-run
@@ -32,7 +32,7 @@ public class ArmTest extends LinearOpMode {
             if (gamepad1.left_bumper) arm.setStopperState(false);
             if (gamepad1.right_bumper) arm.setStopperState(true);
 
-            arm.update();
+            arm.update(true, true, true);
 
             arm.displayDebug(telemetry);
             telemetry.update();

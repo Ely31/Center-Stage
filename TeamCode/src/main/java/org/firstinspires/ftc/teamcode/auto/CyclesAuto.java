@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
-import org.firstinspires.ftc.teamcode.hardware.Arm;
+import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ScoringMech3;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
@@ -141,7 +141,7 @@ public class CyclesAuto extends LinearOpMode {
                     scoringMech.premove();
                     scoringMech.grabJustForPreload();
                     // Once the claw is shut, premove the v4b, then move on to the next state
-                    if (actionTimer.milliseconds() > Arm.gripperActuationTime){
+                    if (actionTimer.milliseconds() > Arm3.gripperActuationTime){
                         // Set the drive on it's next trajectory
                         drive.followTrajectorySequenceAsync(autoConstants.dropOffPurplePixel);
                         actionTimer.reset();
