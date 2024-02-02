@@ -16,15 +16,9 @@ public class Lift {
     // Measurements are in inches
     public static double maxHeight = 24;
     public static double minHeight = 0;
-    public static double retractedPos = 0;
     public static double extendedPos = 7;
 
     public static PIDCoefficients coeffs = new PIDCoefficients(0.5,0.15,0.04);
-    public static double f = 0.0;
-
-    boolean state = false; // True for extended
-    public boolean getState() {return state;}
-
 
     public Lift(HardwareMap hwmap){
         liftActuator = new LinearActuator(hwmap, "lift", 19.2, 5.93);
@@ -42,7 +36,6 @@ public class Lift {
 
     public void setCoefficients(PIDCoefficients coeffs){
         liftActuator.setCoefficients(coeffs);
-        liftActuator.setfCoefficient(f);
         Lift.coeffs = coeffs;
     }
 
@@ -53,14 +46,8 @@ public class Lift {
     public double getHeight(){
         return liftActuator.getCurrentDistance();
     }
-    public void retract(){
-        setHeight(0);
-        state = false;
-    }
-    public void extend(){
-        state = true;
-        setHeight(extendedPos);
-    }
+    public void retract(){setHeight(0);}
+    public void extend(){setHeight(extendedPos);}
 
     public void editExtendedPos(double step){
         extendedPos += step;
@@ -71,19 +58,6 @@ public class Lift {
     }
     public double getExtendedPos(){
         return extendedPos;
-    }
-
-    public void editRetractedPos(double step){
-        retractedPos += step;
-    }
-    public void setRetractedPos(double pos) {
-        retractedPos = pos;
-    }
-    public double getRetractedPos(){
-        return retractedPos;
-    }
-    public void resetRetractedPos(){
-        retractedPos = 0;
     }
 
     public void update(boolean updatePidController){
@@ -101,7 +75,6 @@ public class Lift {
 
     public void disalayDebug(Telemetry telemetry){
         telemetry.addLine("LIFT");
-        telemetry.addData("state", state);
         liftActuator.displayDebugInfo(telemetry);
     }
 }

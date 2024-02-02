@@ -11,13 +11,13 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 public class ScoringMech3 {
     Lift lift;
     Arm3 arm;
-    Intake intake;
+    FixedIntake intake;
     //PurplePixelPusher ppp;
     // Constructor
     public ScoringMech3(HardwareMap hwmap){
         lift = new Lift(hwmap);
         arm = new Arm3(hwmap);
-        intake = new Intake(hwmap);
+        intake = new FixedIntake(hwmap);
         //ppp = new PurplePixelPusher(hwmap);
     }
 
@@ -45,7 +45,7 @@ public class ScoringMech3 {
     // ESSENTIAL to call this function every loop
     public void update(boolean usePixelSensors, boolean useBoardSensor) {
         lift.update();
-        arm.update(usePixelSensors, false, useBoardSensor);
+        arm.updateSensors(usePixelSensors, false, useBoardSensor);
     }
 
     public boolean hasBothPixels(){

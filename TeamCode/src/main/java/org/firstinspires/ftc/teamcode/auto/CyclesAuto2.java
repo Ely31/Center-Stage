@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ScoringMech3;
+import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
@@ -31,7 +32,7 @@ public class CyclesAuto2 extends LinearOpMode {
     // Hacky but the stupid thing won't work otherwise and it's driving me mad why
     Servo ppp;
 
-    CyclesAutoConstants autoConstants;
+    CyclesAutoConstants2 autoConstants;
 
     // For the rising egde detectors
     boolean prevCycleIncrease = false;
@@ -71,7 +72,7 @@ public class CyclesAuto2 extends LinearOpMode {
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
         ppp = hardwareMap.get(Servo.class, "ppp");
-        autoConstants = new CyclesAutoConstants(drive);
+        autoConstants = new CyclesAutoConstants2(drive);
         // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
@@ -143,30 +144,22 @@ public class CyclesAuto2 extends LinearOpMode {
                     // Once the claw is shut, premove the v4b, then move on to the next state
                     if (actionTimer.milliseconds() > Arm3.gripperActuationTime){
                         // Set the drive on it's next trajectory
-                        drive.followTrajectorySequenceAsync(autoConstants.dropOffPurplePixel);
-                        actionTimer.reset();
-                        autoState = AutoState.PUSHING_PURPLE;
+                        moveOnToState(AutoState.PUSHING_PURPLE, autoConstants.dropOffPurplePixel);
                     }
                     break;
 
                 case PUSHING_PURPLE:
                         if (!drive.isBusy()){
-                            // Drop the pixel and send it off again
-                            //scoringMech.setPPPState(false);
+                            // Drop the pixel and then set it to the waiting state
                             ppp.setPosition(pppOpenPos);
-                            actionTimer.reset();
-                            autoState = AutoState.WAITING_FOR_PPP;
+                            moveOnToState(AutoState.WAITING_FOR_PPP);
                         }
                     break;
 
                 case WAITING_FOR_PPP:
-                    // Why does the ppp not release, I'm telling you to release
-                    //scoringMech.setPPPState(false);
                     ppp.setPosition(pppOpenPos);
                     if (actionTimer.milliseconds() > 300){
-                        drive.followTrajectorySequenceAsync(autoConstants.scoreYellowPixel);
-                        autoState = AutoState.SCORING_YELLOW;
-                        actionTimer.reset();
+                        moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);
                     }
                     break;
 
@@ -181,14 +174,10 @@ public class CyclesAuto2 extends LinearOpMode {
                         actionTimer.reset();
                         // If not doing cycles, park
                         if (autoConstants.getNumCycles() > 0){
-                            drive.followTrajectorySequenceAsync(autoConstants.toStack);
-                            scoringMech.resetStackGrabbingState();
-                            autoState = AutoState.TO_STACK;
+                            moveOnToState(AutoState.TO_STACK, autoConstants.toStack);
                         } else {
-                            drive.followTrajectorySequenceAsync(autoConstants.park);
-                            autoState = AutoState.PARKING;
+                            moveOnToState(AutoState.PARKING, autoConstants.park);
                         }
-                        actionTimer.reset();
                     }
                     break;
 
@@ -197,10 +186,8 @@ public class CyclesAuto2 extends LinearOpMode {
                     scoringMech.scoreAsync(3);
 
                     if (!drive.isBusy()){
-                        drive.followTrajectorySequenceAsync(autoConstants.sweepOne);
                         scoringMech.resetStackGrabbingState();
-                        autoState = AutoState.SWEEP_ONE;
-                        actionTimer.reset();
+                        moveOnToState(AutoState.SWEEP_ONE, autoConstants.sweepOne);
                     }
                     break;
 
@@ -212,14 +199,11 @@ public class CyclesAuto2 extends LinearOpMode {
 
                     if (!drive.isBusy() || scoringMech.hasBothPixels()){
                         drive.breakFollowing();
+                        scoringMech.resetScoringState();
+                        addCycle();
                         // Update the trajs because when you break following the start position has to be set to the bot's current position
                         autoConstants.updateTrajectories();
-                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
-                        scoringMech.resetScoringState();
-                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
-                        autoConstants.addFinishedCycle();
-                        autoState = AutoState.SCORING_WHITE;
-                        actionTimer.reset();
+                        moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
                     }
                     break;
 
@@ -227,18 +211,14 @@ public class CyclesAuto2 extends LinearOpMode {
                     scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(), true);
                     if (scoringMech.hasBothPixels()){
                         drive.breakFollowing();
-                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
-                        autoConstants.addFinishedCycle();
+                        scoringMech.resetScoringState();
+                        addCycle();
                         // Update the trajs because when you break following the start position has to be set to the bot's current position
                         autoConstants.updateTrajectories();
-                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
-                        autoState = AutoState.SCORING_WHITE;
-                        actionTimer.reset();
-                        scoringMech.resetScoringState();
+                        moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
                     }
                     if (!drive.isBusy()) {
-                        drive.followTrajectorySequenceAsync(autoConstants.sweepTwo);
-                        autoState = AutoState.SWEEP_TWO;
+                        moveOnToState(AutoState.SWEEP_TWO, autoConstants.sweepTwo);
                     }
                     break;
 
@@ -246,18 +226,14 @@ public class CyclesAuto2 extends LinearOpMode {
                     scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(), true);
                     if (scoringMech.hasBothPixels()){
                         drive.breakFollowing();
-                        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
-                        autoConstants.addFinishedCycle();
+                        scoringMech.resetScoringState();
+                        addCycle();
                         // Update the trajs because when you break following the start position has to be set to the bot's current position
                         autoConstants.updateTrajectories();
-                        drive.followTrajectorySequenceAsync(autoConstants.scoreWhitePixels);
-                        autoState = AutoState.SCORING_WHITE;
-                        actionTimer.reset();
-                        scoringMech.resetScoringState();
+                        moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
                     }
                     if (!drive.isBusy()) {
-                        drive.followTrajectorySequenceAsync(autoConstants.sweepOne);
-                        autoState = AutoState.SWEEP_ONE;
+                        moveOnToState(AutoState.SWEEP_ONE, autoConstants.sweepOne);
                     }
                     break;
 
@@ -270,14 +246,11 @@ public class CyclesAuto2 extends LinearOpMode {
 
                     if (scoringMech.liftIsGoingDown()){
                         if (autoConstants.getNumCycles() > 0){
-                            drive.followTrajectorySequenceAsync(autoConstants.toStackTwo);
                             scoringMech.resetStackGrabbingState();
-                            autoState = AutoState.TO_STACKTWO;
+                            moveOnToState(AutoState.TO_STACKTWO, autoConstants.toStackTwo);
                         } else {
-                            drive.followTrajectorySequenceAsync(autoConstants.park);
-                            autoState = AutoState.PARKING;
+                            moveOnToState(AutoState.PARKING, autoConstants.park);
                         }
-                        actionTimer.reset();
                     }
                     break;
 
@@ -318,5 +291,19 @@ public class CyclesAuto2 extends LinearOpMode {
             timeUtil.displayDebug(telemetry, loopTimer);
             telemetry.update();
         } // End of while loop
+    }
+
+    void moveOnToState(AutoState state, TrajectorySequence traj){
+        drive.followTrajectorySequenceAsync(traj);
+        autoState = state;
+        actionTimer.reset();
+    }
+    void moveOnToState(AutoState state){
+        autoState = state;
+        actionTimer.reset();
+    }
+    void addCycle(){
+        autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
+        autoConstants.addFinishedCycle();
     }
 }

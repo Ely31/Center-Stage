@@ -7,13 +7,13 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Config
-public class Intake {
+public class FixedIntake {
 
     private DcMotor intakeMotor;
     private boolean lastInput;
     private boolean intakeToggledStatus;
 
-    public Intake(HardwareMap hwmap) {
+    public FixedIntake(HardwareMap hwmap) {
         intakeMotor = hwmap.get(DcMotor.class, "intake");
         intakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lastInput = false;

@@ -12,13 +12,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
+import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
-import org.firstinspires.ftc.teamcode.hardware.Intake;
-import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
+import org.firstinspires.ftc.teamcode.hardware.FixedIntake;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
-import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
@@ -37,9 +36,9 @@ public class Teleop3 extends LinearOpMode {
     ElapsedTime pivotTimer = new ElapsedTime();
     ElapsedTime gripperTimer = new ElapsedTime();
     ElapsedTime doubleTapTimer = new ElapsedTime();
-    Intake intake;
+    FixedIntake intake;
     DroneLauncher launcher;
-    IntegratedClimber climber;
+    Climber climber;
     PurplePixelPusher ppp;
     ElapsedTime climberTimer = new ElapsedTime();
 
@@ -89,8 +88,8 @@ public class Teleop3 extends LinearOpMode {
         drive = new TeleMecDrive(hardwareMap, 0.3, false);
         lift = new Lift(hardwareMap);
         arm = new Arm3(hardwareMap);
-        intake = new Intake(hardwareMap);
-        climber = new IntegratedClimber(hardwareMap);
+        intake = new FixedIntake(hardwareMap);
+        climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
         ppp = new PurplePixelPusher(hardwareMap);
 
@@ -210,9 +209,9 @@ public class Teleop3 extends LinearOpMode {
                 }
                 // Update arm
                 // Only poll the sensors we need when we need them to reduce loop times
-                if (scoringState == ScoringState.SCORING) arm.update(true, false, useBoardSensor);
-                if (scoringState == ScoringState.INTAKING) arm.update(true, true, false);
-                if (scoringState == ScoringState.PREMOVED) arm.update(false, false, false);
+                if (scoringState == ScoringState.SCORING) arm.updateSensors(true, false, useBoardSensor);
+                if (scoringState == ScoringState.INTAKING) arm.updateSensors(true, true, false);
+                if (scoringState == ScoringState.PREMOVED) arm.updateSensors(false, false, false);
 
                 // Keep this at 0 until climbing mode is on
                 climberTimer.reset();
@@ -279,10 +278,6 @@ public class Teleop3 extends LinearOpMode {
                 climber.disalayDebug(telemetry);
                 timeUtil.update(matchTimer.milliseconds());
                 timeUtil.displayDebug(telemetry, matchTimer);
-            }
-            // Someone should be able to learn how to drive without looking at the source code
-            if (instructionsOn) {
-              DrivingInstructions.printDrivingInstructions(telemetry);
             }
             telemetry.update();
         } // End of the loop

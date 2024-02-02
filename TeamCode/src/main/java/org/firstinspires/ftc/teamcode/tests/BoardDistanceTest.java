@@ -69,7 +69,7 @@ public class BoardDistanceTest extends LinearOpMode {
             }
             prevHeadingResetInput = gamepad1.share;
 
-            arm.update(false, false, true);
+            arm.updateSensors(false, false, true);
 
             telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistance()));
             telemetry.addData("Board lock error", boardDistanceController.getLastError());

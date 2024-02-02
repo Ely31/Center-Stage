@@ -4,13 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.hardware.Camera;
-import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector;
+import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
 
 @TeleOp(group = "test")
 public class PropPipelineTest extends LinearOpMode {
 
     Camera camera;
-    TeamPropDetector pipeline = new TeamPropDetector();
+    TeamPropDetector2 pipeline = new TeamPropDetector2();
 
     boolean prevInput = false;
 

@@ -165,7 +165,7 @@ public class Arm3 {
         return Arrays.stream(lastBoardSensorVals).average().getAsDouble();
     }
 
-    public void update(boolean usePixelSensors, boolean useArmSensor, boolean useBoardSensor){
+    public void updateSensors(boolean usePixelSensors, boolean useArmSensor, boolean useBoardSensor){
         if (usePixelSensors && pixelSensorsPollTimer.milliseconds() > pixelSensorsPollInterval) {
             // Shift vals back, this is terrible code and should be done with a for loop
             lastBottomSensorVals[2] = lastBottomSensorVals[1];

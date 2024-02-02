@@ -13,12 +13,11 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.AdjustableIntake;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
+import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
-import org.firstinspires.ftc.teamcode.hardware.IntegratedClimber;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
-import org.firstinspires.ftc.teamcode.util.DrivingInstructions;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
@@ -39,7 +38,7 @@ public class Teleop4 extends LinearOpMode {
     ElapsedTime doubleTapTimer = new ElapsedTime();
     AdjustableIntake intake;
     DroneLauncher launcher;
-    IntegratedClimber climber;
+    Climber climber;
     PurplePixelPusher ppp;
     ElapsedTime climberTimer = new ElapsedTime();
 
@@ -58,12 +57,11 @@ public class Teleop4 extends LinearOpMode {
     boolean usePixelSensors = true;
     boolean prevUsePixelSensorsInput = false;
     final boolean useBulkreads = false;
-    public static boolean useHeadingLock = false;
-    public static boolean useSlideUpStrategy = true;
     public static boolean useBoardSensor = false;
     public static boolean prevUseBoardSensorInput = false;
     public static double boardTargetDistance = 15;
     public static double boardControllerEnableDistance = 45;
+    public static boolean displayDebugTelemetry = true;
 
     enum ScoringState {
         INTAKING,
@@ -76,10 +74,6 @@ public class Teleop4 extends LinearOpMode {
 
     int drivingState;
 
-    // Telemetry options
-    public static boolean debug = true;
-    public static boolean instructionsOn = false;
-
     @Override
     public void runOpMode(){
         // Init
@@ -90,7 +84,7 @@ public class Teleop4 extends LinearOpMode {
         lift = new Lift(hardwareMap);
         arm = new Arm3(hardwareMap);
         intake = new AdjustableIntake(hardwareMap);
-        climber = new IntegratedClimber(hardwareMap);
+        climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
         ppp = new PurplePixelPusher(hardwareMap);
 
@@ -125,26 +119,18 @@ public class Teleop4 extends LinearOpMode {
             }
 
             // DRIVING
-            if (useHeadingLock && gamepad1.right_stick_x == 0){
-                // Lock heading with pid controller if you aren't turning
-                drive.driveFieldCentric(
-                        gamepad1.left_stick_x,
-                        gamepad1.left_stick_y,
-                        -headingController.update(drive.getHeading()),
-                        gamepad1.right_trigger
-                );
+            if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 drivingState = 1;
-            } else if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 // Lock heading with pid controller if you aren't turning
                 drive.driveFieldCentric(
                         // Multiply by alliance because the board is to the right on red and left on blue
                         -boardDistanceController.update(arm.getBoardDistanceRollingAvg()) * AutoToTele.allianceSide,
                         gamepad1.left_stick_y,
-                        gamepad1.right_stick_x,
+                        -headingController.update(drive.getHeading()),
                         1
                 );
-                drivingState = 2;
             } else {
+                drivingState = 0;
                 // Drive the bot normally when you give turning input
                 drive.driveFieldCentric(
                         gamepad1.left_stick_x,
@@ -152,21 +138,16 @@ public class Teleop4 extends LinearOpMode {
                         gamepad1.right_stick_x * 0.8,
                         gamepad1.right_trigger
                 );
-                // Reset heading controller so it doesn't do weird things when it turns back on
-                headingController = new PIDFController(headingCoeffs);
-                headingController.setTargetPosition(drive.getHeading());
+                // Reset pid controllers so they don't do weird things when they turn back on
+                resetHeadingController();
                 resetBoardDistanceController();
-
-                drivingState = 0;
             }
 
             // Manually calibrate field centric with a button
             if (gamepad1.share && !prevHeadingResetInput) {
                 drive.resetIMU();
                 drive.resetHeadingOffset();
-                // Reset heading controller so it doesn't do weird things when it turns back on
-                headingController = new PIDFController(headingCoeffs);
-                headingController.setTargetPosition(drive.getHeading());
+                resetHeadingController();
             }
             prevHeadingResetInput = gamepad1.share;
 
@@ -184,8 +165,6 @@ public class Teleop4 extends LinearOpMode {
 
             // ARM AND LIFT CONTROL
             if (!isClimbing) {
-                // This method here does most of the heavy work
-                updateScoringMech();
                 // Edit the extended position with the joystick on gamepad two
                 // Only works when the lift is up
                 if (scoringState == ScoringState.SCORING) {
@@ -196,8 +175,8 @@ public class Teleop4 extends LinearOpMode {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
                     }
                 }
-                // Update the lift so its pid controller runs, very important
-                // But, if you press a special key combo, escape pid control and bring the lift down
+                // Update the entire scoring mech, very important
+                // But, if you press a special key combo, escape pid control and all the state machine stuff to bring the lift down
                 // With raw power to fix potential lift issues
                 if (gamepad2.dpad_left && gamepad2.share) {
                     lift.setRawPowerDangerous(-0.85);
@@ -206,46 +185,16 @@ public class Teleop4 extends LinearOpMode {
                     lift.setRawPowerDangerous(1);
                     lift.zero();
                 } else {
-                    lift.update();
+                    // This method here does most of the heavy work
+                    updateScoringMech();
                 }
-                // Update arm
-                // Only poll the sensors we need when we need them to reduce loop times
-                if (scoringState == ScoringState.SCORING) arm.update(true, false, useBoardSensor);
-                if (scoringState == ScoringState.INTAKING) arm.update(true, true, false);
-                if (scoringState == ScoringState.PREMOVED) arm.update(false, false, false);
 
                 // Keep this at 0 until climbing mode is on
                 climberTimer.reset();
                 // Reset the lift height that the climber will go to
-                IntegratedClimber.targetLiftHeight = IntegratedClimber.hangingHeight;
+                Climber.targetLiftHeight = Climber.hangingHeight;
             } else {
-                // CLIMBER CONTROL
-                // This entire section of code is terrible
-                // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
-                arm.pivotGoToIntake();
-
-                // If you pull the climber, stop pid control of the lift
-                if (!(gamepad2.right_stick_y == 0)){ // If we pull the stick...
-                    climber.setPower(-gamepad2.right_stick_y);
-                    // Update the climbing pos so the lift holds its positon where the climber stops pulling it
-                    IntegratedClimber.targetLiftHeight = lift.getHeight();
-                    // Set the target pos to wherever it is so that it holds there when you stop using the stick
-                    climber.setTargetPos(climber.getPos());
-                    // Lift things
-                    // Let it coast and be pulled up if
-                    lift.setRawPowerDangerous(0);
-                    // Reset pid controller
-                    lift.setCoefficients(Lift.coeffs);
-                    // Update so we can get the lift's position
-                    lift.update(false);
-                } else {
-                    // Hold position to stop slowly falling
-                    climber.goToTargetPos();
-                    // Lift things
-                    lift.setHeight(IntegratedClimber.targetLiftHeight);
-                    // Only run the lift pid if we aren't moving the climber
-                    lift.update();
-                }
+                updateClimibingSystem();
             }
 
             // INTAKE CONTROL
@@ -270,10 +219,11 @@ public class Teleop4 extends LinearOpMode {
             prevClimbingInput = gamepad2.left_bumper && gamepad2.right_bumper;
 
             // TELEMETRY
-            if (debug) {
-                telemetry.addData("Using pixel sensors", usePixelSensors);
-                telemetry.addData("Using board distance", useBoardSensor);
-                telemetry.addData("Climbing", isClimbing);
+            telemetry.addData("Using pixel sensors", usePixelSensors);
+            telemetry.addData("Using board distance", useBoardSensor);
+            telemetry.addData("Climbing", isClimbing);
+            if (displayDebugTelemetry) {
+                telemetry.addLine();
                 telemetry.addData("Driving mode", drivingState);
                 telemetry.addData("Target heading", headingController.getTargetPosition());
                 telemetry.addData("Heading", drive.getHeading());
@@ -293,10 +243,6 @@ public class Teleop4 extends LinearOpMode {
                 timeUtil.update(matchTimer.milliseconds());
                 timeUtil.displayDebug(telemetry, matchTimer);
             }
-            // Someone should be able to learn how to drive without looking at the source code
-            if (instructionsOn) {
-              DrivingInstructions.printDrivingInstructions(telemetry);
-            }
             telemetry.update();
         } // End of the loop
 
@@ -311,6 +257,10 @@ public class Teleop4 extends LinearOpMode {
     void updateScoringMech(){
         switch (scoringState){
             case INTAKING:
+                // Update arm
+                // Only poll the sensors we need when we need them to reduce loop times
+                arm.updateSensors(true, true, false);
+                // Move the arm to the intake, duh
                 arm.pivotGoToIntake();
                 // Wait to retract the lift until the arm is safely away from the board
                 if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
@@ -374,6 +324,10 @@ public class Teleop4 extends LinearOpMode {
                 break;
 
             case SCORING:
+                // Update arm
+                // Only poll the sensors we need when we need them to reduce loop times
+                arm.updateSensors(true, false, useBoardSensor);
+                // Move it up
                 arm.pivotScore();
                 lift.extend();
                 // Release the top and bottom individually if we wish
@@ -403,11 +357,9 @@ public class Teleop4 extends LinearOpMode {
                         (!prevLiftInput && gamepad2.right_bumper) ||
                         (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
                 ){
-                    if (useSlideUpStrategy) {
-                        scoringState = ScoringState.SLIDING_UP;
-                        lift.setExtendedPos(lift.getExtendedPos() + 2);
-                    }
-                    else scoringState = ScoringState.INTAKING;
+
+                    scoringState = ScoringState.SLIDING_UP;
+                    lift.setExtendedPos(lift.getExtendedPos() + 2);
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
                 }
@@ -430,10 +382,46 @@ public class Teleop4 extends LinearOpMode {
                 }
         }
         prevLiftInput = gamepad2.right_bumper;
+        lift.update();
+    }
+
+    void updateClimibingSystem(){
+        // TODO: make this a state machine
+        // CLIMBER CONTROL
+        // This entire section of code is terrible
+        // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
+        arm.pivotGoToIntake();
+
+        // If you pull the climber, stop pid control of the lift
+        if (!(gamepad2.right_stick_y == 0)){ // If we pull the stick...
+            climber.setPower(-gamepad2.right_stick_y);
+            // Update the climbing pos so the lift holds its positon where the climber stops pulling it
+            Climber.targetLiftHeight = lift.getHeight();
+            // Set the target pos to wherever it is so that it holds there when you stop using the stick
+            climber.setTargetPos(climber.getPos());
+            // Lift things
+            // Let it coast and be pulled up if
+            lift.setRawPowerDangerous(0);
+            // Reset pid controller
+            lift.setCoefficients(Lift.coeffs);
+            // Update so we can get the lift's position
+            lift.update(false);
+        } else {
+            // Hold position to stop slowly falling
+            climber.goToTargetPos();
+            // Lift things
+            lift.setHeight(Climber.targetLiftHeight);
+            // Only run the lift pid if we aren't moving the climber
+            lift.update();
+        }
     }
 
     void resetBoardDistanceController(){
         boardDistanceController = new PIDFController(boardCoeffs);
         boardDistanceController.setTargetPosition(boardTargetDistance);
+    }
+    void resetHeadingController(){
+        headingController = new PIDFController(headingCoeffs);
+        headingController.setTargetPosition(drive.getHeading());
     }
 }
