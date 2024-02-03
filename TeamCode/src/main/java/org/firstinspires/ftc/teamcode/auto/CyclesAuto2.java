@@ -3,13 +3,13 @@ package org.firstinspires.ftc.teamcode.auto;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
+import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.hardware.ScoringMech3;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
@@ -27,11 +27,8 @@ public class CyclesAuto2 extends LinearOpMode {
     Camera camera;
     TeamPropDetector2 propPipeline = new TeamPropDetector2(true);
     ScoringMech3 scoringMech;
+    PurplePixelPusher ppp;
     TimeUtil timeUtil = new TimeUtil();
-
-    // Hacky but the stupid thing won't work otherwise and it's driving me mad why
-    Servo ppp;
-
     CyclesAutoConstants2 autoConstants;
 
     // For the rising egde detectors
@@ -71,7 +68,7 @@ public class CyclesAuto2 extends LinearOpMode {
         scoringMech = new ScoringMech3(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
-        ppp = hardwareMap.get(Servo.class, "ppp");
+        ppp = new PurplePixelPusher(hardwareMap);
         autoConstants = new CyclesAutoConstants2(drive);
         // Juice telemetry speed and allow changing color
         telemetry.setMsTransmissionInterval(100);
@@ -151,13 +148,13 @@ public class CyclesAuto2 extends LinearOpMode {
                 case PUSHING_PURPLE:
                         if (!drive.isBusy()){
                             // Drop the pixel and then set it to the waiting state
-                            ppp.setPosition(pppOpenPos);
+                            ppp.setState(false);
                             moveOnToState(AutoState.WAITING_FOR_PPP);
                         }
                     break;
 
                 case WAITING_FOR_PPP:
-                    ppp.setPosition(pppOpenPos);
+                    ppp.setState(false);
                     if (actionTimer.milliseconds() > 300){
                         moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);
                     }

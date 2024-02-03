@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.control.PIDFController;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -16,12 +15,9 @@ import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
-import org.firstinspires.ftc.teamcode.hardware.PurplePixelPusher;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
-
-import java.util.List;
 
 @Config
 //@Photon
@@ -39,7 +35,6 @@ public class Teleop4 extends LinearOpMode {
     AdjustableIntake intake;
     DroneLauncher launcher;
     Climber climber;
-    PurplePixelPusher ppp;
     ElapsedTime climberTimer = new ElapsedTime();
 
     PIDFController headingController;
@@ -47,8 +42,10 @@ public class Teleop4 extends LinearOpMode {
     PIDFController boardDistanceController;
     public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.05,0.000,5); // Old i val 0.0001
 
-    public static double liftPosEditStep = 0.6;
+    public static double liftPosEditStep = 0.45;
     boolean prevLiftInput = false;
+    boolean prevCalibratingLift = false;
+    boolean calibratingLift = false;
     boolean prevHeadingResetInput = false;
     boolean poking = false;
     boolean prevPokingInput = false;
@@ -56,7 +53,6 @@ public class Teleop4 extends LinearOpMode {
     boolean prevClimbingInput = false;
     boolean usePixelSensors = true;
     boolean prevUsePixelSensorsInput = false;
-    final boolean useBulkreads = false;
     public static boolean useBoardSensor = false;
     public static boolean prevUseBoardSensorInput = false;
     public static double boardTargetDistance = 15;
@@ -86,19 +82,10 @@ public class Teleop4 extends LinearOpMode {
         intake = new AdjustableIntake(hardwareMap);
         climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
-        ppp = new PurplePixelPusher(hardwareMap);
 
         headingController = new PIDFController(headingCoeffs);
         boardDistanceController = new PIDFController(boardCoeffs);
         boardDistanceController.setTargetPosition(boardTargetDistance);
-
-        // Bulk reads
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-        if (useBulkreads) {
-            for (LynxModule hub : allHubs) {
-                hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-            }
-        }
 
         waitForStart();
 
@@ -111,17 +98,10 @@ public class Teleop4 extends LinearOpMode {
 
         // START OF TELEOP LOOP
         while (opModeIsActive()){
-            // Bulk reads
-            if (useBulkreads) {
-                for (LynxModule hub : allHubs) {
-                    hub.clearBulkCache();
-                }
-            }
-
             // DRIVING
             if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 drivingState = 1;
-                // Lock heading with pid controller if you aren't turning
+                // Lock onto the board if we're scoring and it's close enough
                 drive.driveFieldCentric(
                         // Multiply by alliance because the board is to the right on red and left on blue
                         -boardDistanceController.update(arm.getBoardDistanceRollingAvg()) * AutoToTele.allianceSide,
@@ -131,7 +111,7 @@ public class Teleop4 extends LinearOpMode {
                 );
             } else {
                 drivingState = 0;
-                // Drive the bot normally when you give turning input
+                // Drive the bot normally
                 drive.driveFieldCentric(
                         gamepad1.left_stick_x,
                         gamepad1.left_stick_y,
@@ -178,16 +158,21 @@ public class Teleop4 extends LinearOpMode {
                 // Update the entire scoring mech, very important
                 // But, if you press a special key combo, escape pid control and all the state machine stuff to bring the lift down
                 // With raw power to fix potential lift issues
-                if (gamepad2.dpad_left && gamepad2.share) {
-                    lift.setRawPowerDangerous(-0.85);
-                    lift.zero();
-                } else if (gamepad2.dpad_right && gamepad2.share) {
-                    lift.setRawPowerDangerous(1);
-                    lift.zero();
+                calibratingLift = ((gamepad2.dpad_left || gamepad2.dpad_right) && gamepad2.share);
+                if (calibratingLift) {
+                    // Check which button it was and apply power in that direction
+                    if (gamepad2.dpad_right) {lift.setRawPowerDangerous(0.5);}
+                    else {lift.setRawPowerDangerous(-0.35);}
+                    // Turn off all the other stuff on the lift temporarily
+                    resetLiftController();
                 } else {
-                    // This method here does most of the heavy work
+                    // Zero the lift just once after you move it with raw power because if you continuously zero it then it gets zero power
+                    // When you try to move it with raw power
+                    if (prevCalibratingLift) lift.zero();
+                    // This method here does all of the heavy work
                     updateScoringMech();
                 }
+                prevCalibratingLift = calibratingLift;
 
                 // Keep this at 0 until climbing mode is on
                 climberTimer.reset();
@@ -249,6 +234,8 @@ public class Teleop4 extends LinearOpMode {
         if (isStopRequested()){
             // Open both grippers if you stop the program, makes it less work for us extracting pixels
             arm.setBothGrippersState(false);
+            // The only time I'll ever use sleep()
+            sleep(1000);
         }
     }
 
@@ -402,8 +389,7 @@ public class Teleop4 extends LinearOpMode {
             // Lift things
             // Let it coast and be pulled up if
             lift.setRawPowerDangerous(0);
-            // Reset pid controller
-            lift.setCoefficients(Lift.coeffs);
+            resetLiftController();
             // Update so we can get the lift's position
             lift.update(false);
         } else {
@@ -423,5 +409,8 @@ public class Teleop4 extends LinearOpMode {
     void resetHeadingController(){
         headingController = new PIDFController(headingCoeffs);
         headingController.setTargetPosition(drive.getHeading());
+    }
+    void resetLiftController(){
+        lift.setCoefficients(Lift.coeffs);
     }
 }
