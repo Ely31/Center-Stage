@@ -53,6 +53,8 @@ public class Teleop4 extends LinearOpMode {
     boolean prevClimbingInput = false;
     boolean usePixelSensors = true;
     boolean prevUsePixelSensorsInput = false;
+    boolean prevStackUp = false;
+    boolean prevStackDown = false;
     public static boolean useBoardSensor = false;
     public static boolean prevUseBoardSensorInput = false;
     public static double boardTargetDistance = 15;
@@ -149,7 +151,7 @@ public class Teleop4 extends LinearOpMode {
                 // Only works when the lift is up
                 if (scoringState == ScoringState.SCORING) {
                     // If you press the trigger, change the lift height slower
-                    if (gamepad2.left_trigger > 0.2) {
+                    if (gamepad2.right_trigger > 0.2) {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep * 0.5);
                     } else {
                         lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
@@ -173,20 +175,24 @@ public class Teleop4 extends LinearOpMode {
                     updateScoringMech();
                 }
                 prevCalibratingLift = calibratingLift;
-
-                // Keep this at 0 until climbing mode is on
-                climberTimer.reset();
-                // Reset the lift height that the climber will go to
-                Climber.targetLiftHeight = Climber.hangingHeight;
             } else {
                 updateClimibingSystem();
             }
 
             // INTAKE CONTROL
-            if (gamepad1.right_stick_button) intake.reverse(0.6);
+            if (gamepad1.right_stick_button) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
             else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)) intake.toggle(gamepad1.left_stick_button);
             else intake.off();
+            // Edit intake stack position
+            if (gamepad2.dpad_up && ! prevStackUp){
+                intake.goToStackPosition(intake.getStackPosition() + 1);
+            }
+            if (gamepad2.dpad_down && ! prevStackDown){
+                intake.goToStackPosition(intake.getStackPosition() - 1);
+            }
+            prevStackUp = gamepad2.dpad_up;
+            prevStackDown = gamepad2.dpad_down;
 
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it
@@ -295,6 +301,8 @@ public class Teleop4 extends LinearOpMode {
                 else intake.off();
                 // Reset poker
                 poking = false;
+                // Lift up the intake so it's less likely to get crunched
+                intake.goToVertical();
 
                 // Switch states when bumper pressed
                 // Don't go to scoring if the arm has just been premoved though, this happens when the automatic raises it but the driver
@@ -370,6 +378,11 @@ public class Teleop4 extends LinearOpMode {
         }
         prevLiftInput = gamepad2.right_bumper;
         lift.update();
+
+        // Keep this at 0 until climbing mode is on
+        climberTimer.reset();
+        // Reset the lift height that the climber will go to
+        Climber.targetLiftHeight = Climber.hangingHeight;
     }
 
     void updateClimibingSystem(){

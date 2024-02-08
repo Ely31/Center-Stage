@@ -2,10 +2,12 @@ package org.firstinspires.ftc.teamcode.hardware;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
 public class AdjustableIntake {
@@ -15,17 +17,21 @@ public class AdjustableIntake {
     private boolean lastInput;
     private boolean intakeToggledStatus;
 
-    public static double verticalPos = 0;
-    public static double groundPos = 0.6;
-    public static double aboveStackPos = 0.4;
+    public static double verticalPos = 0.79;
+    public static double groundPos = 0.3;
+    public static double aboveStackPos = 0.5;
+    public static double servoOffset = 0;
 
-    private int stackPosition = 4;
+    private int stackPosition = 0;
     public int getStackPosition(){return stackPosition;}
+    private double stackpositions[] = new double[]{0.335,0.36,0.38,0.42,0.436, aboveStackPos};
 
     public AdjustableIntake(HardwareMap hwmap) {
         intakeMotor = hwmap.get(DcMotor.class, "intake");
         intakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeArmServo = hwmap.get(Servo.class, "intakeArmServo");
+        intakeArmServo.setPosition(verticalPos);
         lastInput = false;
         intakeToggledStatus = false;
     }
@@ -73,14 +79,16 @@ public class AdjustableIntake {
         intakeArmServo.setPosition(aboveStackPos);
     }
     public void goToStackPosition(int position){
-        stackPosition = position;
+        stackPosition = Utility.clipValue(0, stackpositions.length-1, position);
         // Linearly interpolate here or have an array of predefined positions?
-        intakeArmServo.setPosition(0);
+        intakeArmServo.setPosition(stackpositions[stackPosition] + servoOffset);
     }
 
     public void displayDebug(Telemetry telemetry){
         telemetry.addLine("INTAKE");
         telemetry.addData("Intake Power", intakeMotor.getPower());
         telemetry.addData("Toggled Status", intakeToggledStatus);
+        telemetry.addData("Stack position", stackPosition);
+        telemetry.addData("Servo pos", intakeArmServo.getPosition());
     }
 }
