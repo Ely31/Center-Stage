@@ -10,10 +10,10 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
-import org.firstinspires.ftc.teamcode.hardware.AdjustableIntake;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
+import org.firstinspires.ftc.teamcode.hardware.ExtendoIntake;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
@@ -32,7 +32,7 @@ public class Teleop4 extends LinearOpMode {
     ElapsedTime pivotTimer = new ElapsedTime();
     ElapsedTime gripperTimer = new ElapsedTime();
     ElapsedTime doubleTapTimer = new ElapsedTime();
-    AdjustableIntake intake;
+    ExtendoIntake intake;
     DroneLauncher launcher;
     Climber climber;
     ElapsedTime climberTimer = new ElapsedTime();
@@ -81,7 +81,7 @@ public class Teleop4 extends LinearOpMode {
         drive = new TeleMecDrive(hardwareMap, 0.3, false);
         lift = new Lift(hardwareMap);
         arm = new Arm3(hardwareMap);
-        intake = new AdjustableIntake(hardwareMap);
+        intake = new ExtendoIntake(hardwareMap);
         climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
 
@@ -182,7 +182,11 @@ public class Teleop4 extends LinearOpMode {
             // INTAKE CONTROL
             if (gamepad1.right_stick_button) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
-            else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)) intake.toggle(gamepad1.left_stick_button);
+            else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)){
+                intake.toggle(gamepad1.left_stick_button);
+                // Move the intake back down after it was up if we turn it on
+                if (intake.getToggledStatus()) intake.goToStackPosition(intake.getStackPosition());
+            }
             else intake.off();
             // Edit intake stack position
             if (gamepad2.dpad_up && ! prevStackUp){
@@ -193,6 +197,9 @@ public class Teleop4 extends LinearOpMode {
             }
             prevStackUp = gamepad2.dpad_up;
             prevStackDown = gamepad2.dpad_down;
+            // Go all the way up or down
+            if (gamepad2.dpad_right) intake.goToStackPosition(0);
+            if (gamepad2.dpad_left) intake.goToStackPosition(5);
 
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it

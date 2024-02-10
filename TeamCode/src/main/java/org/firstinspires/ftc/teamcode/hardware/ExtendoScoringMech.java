@@ -11,13 +11,13 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 public class ExtendoScoringMech {
     Lift lift;
     Arm3 arm;
-    AdjustableIntake intake;
+    ExtendoIntake intake;
     PurplePixelPusher ppp;
     // Constructor
     public ExtendoScoringMech(HardwareMap hwmap){
         lift = new Lift(hwmap);
         arm = new Arm3(hwmap);
-        intake = new AdjustableIntake(hwmap);
+        intake = new ExtendoIntake(hwmap);
         ppp = new PurplePixelPusher(hwmap);
     }
 
@@ -195,6 +195,10 @@ public class ExtendoScoringMech {
     }
     public boolean liftIsMostlyDown(){
         return scoringState == ScoringState.RETRACTING;
+    }
+
+    public void setIntakePos(double pos){
+        intake.gotoRawPosition(pos);
     }
 
     // Stuff the ds with info

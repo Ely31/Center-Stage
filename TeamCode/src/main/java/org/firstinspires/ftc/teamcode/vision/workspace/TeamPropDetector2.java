@@ -6,7 +6,6 @@
 package org.firstinspires.ftc.teamcode.vision.workspace;
 
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -15,10 +14,10 @@ import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 public class TeamPropDetector2 extends OpenCvPipeline {
-
+    boolean alliance = true;
     // Don't use this first constructor unless it's for testing
     public TeamPropDetector2(){
-        this(false);
+        this(true);
     }
     public TeamPropDetector2(boolean isRedAlliance){
         if (isRedAlliance){
@@ -28,6 +27,7 @@ public class TeamPropDetector2 extends OpenCvPipeline {
             lower = blueLower;
             upper = blueUpper;
         }
+        alliance = isRedAlliance;
     }
 
     // 0 is left, 1 middle, 2 right
@@ -39,8 +39,10 @@ public class TeamPropDetector2 extends OpenCvPipeline {
     public final Scalar WHITE = new Scalar(255,255,255);
 
     // Min and max values for the threshold
-    public Scalar redLower = new Scalar(0, 20, 20);
-    public Scalar redUpper = new Scalar(30, 255, 255);
+    public Scalar redLower = new Scalar(0, 20, 0);
+    public Scalar redUpper = new Scalar(30, 255, 155);
+    public Scalar redLower2 = new Scalar(170, 20, 0);
+    public Scalar redUpper2 = new Scalar(180, 255, 155);
     public Scalar blueLower = new Scalar(90, 150, 20);
     public Scalar blueUpper = new Scalar(120, 255, 255);
     public Scalar lower;
@@ -49,11 +51,11 @@ public class TeamPropDetector2 extends OpenCvPipeline {
     public boolean showThresh = false;
 
     // Variables that determine the placement of the boxes
-    final static int frameWidth = 240;
+    final static int frameWidth = 232;
     final static int center = frameWidth/2;
-    final static int topOfSides = 205;
-    final static int topOfMiddle = topOfSides-5;
-    final static int sidesSpan = 105;
+    final static int topOfSides = 138;
+    final static int topOfMiddle = topOfSides-7;
+    final static int sidesSpan = 92;
     static final int REGION_WIDTH = 30;
     static final int REGION_HEIGHT = 30;
 
@@ -84,15 +86,18 @@ public class TeamPropDetector2 extends OpenCvPipeline {
 
     Mat region1_Binary, region2_Binary, region3_Binary;
     Mat hsv = new Mat();
-    Mat Binary = new Mat();
-    Mat displayBinary = new Mat();
-    final Mat white = new Mat(320, 240, CvType.CV_8U, Scalar.all(0));
+    Mat binary = new Mat();
+    Mat binary2 = new Mat();
     int avg1, avg2, avg3;
 
     // Converts to YCrCb and then thresholds
     void ThresholdInput(Mat input){
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
-        Core.inRange(hsv, lower, upper, Binary);
+        Core.inRange(hsv, lower, upper, binary);
+        if (alliance){
+            Core.inRange(hsv, redLower2, redUpper2, binary2);
+            Core.bitwise_or(binary, binary2, binary);
+        }
     }
 
     @Override
@@ -109,9 +114,9 @@ public class TeamPropDetector2 extends OpenCvPipeline {
          */
         ThresholdInput(firstFrame);
 
-        region1_Binary = Binary.submat(new Rect(region1_pointA, region1_pointB));
-        region2_Binary = Binary.submat(new Rect(region2_pointA, region2_pointB));
-        region3_Binary = Binary.submat(new Rect(region3_pointA, region3_pointB));
+        region1_Binary = binary.submat(new Rect(region1_pointA, region1_pointB));
+        region2_Binary = binary.submat(new Rect(region2_pointA, region2_pointB));
+        region3_Binary = binary.submat(new Rect(region3_pointA, region3_pointB));
     }
 
     @Override
@@ -128,10 +133,8 @@ public class TeamPropDetector2 extends OpenCvPipeline {
         avg3 = (int) Core.mean(region3_Binary).val[0];
 
         // Draw the threshold on top of the display image
-        Core.inRange(hsv, lower, upper, displayBinary);
         // Couldn't figure out bitwise and, but not works well enough
-        //Core.bitwise_and(input, input, input, displayBinary);
-        Core.bitwise_not(input, input, displayBinary);
+        Core.bitwise_not(input, input, binary);
 
         // Draw rectangles showing the sample regions on the screen.
         Imgproc.rectangle(
@@ -185,7 +188,7 @@ public class TeamPropDetector2 extends OpenCvPipeline {
             Imgproc.rectangle(input,region3_pointA,region3_pointB,GREEN,2);
         }
 
-        if (showThresh) return displayBinary; else return input;
+        if (showThresh) return binary; else return input;
     }
 
     // Call this from the OpMode to obtain the latest analysis

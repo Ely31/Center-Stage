@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.util;
 
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+
 public class Utility {
     // Takes an input and if it is outside the range, make it inside the range
     public static double clipValue(double min, double max, double input){
@@ -25,5 +27,11 @@ public class Utility {
             else builder.append("-");
         }
         return builder.toString();
+    }
+
+    public boolean pointsAreWithinDistance(Pose2d p1, Pose2d p2, double distance){
+        // Phythagorean theorem
+        double distanceBetweenPoints = Math.sqrt(Math.pow(p1.getX()-p2.getX(),2) + Math.pow(p1.getY()-p2.getY(),2));
+        return distanceBetweenPoints < distance;
     }
 }

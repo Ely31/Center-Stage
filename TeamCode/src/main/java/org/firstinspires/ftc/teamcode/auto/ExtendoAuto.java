@@ -9,6 +9,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
+import org.firstinspires.ftc.teamcode.hardware.ExtendoIntake;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoScoringMech;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
@@ -41,6 +42,7 @@ public class ExtendoAuto extends LinearOpMode {
         GRABBING_PRELOADS,
         PUSHING_PURPLE,
         WAITING_FOR_PPP,
+        WAITING_FOR_PPP2,
         SCORING_YELLOW,
         TO_STACK,
         SWEEP_ONE,
@@ -54,7 +56,7 @@ public class ExtendoAuto extends LinearOpMode {
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
 
-    final double liftExtendXCoord = 30;
+    final double liftExtendXCoord = 35;
     final double pppOpenPos = 0;
 
     @Override
@@ -144,14 +146,25 @@ public class ExtendoAuto extends LinearOpMode {
                 case PUSHING_PURPLE:
                         if (!drive.isBusy()){
                             // Drop the pixel and then set it to the waiting state
-                            scoringMech.setPPPState(false);
+                            //scoringMech.setPPPState(false);
+                            // Bring intake arm down
+                            scoringMech.setIntakePos(0.33);
                             moveOnToState(AutoState.WAITING_FOR_PPP);
                         }
                     break;
 
                 case WAITING_FOR_PPP:
-                    scoringMech.setPPPState(false);
-                    if (actionTimer.milliseconds() > 300){
+                    //scoringMech.setPPPState(false);
+                    if (actionTimer.milliseconds() > 700){
+                        scoringMech.setIntakePos(0.42);
+                        moveOnToState(AutoState.WAITING_FOR_PPP2);
+                    }
+                    break;
+
+                case WAITING_FOR_PPP2:
+                    //scoringMech.setPPPState(false);
+                    if (actionTimer.milliseconds() > 500){
+                        scoringMech.setIntakePos(ExtendoIntake.verticalPos);
                         moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);
                     }
                     break;

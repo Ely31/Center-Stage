@@ -10,7 +10,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
-public class AdjustableIntake {
+public class ExtendoIntake {
 
     private DcMotor intakeMotor;
     private Servo intakeArmServo;
@@ -26,7 +26,7 @@ public class AdjustableIntake {
     public int getStackPosition(){return stackPosition;}
     private double stackpositions[] = new double[]{0.335,0.36,0.38,0.42,0.436, aboveStackPos};
 
-    public AdjustableIntake(HardwareMap hwmap) {
+    public ExtendoIntake(HardwareMap hwmap) {
         intakeMotor = hwmap.get(DcMotor.class, "intake");
         intakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -68,6 +68,7 @@ public class AdjustableIntake {
     public void forceToggleOff(){
         intakeToggledStatus = false;
     }
+    public boolean getToggledStatus(){return intakeToggledStatus;}
 
     public void goToVertical(){
         intakeArmServo.setPosition(verticalPos);
@@ -82,6 +83,9 @@ public class AdjustableIntake {
         stackPosition = Utility.clipValue(0, stackpositions.length-1, position);
         // Linearly interpolate here or have an array of predefined positions?
         intakeArmServo.setPosition(stackpositions[stackPosition] + servoOffset);
+    }
+    public void gotoRawPosition(double pos){
+        intakeArmServo.setPosition(pos);
     }
 
     public void displayDebug(Telemetry telemetry){
