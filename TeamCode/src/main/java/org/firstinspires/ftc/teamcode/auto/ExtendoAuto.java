@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -56,8 +58,8 @@ public class ExtendoAuto extends LinearOpMode {
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
 
-    final double liftExtendXCoord = 35;
-    final double pppOpenPos = 0;
+    final double yellowLiftExtendXCoord = 35;
+    final double whiteLiftExtendXcoord = 25;
 
     @Override
     public void runOpMode(){
@@ -69,6 +71,7 @@ public class ExtendoAuto extends LinearOpMode {
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new ExtendoAutoConstants(drive);
         // Juice telemetry speed and allow changing color
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         telemetry.setMsTransmissionInterval(100);
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
 
@@ -172,14 +175,13 @@ public class ExtendoAuto extends LinearOpMode {
                 case SCORING_YELLOW:
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
-                    if (drive.getPoseEstimate().getX() > liftExtendXCoord){
+                    if (drive.getPoseEstimate().getX() > yellowLiftExtendXCoord){
                         scoringMech.scoreAsync(2.75);
                     }
                     if (scoringMech.liftIsGoingDown()){
-
-                        actionTimer.reset();
                         // If not doing cycles, park
                         if (autoConstants.getNumCycles() > 0){
+                            autoConstants.updateTrajectories();
                             moveOnToState(AutoState.TO_STACK, autoConstants.toStack);
                         } else {
                             moveOnToState(AutoState.PARKING, autoConstants.park);
@@ -189,28 +191,26 @@ public class ExtendoAuto extends LinearOpMode {
 
                 case TO_STACK:
 
-                    if (actionTimer.seconds() > 2){
+                    if (actionTimer.seconds() > 3){
                         scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(),false,5);
                     } else scoringMech.scoreAsync(3);
 
-                    if (scoringMech.hasBothPixels()){
-                        drive.breakFollowing();
+                    if (scoringMech.hasBothPixels() && actionTimer.seconds() > 3){
                         scoringMech.resetScoringState();
                         addCycle();
-                        // Update the trajs because when you break following the start position has to be set to the bot's current position
-                        autoConstants.updateTrajectories();
                         moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
                     }
                     break;
 
                 case SCORING_WHITE:
-                    if (drive.getPoseEstimate().getX() > liftExtendXCoord){
+                    if (drive.getPoseEstimate().getX() > whiteLiftExtendXcoord){
                         scoringMech.scoreAsync(8);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy(),5);
                     }
 
                     if (scoringMech.liftIsGoingDown()){
+                        autoConstants.updateTrajectories();
                         if (autoConstants.getNumCycles() > 0){
                             scoringMech.resetStackGrabbingState();
                             moveOnToState(AutoState.TO_STACK, autoConstants.toStack);
@@ -247,7 +247,8 @@ public class ExtendoAuto extends LinearOpMode {
 
             // Show telemetry because there are plenty of bugs it should help me fix
             telemetry.addData("Auto state", autoState.name());
-            telemetry.addData("Number of cycles", autoConstants.getNumCycles());
+            telemetry.addData("Num cycles", autoConstants.getNumCycles());
+            telemetry.addData("Num finished cycles", autoConstants.getNumFinishedCycles());
             drive.displayDeug(telemetry);
             scoringMech.displayDebug(telemetry);
             timeUtil.displayDebug(telemetry, loopTimer);

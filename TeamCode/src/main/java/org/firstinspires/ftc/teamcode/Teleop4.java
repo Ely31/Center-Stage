@@ -186,20 +186,21 @@ public class Teleop4 extends LinearOpMode {
                 intake.toggle(gamepad1.left_stick_button);
                 // Move the intake back down after it was up if we turn it on
                 if (intake.getToggledStatus()) intake.goToStackPosition(intake.getStackPosition());
+
+                // Edit intake stack position
+                if (gamepad2.dpad_up && ! prevStackUp){
+                    intake.goToStackPosition(intake.getStackPosition() + 1);
+                }
+                if (gamepad2.dpad_down && ! prevStackDown){
+                    intake.goToStackPosition(intake.getStackPosition() - 1);
+                }
+                prevStackUp = gamepad2.dpad_up;
+                prevStackDown = gamepad2.dpad_down;
+                // Go all the way up or down
+                if (gamepad2.cross) intake.goToStackPosition(0);
+                if (gamepad2.triangle) intake.goToStackPosition(5);
             }
             else intake.off();
-            // Edit intake stack position
-            if (gamepad2.dpad_up && ! prevStackUp){
-                intake.goToStackPosition(intake.getStackPosition() + 1);
-            }
-            if (gamepad2.dpad_down && ! prevStackDown){
-                intake.goToStackPosition(intake.getStackPosition() - 1);
-            }
-            prevStackUp = gamepad2.dpad_up;
-            prevStackDown = gamepad2.dpad_down;
-            // Go all the way up or down
-            if (gamepad2.dpad_right) intake.goToStackPosition(0);
-            if (gamepad2.dpad_left) intake.goToStackPosition(5);
 
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it
@@ -333,19 +334,19 @@ public class Teleop4 extends LinearOpMode {
                 arm.pivotScore();
                 lift.extend();
                 // Release the top and bottom individually if we wish
-                if (gamepad2.a) {
+                if (gamepad1.left_trigger > 0.5) {
                     arm.setBottomGripperState(false);
                     poking = false;
                 }
-                if (gamepad2.y) {
-                    arm.setTopGripperState(false);
-                    poking = false;
-                }
-                // But more often used, drop them both at once
-                if (gamepad2.left_bumper) {
+                if (gamepad1.left_bumper) {
                     arm.setBothGrippersState(false);
                     poking = false;
                 }
+                // But more often used, drop them both at once
+                //if (gamepad2.left_bumper) {
+                    //arm.setBothGrippersState(false);
+                    //poking = false;
+                //}
 
                 // Toggle the poker
                 if (gamepad2.b && !prevPokingInput){
@@ -400,8 +401,8 @@ public class Teleop4 extends LinearOpMode {
         arm.pivotGoToIntake();
 
         // If you pull the climber, stop pid control of the lift
-        if (!(gamepad2.right_stick_y == 0)){ // If we pull the stick...
-            climber.setPower(-gamepad2.right_stick_y);
+        if (!(gamepad2.left_stick_y == 0)){ // If we pull the stick...
+            climber.setPower(-gamepad2.left_stick_y);
             // Update the climbing pos so the lift holds its positon where the climber stops pulling it
             Climber.targetLiftHeight = lift.getHeight();
             // Set the target pos to wherever it is so that it holds there when you stop using the stick
@@ -413,8 +414,15 @@ public class Teleop4 extends LinearOpMode {
             // Update so we can get the lift's position
             lift.update(false);
         } else {
-            // Hold position to stop slowly falling
-            climber.goToTargetPos();
+            // Automatically get rid of some slack
+            if (climberTimer.seconds() < 1.3) {
+                climber.setPower(-1);
+            } else if (climberTimer.seconds() > 1.3 && climberTimer.seconds() < 1.4) {
+                climber.setTargetPos(climber.getPos());
+            } else {
+                // Hold position to stop slowly falling
+                climber.goToTargetPos();
+            }
             // Lift things
             lift.setHeight(Climber.targetLiftHeight);
             // Only run the lift pid if we aren't moving the climber

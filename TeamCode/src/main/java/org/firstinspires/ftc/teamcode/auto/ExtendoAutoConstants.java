@@ -62,7 +62,7 @@ public class ExtendoAutoConstants {
         return dropIsOffset;
     }
 
-    private int numCycles = 1;
+    private int numCycles = 2;
     public int getNumCycles() {return numCycles;}
     public void setNumCycles(int numCycles) {this.numCycles = numCycles;}
 
@@ -135,7 +135,7 @@ public class ExtendoAutoConstants {
         if (isWingSide()){
             // Wing side
             double afterPurpleTangent = 180;
-            whitePixelYCoord = -30;
+            whitePixelYCoord = -25;
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
@@ -160,7 +160,7 @@ public class ExtendoAutoConstants {
             }
 
             scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
-                    // Line up with the row os tiles to go under the stage door
+                    // Line up with the row of tiles to go under the stage door
                     .setTangent(Math.toRadians(afterPurpleTangent*alliance))
                     .splineToSplineHeading(new Pose2d(-29, -13*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
                     // Drive under the door
@@ -169,17 +169,17 @@ public class ExtendoAutoConstants {
                     .splineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)), Math.toRadians(0*alliance))
                     .build();
 
-            toStack = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
+            toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                     .setTangent(Math.toRadians(180*alliance))
-                    .splineToConstantHeading(new Vector2d(28, -57*alliance), Math.toRadians(180*alliance))
-                    .splineToConstantHeading(new Vector2d(-30, -56*alliance), Math.toRadians(180*alliance))
+                    .splineToConstantHeading(new Vector2d(28, -12*alliance), Math.toRadians(180*alliance))
+                    .splineToConstantHeading(new Vector2d(-30, -12*alliance), Math.toRadians(180*alliance))
                     // Ok we're out of the truss now
-                    .splineToSplineHeading(new Pose2d(-56.5, (-43)*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
+                    .splineToConstantHeading(new Vector2d(-55.5, -11*alliance), Math.toRadians(180*alliance))
                     .build();
 
             scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                    .lineToSplineHeading(new Pose2d(-40, -12*alliance, Math.toRadians(0*alliance)))
-                    .splineToConstantHeading(new Vector2d(24, -12*alliance),0*alliance)
+                    //.lineToSplineHeading(new Pose2d(-40, -11*alliance, Math.toRadians(0*alliance)))
+                    .splineToConstantHeading(new Vector2d(24, -11*alliance),0*alliance)
                     .splineTo(new Vector2d(whitePixelXCoord, whitePixelYCoord*alliance),0*alliance)
                     .build();
 
@@ -213,17 +213,17 @@ public class ExtendoAutoConstants {
                     .lineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord*alliance, Math.toRadians(0*alliance)))
                     .build();
 
-            toStack = drive.trajectorySequenceBuilder(scoreYellowPixel.end())
+            toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                     .setTangent(Math.toRadians(180*alliance))
-                    .splineToConstantHeading(new Vector2d(28, -57*alliance), Math.toRadians(180*alliance))
-                    .splineToConstantHeading(new Vector2d(-30, -56*alliance), Math.toRadians(180*alliance))
+                    .splineToConstantHeading(new Vector2d(28, -58*alliance), Math.toRadians(180*alliance))
+                    .splineToConstantHeading(new Vector2d(-30, -57*alliance), Math.toRadians(180*alliance))
                     // Ok we're out of the truss now
                     .splineToSplineHeading(new Pose2d(-56.5, (-39)*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
                     .build();
 
-            scoreWhitePixels = drive.trajectorySequenceBuilder(drive.getPoseEstimate())
-                    .lineToSplineHeading(new Pose2d(-50, -50*alliance, Math.toRadians(0*alliance)))
-                    .splineToConstantHeading(new Vector2d(12, -55*alliance),0*alliance)
+            scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
+                    .lineToSplineHeading(new Pose2d(-50, -47*alliance, Math.toRadians(0*alliance)))
+                    .splineToConstantHeading(new Vector2d(12, -59*alliance),0*alliance)
                     .splineTo(new Vector2d(whitePixelXCoord, whitePixelYCoord*alliance),0*alliance)
                     .build();
 
@@ -253,7 +253,7 @@ public class ExtendoAutoConstants {
     public void addTelemetry(Telemetry telemetry){
         // Write the alliance in its color
         telemetry.addLine("<font color =#"+ (allianceToBool() ? "ff0000>" : "0099ff>") + allianceToString() + "</font>" );
-        telemetry.addData("Side", (isWingSide() ? "Wing" : "Board")); // First time using this funny switchy thing
+        telemetry.addData("Side", (isWingSide() ? "Wing /\\" : "Board [")); // First time using this funny switchy thing
         telemetry.addData("Parking close", isParkingClose());
         telemetry.addData("Drop is offset", isDropOffset());
         telemetry.addData("Corrected Spike Mark Pos", getCorrectedSpikeMarkPos());

@@ -17,7 +17,7 @@ public class ExtendoIntake {
     private boolean lastInput;
     private boolean intakeToggledStatus;
 
-    public static double verticalPos = 0.79;
+    public static double verticalPos = 0.81;
     public static double groundPos = 0.3;
     public static double aboveStackPos = 0.5;
     public static double servoOffset = 0;

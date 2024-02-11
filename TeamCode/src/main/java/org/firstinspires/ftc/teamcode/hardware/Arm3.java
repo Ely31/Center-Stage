@@ -33,7 +33,7 @@ public class Arm3 {
     public static double pivotIntakingPos = 0.013;
     public static double pivotScoringPos = 0.912;
     public static double pivotPremovePos = 0.25;
-    public static double pivotAwayFromBordTime = 250;
+    public static double pivotAwayFromBordTime = 500;
 
     public static double gripperClosedPos = 0.88;
     public static double gripperOpenPos = 0.6;
@@ -44,12 +44,13 @@ public class Arm3 {
     public static double stopperOpenPos = 0.9;
     boolean stopperState = false;
 
-    public static double bottomSensorThreshold = 600;
-    public static double topSensorThreshold = 1300;
+    public static double bottomSensorThreshold = 1500;
+    public static double topSensorThreshold = 3000;
     public static double armSensorThreshold = 1000;
 
     double[] lastBottomSensorVals = new double[3];
     double[] lastTopSensorVals = new double[3];
+    boolean useRollingPixelSensors = true;
 
     double lastBoardDistance;
     double lastArmSensorVal;
@@ -139,20 +140,24 @@ public class Arm3 {
 
     // Use averages of past values because we get little incorrect blips sometimes
     public boolean pixelIsInBottom(){
-        boolean answer = true;
-        for (double val : lastBottomSensorVals){
-            if (val < bottomSensorThreshold) answer = false;
+        if (useRollingPixelSensors) {
+            boolean answer = true;
+            for (double val : lastBottomSensorVals) {
+                if (val < bottomSensorThreshold) answer = false;
+            }
+            return answer;
         }
-        return answer;
-        //return Arrays.stream(lastBottomSensorVals).average().orElse(Double.NaN) > sensorThreshold;
+        else return lastBottomSensorVals[0] > bottomSensorThreshold;
     }
     public boolean pixelIsInTop(){
-        boolean answer = true;
-        for (double val : lastTopSensorVals){
-            if (val < topSensorThreshold) answer = false;
+        if (useRollingPixelSensors) {
+            boolean answer = true;
+            for (double val : lastTopSensorVals) {
+                if (val < topSensorThreshold) answer = false;
+            }
+            return answer;
         }
-        return answer;
-        //return Arrays.stream(lastTopSensorVals).average().orElse(Double.NaN) > sensorThreshold;
+        else return lastTopSensorVals[0] > topSensorThreshold;
     }
     public boolean armIsDown(){
         return lastArmSensorVal > armSensorThreshold;
@@ -167,14 +172,20 @@ public class Arm3 {
 
     public void updateSensors(boolean usePixelSensors, boolean useArmSensor, boolean useBoardSensor){
         if (usePixelSensors && pixelSensorsPollTimer.milliseconds() > pixelSensorsPollInterval) {
-            // Shift vals back, this is terrible code and should be done with a for loop
-            lastBottomSensorVals[2] = lastBottomSensorVals[1];
-            lastBottomSensorVals[1] = lastBottomSensorVals[0];
-            lastBottomSensorVals[0] = bottomPixelSensor.alpha();
-            // Same thing for top
-            lastTopSensorVals[2] = lastTopSensorVals[1];
-            lastTopSensorVals[1] = lastTopSensorVals[0];
-            lastTopSensorVals[0] = topPixelSensor.alpha();
+            if (useRollingPixelSensors) {
+                // Shift vals back, this is terrible code and should be done with a for loop
+                lastBottomSensorVals[2] = lastBottomSensorVals[1];
+                lastBottomSensorVals[1] = lastBottomSensorVals[0];
+                lastBottomSensorVals[0] = bottomPixelSensor.alpha();
+                // Same thing for top
+                lastTopSensorVals[2] = lastTopSensorVals[1];
+                lastTopSensorVals[1] = lastTopSensorVals[0];
+                lastTopSensorVals[0] = topPixelSensor.alpha();
+            }
+            else {
+                lastTopSensorVals[0] = topPixelSensor.alpha();
+                lastBottomSensorVals[0] = bottomPixelSensor.alpha();
+            }
 
             pixelSensorsPollTimer.reset();
         }

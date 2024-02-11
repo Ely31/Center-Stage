@@ -59,6 +59,7 @@ public class ExtendoScoringMech {
         EXTENDING,
         WAITING_FOR_ARM_PIVOT,
         WAITING_FOR_PIXELS_DROP,
+        BUMPING_UP,
         WAITING_FOR_ARM_RETRACT,
         RETRACTING,
         DONE
@@ -75,6 +76,7 @@ public class ExtendoScoringMech {
     public enum StackGrabbingState{
         SETUP,
         INTAKING,
+        MOVING_ARM_DOWN,
         GRABBING,
         SPITTING,
         DONE
@@ -100,9 +102,9 @@ public class ExtendoScoringMech {
                 retract();
                 arm.setStopperState(true);
                 intake.on();
-                if (stackGrabbingWait.seconds() < 2) intake.goToStackPosition(startingStackPos);
-                if (stackGrabbingWait.seconds() > 2 && stackGrabbingWait.seconds() < 4) intake.goToStackPosition(startingStackPos-1);
-                if (stackGrabbingWait.seconds() > 4) intake.goToStackPosition(startingStackPos-2);
+                if (stackGrabbingWait.seconds() > 1){
+                    stackGrabbingState = StackGrabbingState.MOVING_ARM_DOWN;
+                }
                 if (grasping){
                     stackGrabbingWait.reset();
                     stackGrabbingState = StackGrabbingState.GRABBING;
@@ -111,6 +113,12 @@ public class ExtendoScoringMech {
                     // Move this up just in case it might be hit
                     intake.goToVertical();
                 }
+                break;
+
+            case MOVING_ARM_DOWN:
+                stackGrabbingWait.reset();
+                intake.goToStackPosition(intake.getStackPosition()-1);
+                stackGrabbingState = StackGrabbingState.INTAKING;
                 break;
 
             case GRABBING:
@@ -163,13 +171,20 @@ public class ExtendoScoringMech {
             case WAITING_FOR_PIXELS_DROP:
                 if (scoringWait.seconds() > 0.5){ // Wait for them to fall out
                     scoringWait.reset();
+                    scoringState = ScoringState.BUMPING_UP;
+                }
+                break;
+
+            case BUMPING_UP:
+                lift.setHeight(height+2);
+                if (Utility.withinErrorOfValue(lift.getHeight(), height+2, 0.5)) {
+                    scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
                 }
                 break;
 
             case WAITING_FOR_ARM_RETRACT:
                 arm.pivotGoToIntake();
-
                 if (scoringWait.milliseconds() > Arm3.pivotAwayFromBordTime){
                     scoringWait.reset();
                     lift.retract();
@@ -205,7 +220,9 @@ public class ExtendoScoringMech {
     public void displayDebug(Telemetry telemetry){
         telemetry.addLine("SCORING MECH");
         telemetry.addData("scoring state", scoringState.name());
+        telemetry.addData("scoring wait", scoringWait.milliseconds());
         telemetry.addData("grabbing state", stackGrabbingState.name());
+        telemetry.addData("grabbing wait", stackGrabbingWait.milliseconds());
         arm.displayDebug(telemetry);
         lift.disalayDebug(telemetry);
         //ppp.displayDebug(telemetry);
