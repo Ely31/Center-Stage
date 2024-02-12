@@ -51,11 +51,15 @@ public class ExtendoScoringMech {
     public boolean hasBothPixels(){
         return arm.pixelIsInBottom() && arm.pixelIsInTop();
     }
+    public boolean hasAPixel(){
+        return arm.pixelIsInBottom() || arm.pixelIsInTop();
+    }
 
     ElapsedTime scoringWait = new ElapsedTime();
     ElapsedTime stackGrabbingWait = new ElapsedTime();
 
     public enum ScoringState{
+        SETUP,
         EXTENDING,
         WAITING_FOR_ARM_PIVOT,
         WAITING_FOR_PIXELS_DROP,
@@ -64,13 +68,13 @@ public class ExtendoScoringMech {
         RETRACTING,
         DONE
     }
-    ScoringState scoringState = ScoringState.EXTENDING;
+    ScoringState scoringState = ScoringState.SETUP;
     public ScoringState getScoringState() {
         return scoringState;
     }
     // Have to call this before scoring again to get the state machine to run
     public void resetScoringState(){
-        scoringState = ScoringState.EXTENDING;
+        scoringState = ScoringState.SETUP;
     }
 
     public enum StackGrabbingState{
@@ -90,10 +94,10 @@ public class ExtendoScoringMech {
         stackGrabbingState = StackGrabbingState.SETUP;
     }
 
-    public void grabOffStackAsync(boolean grasping, boolean driving, int startingStackPos){
+    public void grabOffStackAsync(boolean grasping, boolean driving){
         switch (stackGrabbingState){
             case SETUP:
-                intake.goToStackPosition(startingStackPos);
+                intake.goToStackPosition(intake.getStackPosition());
                 stackGrabbingWait.reset();
                 stackGrabbingState = StackGrabbingState.INTAKING;
                 break;
@@ -146,8 +150,13 @@ public class ExtendoScoringMech {
         return stackGrabbingState == StackGrabbingState.DONE;
     }
 
-    public void scoreAsync(double height){
+    public void scoreAsync(double height, boolean bumpUp){
         switch (scoringState){
+            case SETUP:
+                scoringWait.reset();
+                scoringState = ScoringState.EXTENDING;
+                break;
+
             case EXTENDING:
                 lift.setHeight(height);
                 arm.pivotScore();
@@ -155,13 +164,12 @@ public class ExtendoScoringMech {
                 arm.setBothGrippersState(true);
                 // Move on if the lift is all the way up
                 if (Utility.withinErrorOfValue(lift.getHeight(), height, 0.5)) {
-                    scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_PIVOT;
                 }
                 break;
 
             case WAITING_FOR_ARM_PIVOT:
-                if (scoringWait.seconds() > 1) { // Wait for the arm to move all the way
+                if (scoringWait.seconds() > 1.4) { // Wait for the arm to move all the way
                     arm.setBothGrippersState(false); // Drop the pixels
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_PIXELS_DROP;
@@ -171,7 +179,8 @@ public class ExtendoScoringMech {
             case WAITING_FOR_PIXELS_DROP:
                 if (scoringWait.seconds() > 0.5){ // Wait for them to fall out
                     scoringWait.reset();
-                    scoringState = ScoringState.BUMPING_UP;
+                    if (bumpUp) scoringState = ScoringState.BUMPING_UP;
+                    else scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
                 }
                 break;
 

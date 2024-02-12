@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.hardware.ExtendoScoringMech;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
+import org.firstinspires.ftc.teamcode.util.Utility;
 import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
 
 import java.util.Objects;
@@ -59,7 +60,7 @@ public class ExtendoAuto extends LinearOpMode {
     ElapsedTime loopTimer = new ElapsedTime();
 
     final double yellowLiftExtendXCoord = 35;
-    final double whiteLiftExtendXcoord = 25;
+    final double whiteLiftExtendXcoord = 20;
 
     @Override
     public void runOpMode(){
@@ -85,11 +86,13 @@ public class ExtendoAuto extends LinearOpMode {
                 autoConstants.setWingSide(true);
                 // Do this too for convenience
                 autoConstants.setParkingClose(false);
+                autoConstants.setNumCycles(1);
             }
             if (gamepad1.right_bumper){
                 autoConstants.setWingSide(false);
                 // Do this too for convenience
                 autoConstants.setParkingClose(true);
+                autoConstants.setNumCycles(2);
             }
             // Park options
             if (gamepad1.left_trigger > 0.5) autoConstants.setParkingClose(true);
@@ -129,6 +132,7 @@ public class ExtendoAuto extends LinearOpMode {
         // Stop the camera because we don't need it and it takes computation
         camera.stopStreaming();
         actionTimer.reset();
+        loopTimer.reset();
         // Save this for tele
         AutoToTele.allianceSide = autoConstants.getAlliance();
         // Used sometimes to avoid potential collisions with a partner
@@ -147,7 +151,7 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case PUSHING_PURPLE:
-                        if (!drive.isBusy()){
+                        if (!drive.isBusy() || Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.dropOffPurplePixel.end(), 1)){
                             // Drop the pixel and then set it to the waiting state
                             //scoringMech.setPPPState(false);
                             // Bring intake arm down
@@ -175,8 +179,8 @@ public class ExtendoAuto extends LinearOpMode {
                 case SCORING_YELLOW:
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
-                    if (drive.getPoseEstimate().getX() > yellowLiftExtendXCoord){
-                        scoringMech.scoreAsync(2.75);
+                    if (drive.getPoseEstimate().getX() > (autoConstants.isWingSide() ? yellowLiftExtendXCoord + 3 : yellowLiftExtendXCoord)){
+                        scoringMech.scoreAsync(1, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
                         // If not doing cycles, park
@@ -190,12 +194,12 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case TO_STACK:
-
                     if (actionTimer.seconds() > 3){
-                        scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(),false,5);
-                    } else scoringMech.scoreAsync(3);
+                        scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(),false);
+                    } else scoringMech.scoreAsync(3, true);
 
-                    if (scoringMech.hasBothPixels() && actionTimer.seconds() > 3){
+                    // Wait to move on until we've started grabbing off the stack because otherwise the sensor vals are out of date
+                    if ((scoringMech.hasBothPixels() || (loopTimer.seconds() > 23.5 && scoringMech.hasAPixel())) && actionTimer.seconds() > 4){
                         scoringMech.resetScoringState();
                         addCycle();
                         moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
@@ -203,10 +207,10 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case SCORING_WHITE:
-                    if (drive.getPoseEstimate().getX() > whiteLiftExtendXcoord){
-                        scoringMech.scoreAsync(8);
+                    if (drive.getPoseEstimate().getX() > (autoConstants.isWingSide() ? whiteLiftExtendXcoord + 10 : whiteLiftExtendXcoord)){
+                        scoringMech.scoreAsync(6.5, false);
                     } else {
-                        scoringMech.grabOffStackAsync(true, drive.isBusy(),5);
+                        scoringMech.grabOffStackAsync(true, drive.isBusy());
                     }
 
                     if (scoringMech.liftIsGoingDown()){
@@ -223,7 +227,7 @@ public class ExtendoAuto extends LinearOpMode {
                 case PARKING:
                     // Yay, done!
                     // Keep the scoring mech running so it goes down
-                    scoringMech.scoreAsync(3);
+                    scoringMech.scoreAsync(3, false);
                     // Once the bot is parked, stop the OpMode
                     if (!drive.isBusy()){
                         // I swear this method used to be called stop
@@ -249,6 +253,7 @@ public class ExtendoAuto extends LinearOpMode {
             telemetry.addData("Auto state", autoState.name());
             telemetry.addData("Num cycles", autoConstants.getNumCycles());
             telemetry.addData("Num finished cycles", autoConstants.getNumFinishedCycles());
+            telemetry.addData("Time", loopTimer.seconds());
             drive.displayDeug(telemetry);
             scoringMech.displayDebug(telemetry);
             timeUtil.displayDebug(telemetry, loopTimer);

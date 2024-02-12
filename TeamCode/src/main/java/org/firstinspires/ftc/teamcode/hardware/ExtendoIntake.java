@@ -19,12 +19,12 @@ public class ExtendoIntake {
 
     public static double verticalPos = 0.81;
     public static double groundPos = 0.3;
-    public static double aboveStackPos = 0.5;
+    public static double aboveStackPos = 0.49;
     public static double servoOffset = 0;
 
-    private int stackPosition = 0;
+    private int stackPosition = 5;
     public int getStackPosition(){return stackPosition;}
-    private double stackpositions[] = new double[]{0.335,0.36,0.38,0.42,0.436, aboveStackPos};
+    private double stackpositions[] = new double[]{0.335,0.36,0.38,0.42,0.44, aboveStackPos};
 
     public ExtendoIntake(HardwareMap hwmap) {
         intakeMotor = hwmap.get(DcMotor.class, "intake");

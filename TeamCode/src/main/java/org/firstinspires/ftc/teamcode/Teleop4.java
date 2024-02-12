@@ -305,7 +305,7 @@ public class Teleop4 extends LinearOpMode {
                 intake.forceToggleOff();
                 // Spit out just a little to avoid dragging a third under the tubing
                 // Using the gripper timer for this is hacky but oh well
-                if (gripperTimer.milliseconds() < (Arm3.gripperActuationTime + 200)) intake.reverse(0.6);
+                if (gripperTimer.milliseconds() < (Arm3.gripperActuationTime + 200)) intake.reverse();
                 else intake.off();
                 // Reset poker
                 poking = false;
