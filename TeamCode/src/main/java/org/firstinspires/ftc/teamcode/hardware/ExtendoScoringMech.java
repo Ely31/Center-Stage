@@ -98,6 +98,7 @@ public class ExtendoScoringMech {
         switch (stackGrabbingState){
             case SETUP:
                 intake.goToStackPosition(intake.getStackPosition());
+                intake.updateCurrent();
                 stackGrabbingWait.reset();
                 stackGrabbingState = StackGrabbingState.INTAKING;
                 break;
@@ -105,7 +106,7 @@ public class ExtendoScoringMech {
             case INTAKING:
                 retract();
                 arm.setStopperState(true);
-                intake.on();
+                intake.on(true);
                 if (stackGrabbingWait.seconds() > 1){
                     stackGrabbingState = StackGrabbingState.MOVING_ARM_DOWN;
                 }
@@ -217,10 +218,6 @@ public class ExtendoScoringMech {
     public boolean liftIsGoingDown(){
         return scoringState == ScoringState.WAITING_FOR_ARM_RETRACT;
     }
-    public boolean liftIsMostlyDown(){
-        return scoringState == ScoringState.RETRACTING;
-    }
-
     public void setIntakePos(double pos){
         intake.gotoRawPosition(pos);
     }
@@ -234,7 +231,6 @@ public class ExtendoScoringMech {
         telemetry.addData("grabbing wait", stackGrabbingWait.milliseconds());
         arm.displayDebug(telemetry);
         lift.disalayDebug(telemetry);
-        //ppp.displayDebug(telemetry);
         intake.displayDebug(telemetry);
     }
 }

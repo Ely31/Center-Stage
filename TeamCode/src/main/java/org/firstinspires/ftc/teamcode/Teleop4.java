@@ -183,7 +183,7 @@ public class Teleop4 extends LinearOpMode {
             if (gamepad1.right_stick_button) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
             else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)){
-                intake.toggle(gamepad1.left_stick_button);
+                intake.toggle(gamepad1.left_stick_button, true);
                 // Move the intake back down after it was up if we turn it on
                 if (intake.getToggledStatus()) intake.goToStackPosition(intake.getStackPosition());
 

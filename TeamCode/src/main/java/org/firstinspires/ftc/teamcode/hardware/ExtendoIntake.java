@@ -2,17 +2,20 @@ package org.firstinspires.ftc.teamcode.hardware;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
 public class ExtendoIntake {
 
-    private DcMotor intakeMotor;
+    private DcMotorEx intakeMotor;
     private Servo intakeArmServo;
     private boolean lastInput;
     private boolean intakeToggledStatus;
@@ -26,20 +29,41 @@ public class ExtendoIntake {
     public int getStackPosition(){return stackPosition;}
     private double stackpositions[] = new double[]{0.335,0.36,0.38,0.42,0.44, aboveStackPos};
 
+    ElapsedTime jamTimer = new ElapsedTime();
+    int antiJamSpittingTime = 150;
+    double lastCurrent = 0;
+
     public ExtendoIntake(HardwareMap hwmap) {
-        intakeMotor = hwmap.get(DcMotor.class, "intake");
+        intakeMotor = hwmap.get(DcMotorEx.class, "intake");
         intakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeArmServo = hwmap.get(Servo.class, "intakeArmServo");
         intakeArmServo.setPosition(verticalPos);
         lastInput = false;
         intakeToggledStatus = false;
+        jamTimer.reset();
     }
 
     public void on(){
-        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeMotor.setPower(0.75);
+        this.on(false);
     }
+    public void on(boolean antiJam){
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // If the current trips the limit, spit out for a little bit
+        if (antiJam){
+            updateCurrent();
+            if (lastCurrent > 5 && jamTimer.milliseconds() > antiJamSpittingTime + 1000){
+                jamTimer.reset();
+            }
+            if (jamTimer.milliseconds() < antiJamSpittingTime){
+                reverse();
+            } else intakeMotor.setPower(0.75);
+        }
+        else {
+            intakeMotor.setPower(0.75);
+        }
+    }
+
     public void off(){
         intakeMotor.setPower(0);
     }
@@ -55,14 +79,26 @@ public class ExtendoIntake {
         intakeMotor.setPower(power);
     }
 
-    public void toggle(boolean input){
+    public void toggle(boolean input, boolean antiJam){
         if (input && !lastInput){
             intakeToggledStatus = !intakeToggledStatus;
         }
-        if (intakeToggledStatus) on();
-        else off();
+        if (intakeToggledStatus) on(antiJam);
+        else {
+            if (antiJam) {
+                if (!(jamTimer.milliseconds() < antiJamSpittingTime)) {
+                    off();
+                }
+            } else off();
+        }
 
         lastInput = input;
+    }
+    public void toggle(boolean input){
+        this.toggle(input, false);
+    }
+    public void updateCurrent(){
+        lastCurrent = intakeMotor.getCurrent(CurrentUnit.AMPS);
     }
     // Used in teleop whenever we extend because the arm servo doesn't have positional feedback
     public void forceToggleOff(){
@@ -81,7 +117,7 @@ public class ExtendoIntake {
     }
     public void goToStackPosition(int position){
         stackPosition = Utility.clipValue(0, stackpositions.length-1, position);
-        // Linearly interpolate here or have an array of predefined positions?
+        // Look up the position in the array and go there
         intakeArmServo.setPosition(stackpositions[stackPosition] + servoOffset);
     }
     public void gotoRawPosition(double pos){
@@ -90,8 +126,9 @@ public class ExtendoIntake {
 
     public void displayDebug(Telemetry telemetry){
         telemetry.addLine("INTAKE");
-        telemetry.addData("Intake Power", intakeMotor.getPower());
         telemetry.addData("Toggled Status", intakeToggledStatus);
+        telemetry.addData("Current", lastCurrent);
+        telemetry.addData("Jam timer", jamTimer.milliseconds());
         telemetry.addData("Stack position", stackPosition);
         telemetry.addData("Servo pos", intakeArmServo.getPosition());
     }
