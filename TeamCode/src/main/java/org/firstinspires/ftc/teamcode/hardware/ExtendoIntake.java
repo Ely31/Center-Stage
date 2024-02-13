@@ -52,7 +52,7 @@ public class ExtendoIntake {
         // If the current trips the limit, spit out for a little bit
         if (antiJam){
             updateCurrent();
-            if (lastCurrent > 5 && jamTimer.milliseconds() > antiJamSpittingTime + 1000){
+            if (lastCurrent > 6.2 && jamTimer.milliseconds() > antiJamSpittingTime + 1000){
                 jamTimer.reset();
             }
             if (jamTimer.milliseconds() < antiJamSpittingTime){

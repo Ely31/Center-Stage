@@ -80,6 +80,8 @@ public class ExtendoAutoConstants {
         delaySeconds = seconds;
     }
 
+    private boolean avoidYellowsWhenDroppingWhite = true;
+
 
     public void updateCorrectedSpikeMarkPos(int visionResult){
         switch(visionResult){
@@ -216,12 +218,12 @@ public class ExtendoAutoConstants {
                     .splineToConstantHeading(new Vector2d(28, -58*alliance), Math.toRadians(180*alliance))
                     .splineToConstantHeading(new Vector2d(-30, -57*alliance), Math.toRadians(180*alliance))
                     // Ok we're out of the truss now
-                    .splineToSplineHeading(new Pose2d(getNumFinishedCycles() == 0 ? -56.5 : -57.5, (-39.5)*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
+                    .splineToSplineHeading(new Pose2d(getNumFinishedCycles() == 0 ? -56 : -57, (-40.7)*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
                     .build();
 
             scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                    .lineToSplineHeading(new Pose2d(-50, -47*alliance, Math.toRadians(0*alliance)))
-                    .splineToConstantHeading(new Vector2d(12, -59*alliance),0*alliance)
+                    .lineToSplineHeading(new Pose2d(-50, -48*alliance, Math.toRadians(0*alliance)))
+                    .splineToConstantHeading(new Vector2d(12, -59.5*alliance),0*alliance)
                     .splineTo(new Vector2d(whitePixelXCoord, whitePixelYCoord*alliance),0*alliance)
                     .build();
 
