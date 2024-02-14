@@ -80,8 +80,13 @@ public class ExtendoAutoConstants {
         delaySeconds = seconds;
     }
 
-    private boolean avoidYellowsWhenDroppingWhite = true;
-
+    private boolean avoidYellows = true;
+    public void setAvoidYellows(boolean val){
+        avoidYellows = val;
+    }
+    public boolean isAvoidingYellows(){
+        return avoidYellows;
+    }
 
     public void updateCorrectedSpikeMarkPos(int visionResult){
         switch(visionResult){
@@ -128,14 +133,19 @@ public class ExtendoAutoConstants {
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -28;
         final double baseYellowPixelYCoord = -29;
-        final double yellowPixelXCoord = 51;
-        final double whitePixelXCoord = 51;
+        final double yellowPixelXCoord = 52;
+        final double whitePixelXCoord = 51.3;
         double whitePixelYCoord = -29.5;
+        final double wingSideWhiteY = -30;
+        final double boardSideWhiteY = -40.5;
 
         if (isWingSide()){
             // Wing side
             double afterPurpleTangent = 180;
-            whitePixelYCoord = -30;
+            // Avoid dropping whites on top of a future mosaic if we want
+            if (avoidYellows && correctedSpikeMarkPos == 1) whitePixelYCoord = boardSideWhiteY;
+            else whitePixelYCoord = wingSideWhiteY;
+
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
@@ -186,7 +196,10 @@ public class ExtendoAutoConstants {
             // END OF WINGSIDE
         } else {
             // Board side
-            whitePixelYCoord = -40.5;
+            // Avoid dropping whites on top of a future mosaic if we want
+            if (avoidYellows && correctedSpikeMarkPos == 3) whitePixelYCoord = wingSideWhiteY;
+            else whitePixelYCoord = boardSideWhiteY;
+
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
@@ -218,7 +231,7 @@ public class ExtendoAutoConstants {
                     .splineToConstantHeading(new Vector2d(28, -58*alliance), Math.toRadians(180*alliance))
                     .splineToConstantHeading(new Vector2d(-30, -57*alliance), Math.toRadians(180*alliance))
                     // Ok we're out of the truss now
-                    .splineToSplineHeading(new Pose2d(getNumFinishedCycles() == 0 ? -56 : -57, (-40.7)*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
+                    .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56 : -57), -40.5*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
                     .build();
 
             scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
@@ -254,11 +267,12 @@ public class ExtendoAutoConstants {
         // Write the alliance in its color
         telemetry.addLine("<font color =#"+ (allianceToBool() ? "ff0000>" : "0099ff>") + allianceToString() + "</font>" );
         telemetry.addData("Side", (isWingSide() ? "Wing /\\" : "Board [")); // First time using this funny switchy thing
-        telemetry.addData("Parking close", isParkingClose());
-        telemetry.addData("Drop is offset", isDropOffset());
         telemetry.addData("Corrected Spike Mark Pos", getCorrectedSpikeMarkPos());
         telemetry.addData("Delay in seconds", getDelaySeconds());
         telemetry.addData("Number of cycles", getNumCycles());
+        telemetry.addData("Parking close", isParkingClose());
+        telemetry.addData("Drop is offset", isDropOffset());
+        telemetry.addData("Avoiding yellows", isAvoidingYellows());
         telemetry.addLine();
         telemetry.addLine(autoConfigToEnglish());
         telemetry.addLine();

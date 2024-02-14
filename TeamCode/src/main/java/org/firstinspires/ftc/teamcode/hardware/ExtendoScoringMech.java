@@ -178,11 +178,15 @@ public class ExtendoScoringMech {
                 break;
 
             case WAITING_FOR_PIXELS_DROP:
-                if (scoringWait.seconds() > 0.5){ // Wait for them to fall out
+                if (scoringWait.seconds() > 0.1){ // Wait for them to fall out
                     scoringWait.reset();
-                    if (bumpUp) scoringState = ScoringState.BUMPING_UP;
-                    else scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
+                    scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
                 }
+                if (bumpUp && scoringWait.seconds() > 0.07){
+                    scoringWait.reset();
+                    scoringState = ScoringState.BUMPING_UP;
+                }
+
                 break;
 
             case BUMPING_UP:

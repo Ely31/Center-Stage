@@ -30,9 +30,10 @@ public class Arm3 {
     boolean topState = false;
 
     // Constants
-    public static double pivotIntakingPos = 0.013;
+    public static double pivotIntakingPos = 0.011;
     public static double pivotScoringPos = 0.912;
     public static double pivotPremovePos = 0.25;
+    public static double pivotOffset = 0;
     public static double pivotAwayFromBordTime = 500;
 
     public static double gripperClosedPos = 0.88;
@@ -113,7 +114,7 @@ public class Arm3 {
     public void setPivotPos(double pos){
         // Make sure it's a safe move
         double finalPos = Utility.clipValue(pivotIntakingPos, pivotScoringPos, pos);
-        pivot.setPosition(finalPos);
+        pivot.setPosition(finalPos + pivotOffset);
     }
     public double getPivotPos(){
         // Take the pos of the one we didn't offset

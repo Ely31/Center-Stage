@@ -39,6 +39,7 @@ public class ExtendoAuto extends LinearOpMode {
     boolean prevDelayIncrease = false;
     boolean prevDelayDecrease = false;
     boolean prevToggleOffset = false;
+    boolean prevAvoidYellows = false;
 
     // For the giant fsm to run everything asynchronously
     enum AutoState{
@@ -59,8 +60,8 @@ public class ExtendoAuto extends LinearOpMode {
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
 
-    final double yellowLiftExtendXCoord = 35;
-    final double whiteLiftExtendXcoord = 20;
+    final double yellowExtendProximity = 23;
+    final double whiteExtendProximity = 36;
 
     @Override
     public void runOpMode(){
@@ -104,12 +105,14 @@ public class ExtendoAuto extends LinearOpMode {
             if (gamepad1.dpad_right && !prevDelayIncrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() + 1);
             if (gamepad1.dpad_left && !prevDelayDecrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() - 1);
             if (gamepad1.y && !prevToggleOffset) autoConstants.setDropIsOffset(!autoConstants.isDropOffset());
+            if (gamepad1.x && !prevAvoidYellows) autoConstants.setAvoidYellows(!autoConstants.isAvoidingYellows());
 
             prevCycleIncrease = gamepad1.dpad_up;
             prevCycleDecrease = gamepad1.dpad_down;
             prevDelayIncrease = gamepad1.dpad_right;
             prevDelayDecrease = gamepad1.dpad_left;
             prevToggleOffset = gamepad1.y;
+            prevAvoidYellows = gamepad1.x;
 
             // Recompute trajectories every few seconds or every time you make a change
             if (pipelineThrottle.seconds() > 5 || !(Objects.equals(autoConstants.autoConfigToEnglish(), autoConstants.prevConfigToEnglish))){
@@ -179,7 +182,7 @@ public class ExtendoAuto extends LinearOpMode {
                 case SCORING_YELLOW:
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
-                    if (drive.getPoseEstimate().getX() > (autoConstants.isWingSide() ? yellowLiftExtendXCoord + 3 : yellowLiftExtendXCoord)){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 3 : yellowExtendProximity))){
                         scoringMech.scoreAsync(1, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
@@ -207,7 +210,7 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case SCORING_WHITE:
-                    if (drive.getPoseEstimate().getX() > (autoConstants.isWingSide() ? whiteLiftExtendXcoord + 10 : whiteLiftExtendXcoord)){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
                         scoringMech.scoreAsync(6.5, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());
