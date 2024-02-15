@@ -203,7 +203,7 @@ public class ExtendoAutoConstants {
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(15.5, -33.5*alliance, Math.toRadians(0*alliance)))
+                            .lineToSplineHeading(new Pose2d(15.5, -34*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-dropOffset;
                     break;
@@ -215,7 +215,7 @@ public class ExtendoAutoConstants {
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(37, -33.5*alliance, Math.toRadians(0*alliance)))
+                            .lineToSplineHeading(new Pose2d(37, -34*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-11.4-dropOffset;
                     break;

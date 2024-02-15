@@ -97,6 +97,7 @@ public class ExtendoScoringMech {
     public void grabOffStackAsync(boolean grasping, boolean driving){
         switch (stackGrabbingState){
             case SETUP:
+                arm.pivotGoToIntake();
                 intake.goToStackPosition(intake.getStackPosition());
                 intake.updateCurrent();
                 stackGrabbingWait.reset();
@@ -106,7 +107,7 @@ public class ExtendoScoringMech {
             case INTAKING:
                 retract();
                 arm.setStopperState(true);
-                intake.on(true);
+                intake.on(true, 0.75);
                 if (stackGrabbingWait.seconds() > 1){
                     stackGrabbingState = StackGrabbingState.MOVING_ARM_DOWN;
                 }
@@ -178,7 +179,7 @@ public class ExtendoScoringMech {
                 break;
 
             case WAITING_FOR_PIXELS_DROP:
-                if (scoringWait.seconds() > 0.1){ // Wait for them to fall out
+                if (scoringWait.seconds() > 0.25){ // Wait for them to fall out
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
                 }
@@ -198,7 +199,6 @@ public class ExtendoScoringMech {
                 break;
 
             case WAITING_FOR_ARM_RETRACT:
-                arm.pivotGoToIntake();
                 if (scoringWait.milliseconds() > Arm3.pivotAwayFromBordTime){
                     scoringWait.reset();
                     lift.retract();
@@ -208,6 +208,12 @@ public class ExtendoScoringMech {
 
             case RETRACTING:
                 lift.retract();
+                // Prevent arm hitting stuff near the intake because we spapped it for a speed
+                if (Utility.withinErrorOfValue(lift.getHeight(), 0, 2)){
+                    arm.pivotGoToIntake();
+                } else {
+                    arm.preMove();
+                }
                 // Move on if the lift is all the way down
                 if (Utility.withinErrorOfValue(lift.getHeight(), 0, 1)) {
                     scoringState = ScoringState.DONE; // Finish

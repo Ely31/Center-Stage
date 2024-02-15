@@ -156,15 +156,13 @@ public class ExtendoAuto extends LinearOpMode {
                 case PUSHING_PURPLE:
                         if (!drive.isBusy() || Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.dropOffPurplePixel.end(), 1)){
                             // Drop the pixel and then set it to the waiting state
-                            //scoringMech.setPPPState(false);
                             // Bring intake arm down
-                            scoringMech.setIntakePos(0.33);
+                            scoringMech.setIntakePos(0.3);
                             moveOnToState(AutoState.WAITING_FOR_PPP);
                         }
                     break;
 
                 case WAITING_FOR_PPP:
-                    //scoringMech.setPPPState(false);
                     if (actionTimer.milliseconds() > 700){
                         scoringMech.setIntakePos(0.42);
                         moveOnToState(AutoState.WAITING_FOR_PPP2);

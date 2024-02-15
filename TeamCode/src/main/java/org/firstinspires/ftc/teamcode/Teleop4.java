@@ -183,7 +183,7 @@ public class Teleop4 extends LinearOpMode {
             if (gamepad1.right_stick_button) intake.reverse();
             // Only allow intaking when the arm is there to catch the pixels
             else if (arm.armIsDown() && (scoringState == ScoringState.INTAKING || scoringState == ScoringState.WAITING_FOR_GRIPPERS)){
-                intake.toggle(gamepad1.left_stick_button, true);
+                intake.toggle(gamepad1.left_stick_button, false, 0.75);
                 // Move the intake back down after it was up if we turn it on
                 if (intake.getToggledStatus()) intake.goToStackPosition(intake.getStackPosition());
 
@@ -262,7 +262,12 @@ public class Teleop4 extends LinearOpMode {
                 // Only poll the sensors we need when we need them to reduce loop times
                 arm.updateSensors(true, true, false);
                 // Move the arm to the intake, duh
-                arm.pivotGoToIntake();
+                // Prevent arm hitting stuff near the intake because we spapped it for a speed
+                if (Utility.withinErrorOfValue(lift.getHeight(), 0, 2)){
+                    arm.pivotGoToIntake();
+                } else {
+                    arm.preMove();
+                }
                 // Wait to retract the lift until the arm is safely away from the board
                 if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
                     lift.retract();

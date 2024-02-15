@@ -45,9 +45,9 @@ public class ExtendoIntake {
     }
 
     public void on(){
-        this.on(false);
+        this.on(false, 1);
     }
-    public void on(boolean antiJam){
+    public void on(boolean antiJam, double power){
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         // If the current trips the limit, spit out for a little bit
         if (antiJam){
@@ -57,10 +57,10 @@ public class ExtendoIntake {
             }
             if (jamTimer.milliseconds() < antiJamSpittingTime){
                 reverse();
-            } else intakeMotor.setPower(0.75);
+            } else intakeMotor.setPower(power);
         }
         else {
-            intakeMotor.setPower(0.75);
+            intakeMotor.setPower(power);
         }
     }
 
@@ -79,11 +79,11 @@ public class ExtendoIntake {
         intakeMotor.setPower(power);
     }
 
-    public void toggle(boolean input, boolean antiJam){
+    public void toggle(boolean input, boolean antiJam, double power){
         if (input && !lastInput){
             intakeToggledStatus = !intakeToggledStatus;
         }
-        if (intakeToggledStatus) on(antiJam);
+        if (intakeToggledStatus) on(antiJam, power);
         else {
             if (antiJam) {
                 if (!(jamTimer.milliseconds() < antiJamSpittingTime)) {
@@ -95,7 +95,7 @@ public class ExtendoIntake {
         lastInput = input;
     }
     public void toggle(boolean input){
-        this.toggle(input, false);
+        this.toggle(input, false, 1);
     }
     public void updateCurrent(){
         lastCurrent = intakeMotor.getCurrent(CurrentUnit.AMPS);
