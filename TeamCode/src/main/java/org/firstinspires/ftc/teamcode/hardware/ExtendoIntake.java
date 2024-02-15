@@ -37,6 +37,7 @@ public class ExtendoIntake {
         intakeMotor = hwmap.get(DcMotorEx.class, "intake");
         intakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intakeArmServo = hwmap.get(Servo.class, "intakeArmServo");
         intakeArmServo.setPosition(verticalPos);
         lastInput = false;

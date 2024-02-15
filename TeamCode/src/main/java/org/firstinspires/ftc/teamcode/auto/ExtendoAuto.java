@@ -120,7 +120,7 @@ public class ExtendoAuto extends LinearOpMode {
                 autoConstants.updateCorrectedSpikeMarkPos(propPipeline.getAnalysis());
                 autoConstants.updateTrajectories();
                 // switch propPipeline between red and blue based on alliance selected
-                propPipeline = new TeamPropDetector2(autoConstants.allianceToBool());
+                propPipeline = new TeamPropDetector2(autoConstants.isRedAlliance());
                 camera.setPipeline(propPipeline);
 
                 drive.setPoseEstimate(autoConstants.startPos);
@@ -157,21 +157,20 @@ public class ExtendoAuto extends LinearOpMode {
                         if (!drive.isBusy() || Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.dropOffPurplePixel.end(), 1)){
                             // Drop the pixel and then set it to the waiting state
                             // Bring intake arm down
-                            scoringMech.setIntakePos(0.3);
+                            scoringMech.setIntakePos(0.33);
                             moveOnToState(AutoState.WAITING_FOR_PPP);
                         }
                     break;
 
                 case WAITING_FOR_PPP:
-                    if (actionTimer.milliseconds() > 700){
+                    if (actionTimer.milliseconds() > 900){
                         scoringMech.setIntakePos(0.42);
                         moveOnToState(AutoState.WAITING_FOR_PPP2);
                     }
                     break;
 
                 case WAITING_FOR_PPP2:
-                    //scoringMech.setPPPState(false);
-                    if (actionTimer.milliseconds() > 500){
+                    if (actionTimer.milliseconds() > 300){
                         scoringMech.setIntakePos(ExtendoIntake.verticalPos);
                         moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);
                     }
@@ -181,7 +180,7 @@ public class ExtendoAuto extends LinearOpMode {
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
                     if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 3 : yellowExtendProximity))){
-                        scoringMech.scoreAsync(1, true);
+                        scoringMech.scoreAsync(1.05, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
                         // If not doing cycles, park

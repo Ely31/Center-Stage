@@ -23,7 +23,7 @@ public class ExtendoAutoConstants {
     private int alliance = 1;
     public int getAlliance() {return alliance;}
     public void setAlliance(int alliance) {this.alliance = alliance;}
-    public boolean allianceToBool(){
+    public boolean isRedAlliance(){
         return alliance == 1;
     }
     public String allianceToString(){
@@ -87,6 +87,11 @@ public class ExtendoAutoConstants {
     public boolean isAvoidingYellows(){
         return avoidYellows;
     }
+
+    boolean sketchyBlueOffsets = true;
+    double sketchyBlueStackOffsetY;
+    double sketcyBlueStackOffsetX;
+    double sketchyBlueBoardOffsetX;
 
     public void updateCorrectedSpikeMarkPos(int visionResult){
         switch(visionResult){
@@ -195,6 +200,15 @@ public class ExtendoAutoConstants {
 
             // END OF WINGSIDE
         } else {
+            if (!isRedAlliance() && sketchyBlueOffsets){
+                sketchyBlueStackOffsetY = 4;
+                sketcyBlueStackOffsetX = 1.2;
+                sketchyBlueBoardOffsetX = 1.1;
+            } else {
+                sketchyBlueStackOffsetY = 0;
+                sketcyBlueStackOffsetX = 0;
+                sketchyBlueBoardOffsetX = 0;
+            }
             // Board side
             // Avoid dropping whites on top of a future mosaic if we want
             if (avoidYellows && correctedSpikeMarkPos == 3) whitePixelYCoord = wingSideWhiteY;
@@ -203,7 +217,7 @@ public class ExtendoAutoConstants {
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(15.5, -34*alliance, Math.toRadians(0*alliance)))
+                            .lineToSplineHeading(new Pose2d(14, -34*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-dropOffset;
                     break;
@@ -228,16 +242,18 @@ public class ExtendoAutoConstants {
 
             toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                     .setTangent(Math.toRadians(180*alliance))
+                    .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(40, Math.toRadians(180), 14))
                     .splineToConstantHeading(new Vector2d(28, -58*alliance), Math.toRadians(180*alliance))
+                    .resetVelConstraint()
                     .splineToConstantHeading(new Vector2d(-30, -57*alliance), Math.toRadians(180*alliance))
                     // Ok we're out of the truss now
-                    .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56 : -57), -40.5*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
+                    .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56+sketcyBlueStackOffsetX : -57+sketcyBlueStackOffsetX), (-40.5+sketchyBlueStackOffsetY)*alliance, Math.toRadians(-20*alliance)), Math.toRadians(110*alliance))
                     .build();
 
             scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                    .lineToSplineHeading(new Pose2d(-50, -48*alliance, Math.toRadians(0*alliance)))
-                    .splineToConstantHeading(new Vector2d(12, -59.5*alliance),0*alliance)
-                    .splineTo(new Vector2d(whitePixelXCoord, whitePixelYCoord*alliance),0*alliance)
+                    .lineToSplineHeading(new Pose2d(-50, (sketchyBlueOffsets && !isRedAlliance() ? -46.5*alliance : -48*alliance), Math.toRadians(0*alliance)))
+                    .splineToConstantHeading(new Vector2d(12,(-59.5+sketchyBlueStackOffsetY)*alliance),0*alliance)
+                    .splineTo(new Vector2d(whitePixelXCoord+sketchyBlueBoardOffsetX, (whitePixelYCoord)*alliance),0*alliance)
                     .build();
 
             // END OF BOARDSIDE
@@ -265,7 +281,7 @@ public class ExtendoAutoConstants {
     // Telemetry stuff
     public void addTelemetry(Telemetry telemetry){
         // Write the alliance in its color
-        telemetry.addLine("<font color =#"+ (allianceToBool() ? "ff0000>" : "0099ff>") + allianceToString() + "</font>" );
+        telemetry.addLine("<font color =#"+ (isRedAlliance() ? "ff0000>" : "0099ff>") + allianceToString() + "</font>" );
         telemetry.addData("Side", (isWingSide() ? "Wing /\\" : "Board [")); // First time using this funny switchy thing
         telemetry.addData("Corrected Spike Mark Pos", getCorrectedSpikeMarkPos());
         telemetry.addData("Delay in seconds", getDelaySeconds());
