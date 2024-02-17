@@ -71,6 +71,7 @@ public class Teleop4 extends LinearOpMode {
     ScoringState scoringState = ScoringState.INTAKING;
 
     int drivingState;
+    double climberSlackPullTime = 1.3;
 
     @Override
     public void runOpMode(){
@@ -403,10 +404,10 @@ public class Teleop4 extends LinearOpMode {
         // CLIMBER CONTROL
         // This entire section of code is terrible
         // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
-        arm.pivotGoToIntake();
+        arm.setPivotPos(0.1);
 
         // If you pull the climber, stop pid control of the lift
-        if (!(gamepad2.left_stick_y == 0)){ // If we pull the stick...
+        if (!(gamepad2.left_stick_y == 0) && !(climberTimer.seconds() < climberSlackPullTime)){ // If we pull the stick...
             climber.setPower(-gamepad2.left_stick_y);
             // Update the climbing pos so the lift holds its positon where the climber stops pulling it
             Climber.targetLiftHeight = lift.getHeight();
@@ -420,9 +421,9 @@ public class Teleop4 extends LinearOpMode {
             lift.update(false);
         } else {
             // Automatically get rid of some slack
-            if (climberTimer.seconds() < 1.3) {
+            if (climberTimer.seconds() < climberSlackPullTime) {
                 climber.setPower(-1);
-            } else if (climberTimer.seconds() > 1.3 && climberTimer.seconds() < 1.4) {
+            } else if (climberTimer.seconds() > climberSlackPullTime && climberTimer.seconds() < climberSlackPullTime+0.1) {
                 climber.setTargetPos(climber.getPos());
             } else {
                 // Hold position to stop slowly falling

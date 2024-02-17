@@ -63,6 +63,8 @@ public class ExtendoAuto extends LinearOpMode {
     final double yellowExtendProximity = 23;
     final double whiteExtendProximity = 36;
 
+    final boolean useIntakeBlipping = true;
+
     @Override
     public void runOpMode(){
         // Init
@@ -165,11 +167,19 @@ public class ExtendoAuto extends LinearOpMode {
                 case WAITING_FOR_PPP:
                     if (actionTimer.milliseconds() > 900){
                         scoringMech.setIntakePos(0.42);
+                        if (useIntakeBlipping) {
+                            // Do a little blip with the intake to knock the pixel off
+                            scoringMech.intakeOn();
+                        }
                         moveOnToState(AutoState.WAITING_FOR_PPP2);
                     }
                     break;
 
                 case WAITING_FOR_PPP2:
+                    if (useIntakeBlipping) {
+                        // Do a little blip with the intake to knock the pixel off
+                        if (actionTimer.milliseconds() > 50) scoringMech.intakeOff();
+                    }
                     if (actionTimer.milliseconds() > 300){
                         scoringMech.setIntakePos(ExtendoIntake.verticalPos);
                         moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);

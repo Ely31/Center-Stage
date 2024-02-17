@@ -168,7 +168,7 @@ public class ExtendoAutoConstants {
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(-39, -34 * alliance, Math.toRadians(179.5 * alliance)))
+                            .lineToSplineHeading(new Pose2d(-38, -34 * alliance, Math.toRadians(179.5 * alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-9-dropOffset;
                     break;

@@ -12,13 +12,11 @@ public class ExtendoScoringMech {
     Lift lift;
     Arm3 arm;
     ExtendoIntake intake;
-    PurplePixelPusher ppp;
     // Constructor
     public ExtendoScoringMech(HardwareMap hwmap){
         lift = new Lift(hwmap);
         arm = new Arm3(hwmap);
         intake = new ExtendoIntake(hwmap);
-        ppp = new PurplePixelPusher(hwmap);
     }
 
     public void score(){
@@ -39,7 +37,6 @@ public class ExtendoScoringMech {
     }
 
     public void grabJustForPreload(){arm.setBothGrippersState(true);}
-    public void setPPPState(boolean state) {ppp.setState(state);}
     public void premove(){arm.preMove();}
 
     // ESSENTIAL to call this function every loop
@@ -231,6 +228,8 @@ public class ExtendoScoringMech {
     public void setIntakePos(double pos){
         intake.gotoRawPosition(pos);
     }
+    public void intakeOn(){intake.on(false, 0.4);}
+    public void intakeOff(){intake.off();}
 
     // Stuff the ds with info
     public void displayDebug(Telemetry telemetry){
