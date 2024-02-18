@@ -218,7 +218,7 @@ public class ExtendoAuto extends LinearOpMode {
 
                 case SCORING_WHITE:
                     if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
-                        scoringMech.scoreAsync(6.5, false);
+                        scoringMech.scoreAsync(7, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());
                     }

@@ -161,14 +161,14 @@ public class ExtendoAutoConstants {
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(-40, -10.5 * alliance, Math.toRadians(89.9 * alliance))) // 89.9 so it turns CW
+                            .lineToSplineHeading(new Pose2d(-40, -11.5 * alliance, Math.toRadians(89.9 * alliance))) // 89.9 so it turns CW
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-6.2-dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(-38, -34 * alliance, Math.toRadians(179.5 * alliance)))
+                            .lineToSplineHeading(new Pose2d(-37, -34 * alliance, Math.toRadians(179.5 * alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-9-dropOffset;
                     break;
@@ -217,19 +217,19 @@ public class ExtendoAutoConstants {
             switch (correctedSpikeMarkPos){
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(14, -34*alliance, Math.toRadians(0*alliance)))
+                            .lineToSplineHeading(new Pose2d(13, -34*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-dropOffset;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(30, -24*alliance, Math.toRadians(0*alliance)))
+                            .lineToSplineHeading(new Pose2d(28.8, -24.5*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-5.5-dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
-                            .lineToSplineHeading(new Pose2d(37, -34*alliance, Math.toRadians(0*alliance)))
+                            .lineToSplineHeading(new Pose2d(35, -34*alliance, Math.toRadians(0*alliance)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord-11.4-dropOffset;
                     break;
@@ -251,7 +251,7 @@ public class ExtendoAutoConstants {
                     .build();
 
             scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                    .lineToSplineHeading(new Pose2d(-50, (sketchyBlueOffsets && !isRedAlliance() ? -46.5*alliance : -48*alliance), Math.toRadians(0*alliance)))
+                    .lineToSplineHeading(new Pose2d(-50, (-48+sketchyBlueStackOffsetY)*alliance, Math.toRadians(0*alliance)))
                     .splineToConstantHeading(new Vector2d(12,(-59.5+sketchyBlueStackOffsetY)*alliance),0*alliance)
                     .splineTo(new Vector2d(whitePixelXCoord+sketchyBlueBoardOffsetX, (whitePixelYCoord)*alliance),0*alliance)
                     .build();
