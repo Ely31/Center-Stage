@@ -63,8 +63,6 @@ public class ExtendoAuto extends LinearOpMode {
     final double yellowExtendProximity = 23;
     final double whiteExtendProximity = 36;
 
-    final boolean useIntakeBlipping = true;
-
     @Override
     public void runOpMode(){
         // Init
@@ -156,8 +154,7 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case PUSHING_PURPLE:
-                        if (!drive.isBusy() || Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.dropOffPurplePixel.end(), 1)){
-                            // Drop the pixel and then set it to the waiting state
+                        if (actionTimer.seconds() > 0.8){
                             // Bring intake arm down
                             scoringMech.setIntakePos(0.33);
                             moveOnToState(AutoState.WAITING_FOR_PPP);
@@ -165,21 +162,18 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case WAITING_FOR_PPP:
-                    if (actionTimer.milliseconds() > 900){
+                    if (!drive.isBusy() || Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.dropOffPurplePixel.end(), 1)){
                         scoringMech.setIntakePos(0.42);
-                        if (useIntakeBlipping) {
-                            // Do a little blip with the intake to knock the pixel off
-                            scoringMech.intakeOn();
-                        }
+                        // Do a little blip with the intake to knock the pixel off
+                        scoringMech.intakeOn();
                         moveOnToState(AutoState.WAITING_FOR_PPP2);
                     }
                     break;
 
                 case WAITING_FOR_PPP2:
-                    if (useIntakeBlipping) {
-                        // Do a little blip with the intake to knock the pixel off
-                        if (actionTimer.milliseconds() > 50) scoringMech.intakeOff();
-                    }
+                    // Do a little blip with the intake to knock the pixel off
+                    if (actionTimer.milliseconds() > 50) scoringMech.intakeOff();
+
                     if (actionTimer.milliseconds() > 300){
                         scoringMech.setIntakePos(ExtendoIntake.verticalPos);
                         moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);
