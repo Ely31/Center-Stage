@@ -34,7 +34,7 @@ public class Arm3 {
     public static double pivotScoringPos = 0.938;
     public static double pivotPremovePos = 0.25;
     public static double pivotOffset = 0.002;
-    public static double pivotAwayFromBordTime = 500;
+    public static double pivotAwayFromBordTime = 300;
 
     public static double gripperClosedPos = 0.88;
     public static double gripperOpenPos = 0.6;

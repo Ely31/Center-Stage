@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoIntake;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoScoringMech;
+import org.firstinspires.ftc.teamcode.hardware.TapeMeasure;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
@@ -24,14 +25,15 @@ import java.util.Objects;
 @Config
 //@Photon
 @Autonomous
-public class ExtendoAuto extends LinearOpMode {
+public class ExtendoAuto2 extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
     Camera camera;
     TeamPropDetector2 propPipeline = new TeamPropDetector2(true);
     ExtendoScoringMech scoringMech;
     TimeUtil timeUtil = new TimeUtil();
-    ExtendoAutoConstants autoConstants;
+    ExtendoAutoConstants2 autoConstants;
+    TapeMeasure tapeMeasure;
 
     // For the rising egde detectors
     boolean prevCycleIncrease = false;
@@ -52,6 +54,7 @@ public class ExtendoAuto extends LinearOpMode {
         SWEEP_ONE,
         SWEEP_TWO,
         SCORING_WHITE,
+        SCORING_WHITE_BACKSTAGE,
         PARKING
     }
     AutoState autoState = AutoState.GRABBING_PRELOADS;
@@ -71,7 +74,7 @@ public class ExtendoAuto extends LinearOpMode {
         scoringMech = new ExtendoScoringMech(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
-        autoConstants = new ExtendoAutoConstants(drive);
+        autoConstants = new ExtendoAutoConstants2(drive);
         // Juice telemetry speed and allow changing color
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         telemetry.setMsTransmissionInterval(100);
@@ -79,9 +82,22 @@ public class ExtendoAuto extends LinearOpMode {
 
         // Init loop
         while (!isStarted()&&!isStopRequested()){
+            //different auto path choices
+            if(gamepad2.cross) autoConstants.setOppositeAuto(true);
+            if(gamepad2.triangle) autoConstants.setOppositeAuto(false);
+
+            //different white pixel placement choices
+            if (gamepad2.circle) autoConstants.setWhitePixelDropBackstageA(true);
+            if (gamepad2.square) autoConstants.setWhitePixelDropBackstageA(false);
+
+            //different backstage drop options
+            if(gamepad2.left_trigger > 0.5) autoConstants.setWhitePixelDropBackstageB(true);
+            if(gamepad2.right_trigger > 0.5) autoConstants.setWhitePixelDropBackstageB(false);
+
             // Configure the alliance with the gamepad
             if (gamepad1.circle) autoConstants.setAlliance(1); // Red alliance
             if (gamepad1.cross) autoConstants.setAlliance(-1); // Blue alliance
+
             // This isn't the best choice of buttons right now
             if (gamepad1.left_bumper){
                 autoConstants.setWingSide(true);
@@ -98,6 +114,9 @@ public class ExtendoAuto extends LinearOpMode {
             // Park options
             if (gamepad1.left_trigger > 0.5) autoConstants.setParkingClose(true);
             if (gamepad1.right_trigger > 0.5) autoConstants.setParkingClose(false);
+
+            if(gamepad2.left_bumper) autoConstants.setTapeMeasurePark(true);
+            if(gamepad2.right_bumper) autoConstants.setTapeMeasurePark(false);
 
             // Buncha rising edge detectors
             if (gamepad1.dpad_up && !prevCycleIncrease) autoConstants.setNumCycles(autoConstants.getNumCycles() + 1);
@@ -154,27 +173,25 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case PUSHING_PURPLE:
-                    if (actionTimer.seconds() > 0.8){
-                        // Bring intake arm down
-                        scoringMech.setIntakePos(0.33);
-                        moveOnToState(AutoState.WAITING_FOR_PPP);
-                    }
+                            // Bring intake arm down
+                           if(actionTimer.seconds() > 0.8){
+                            scoringMech.setIntakePos(0.33);
+                            moveOnToState(AutoState.WAITING_FOR_PPP);
+                        }
                     break;
 
                 case WAITING_FOR_PPP:
                     if (!drive.isBusy() || Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.dropOffPurplePixel.end(), 1)){
                         scoringMech.setIntakePos(0.42);
-                        // Do a little blip with the intake to knock the pixel off
                         scoringMech.intakeOn();
                         moveOnToState(AutoState.WAITING_FOR_PPP2);
                     }
                     break;
 
                 case WAITING_FOR_PPP2:
-                    // Do a little blip with the intake to knock the pixel off
                     if (actionTimer.milliseconds() > 50) scoringMech.intakeOff();
 
-                    if (actionTimer.milliseconds() > 300){
+                    if (actionTimer.milliseconds() > 200){
                         scoringMech.setIntakePos(ExtendoIntake.verticalPos);
                         moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);
                     }
@@ -198,7 +215,7 @@ public class ExtendoAuto extends LinearOpMode {
                     break;
 
                 case TO_STACK:
-                    if (actionTimer.seconds() > 3){
+                    if (actionTimer.seconds() > 2.5){
                         scoringMech.grabOffStackAsync(scoringMech.hasBothPixels(),false);
                     } else scoringMech.scoreAsync(3, true);
 
@@ -206,15 +223,55 @@ public class ExtendoAuto extends LinearOpMode {
                     if ((scoringMech.hasBothPixels() || (loopTimer.seconds() > 23.5 && scoringMech.hasAPixel())) && actionTimer.seconds() > 4){
                         scoringMech.resetScoringState();
                         addCycle();
-                        moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+
+                        if(autoConstants.getWhitePixelDropBackstageA() && autoConstants.getNumCycles() == 0){
+                            moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstageA);
+                        }
+                        else if(autoConstants.getWhitePixelDropBackstageB() && autoConstants.getNumCycles() == 1){
+                            moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstageB);
+                        }
+                        else{
+                            moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+                        }
+                    }
+                    break;
+
+               //Im calling it now, there will be a bug with the interaction between cycle counter and this case
+                //TODO: turn this into a state machine for ease of use
+                case SCORING_WHITE_BACKSTAGE:
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstageA.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
+                        scoringMech.scoreAsync(0, false);
+                    } else {
+                        scoringMech.grabOffStackAsync(true, drive.isBusy());
+                    }
+
+                    if (scoringMech.liftIsGoingDown()){
+                        autoConstants.updateTrajectories();
+                        if (autoConstants.getNumCycles() > 0){
+                            scoringMech.resetStackGrabbingState();
+                            moveOnToState(AutoState.TO_STACK, autoConstants.toStack);
+                        } else {
+                            moveOnToState(AutoState.PARKING, autoConstants.park);
+                        }
                     }
                     break;
 
                 case SCORING_WHITE:
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
-                        scoringMech.scoreAsync(7, false);
-                    } else {
-                        scoringMech.grabOffStackAsync(true, drive.isBusy());
+                    if(autoConstants.getOppositeAuto()){
+                        if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 20 : whiteExtendProximity))){
+                            scoringMech.scoreAsync(9, false);
+                        }
+                        else {
+                            scoringMech.grabOffStackAsync(true, drive.isBusy());
+                        }
+                    }
+                    else{
+                        if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
+                            scoringMech.scoreAsync(9, false);
+                        }
+                        else {
+                            scoringMech.grabOffStackAsync(true, drive.isBusy());
+                        }
                     }
 
                     if (scoringMech.liftIsGoingDown()){
@@ -233,7 +290,10 @@ public class ExtendoAuto extends LinearOpMode {
                     // Keep the scoring mech running so it goes down
                     scoringMech.scoreAsync(3, false);
                     // Once the bot is parked, stop the OpMode
-                    if (!drive.isBusy()){
+                    if(drive.isBusy() && autoConstants.tapeMeasurePark){
+                        tapeMeasure.executeBPM();
+                    }
+                    else if(!drive.isBusy()){
                         // I swear this method used to be called stop
                         terminateOpModeNow();
                     }
@@ -258,6 +318,10 @@ public class ExtendoAuto extends LinearOpMode {
             telemetry.addData("Num cycles", autoConstants.getNumCycles());
             telemetry.addData("Num finished cycles", autoConstants.getNumFinishedCycles());
             telemetry.addData("Time", loopTimer.seconds());
+            telemetry.addData("Delay in seconds", autoConstants.getDelaySeconds());
+            telemetry.addData("Backstage drop", autoConstants.getWhitePixelDropBackstageA());
+            telemetry.addData("Opposite routes", autoConstants.getOppositeAuto());
+            telemetry.addData("Tape measure park", autoConstants.isTapeMeasurePark());
             drive.displayDeug(telemetry);
             scoringMech.displayDebug(telemetry);
             timeUtil.displayDebug(telemetry, loopTimer);

@@ -418,10 +418,12 @@ public class Teleop4 extends LinearOpMode {
             case REDUCE_SLACK:
                 arm.setPivotPos(0.1);
                 climber.setPower(-1);
+                lift.setHeight(Climber.targetLiftHeight);
+
                 if (climberTimer.seconds() > climberSlackPullTime) {
                    climber.setPower(0);
-                    climber.setTargetPos(climber.getPos());
-                    climbingState = climbingState.HOLD;
+                   climber.setTargetPos(climber.getPos());
+                   climbingState = climbingState.HOLD;
                 }
                 break;
 
