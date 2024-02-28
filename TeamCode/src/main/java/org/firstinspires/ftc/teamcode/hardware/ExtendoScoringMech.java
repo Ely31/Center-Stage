@@ -196,6 +196,7 @@ public class ExtendoScoringMech {
                 break;
 
             case WAITING_FOR_ARM_RETRACT:
+                arm.pivotGoToIntake();
                 if (scoringWait.milliseconds() > Arm3.pivotAwayFromBordTime){
                     scoringWait.reset();
                     lift.retract();

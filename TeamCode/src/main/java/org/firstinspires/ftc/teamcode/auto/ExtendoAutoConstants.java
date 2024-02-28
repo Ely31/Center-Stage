@@ -347,14 +347,14 @@ public class ExtendoAutoConstants {
         }
         return (
                 "You are on the " + allianceToString() + "."
-                + " You are on the side of the field closest to the " + (isWingSide() ? "wing" : "board") + "."
-                + " The bot will wait " + getDelaySeconds() + " Seconds before moving the purple pixel to the spike mark " + spikeMarkDescription
-                + " and scoring the yellow pixel " + yellowPixelDescription + "."
-                + " The yellow pixel will be placed in that slot closest to " + (isDropOffset() ? "you" : "the center of the field") + "."
-                + " It'll do " + getNumCycles() + " Cycles."
-                + " The bot will then park closest to " + (isParkingClose() ? "you" : "the center of the field") + "."
-                + "\n" + "Sound right?"
-                );
+                        + " You are on the side of the field closest to the " + (isWingSide() ? "wing" : "board") + "."
+                        + " The bot will wait " + getDelaySeconds() + " Seconds before moving the purple pixel to the spike mark " + spikeMarkDescription
+                        + " and scoring the yellow pixel " + yellowPixelDescription + "."
+                        + " The yellow pixel will be placed in that slot closest to " + (isDropOffset() ? "you" : "the center of the field") + "."
+                        + " It'll do " + getNumCycles() + " Cycles."
+                        + " The bot will then park closest to " + (isParkingClose() ? "you" : "the center of the field") + "."
+                        + "\n" + "Sound right?"
+        );
     }
     String prevConfigToEnglish = "";
 }

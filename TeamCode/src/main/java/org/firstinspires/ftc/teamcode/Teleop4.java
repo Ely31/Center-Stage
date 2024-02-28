@@ -68,7 +68,15 @@ public class Teleop4 extends LinearOpMode {
         SCORING,
         SLIDING_UP
     }
+
+    enum ClimbingState{
+        REDUCE_SLACK,
+        HOLD,
+        CLIMB
+    }
+
     ScoringState scoringState = ScoringState.INTAKING;
+    ClimbingState climbingState = ClimbingState.REDUCE_SLACK;
 
     int drivingState;
     double climberSlackPullTime = 1.3;
@@ -404,35 +412,43 @@ public class Teleop4 extends LinearOpMode {
         // CLIMBER CONTROL
         // This entire section of code is terrible
         // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
-        arm.setPivotPos(0.1);
+        // holy crap ely you weren't kidding about this being terrible
 
-        // If you pull the climber, stop pid control of the lift
-        if (!(gamepad2.left_stick_y == 0) && !(climberTimer.seconds() < climberSlackPullTime)){ // If we pull the stick...
-            climber.setPower(-gamepad2.left_stick_y);
-            // Update the climbing pos so the lift holds its positon where the climber stops pulling it
-            Climber.targetLiftHeight = lift.getHeight();
-            // Set the target pos to wherever it is so that it holds there when you stop using the stick
-            climber.setTargetPos(climber.getPos());
-            // Lift things
-            // Let it coast and be pulled up if
-            lift.setRawPowerDangerous(0);
-            resetLiftController();
-            // Update so we can get the lift's position
-            lift.update(false);
-        } else {
-            // Automatically get rid of some slack
-            if (climberTimer.seconds() < climberSlackPullTime) {
+        switch(climbingState){
+            case REDUCE_SLACK:
+                arm.setPivotPos(0.1);
                 climber.setPower(-1);
-            } else if (climberTimer.seconds() > climberSlackPullTime && climberTimer.seconds() < climberSlackPullTime+0.1) {
-                climber.setTargetPos(climber.getPos());
-            } else {
-                // Hold position to stop slowly falling
+                lift.setHeight(Climber.targetLiftHeight);
+
+                if (climberTimer.seconds() > climberSlackPullTime) {
+                   climber.setPower(0);
+                   climber.setTargetPos(climber.getPos());
+                   climbingState = climbingState.HOLD;
+                }
+                break;
+
+            case HOLD:
                 climber.goToTargetPos();
-            }
-            // Lift things
-            lift.setHeight(Climber.targetLiftHeight);
-            // Only run the lift pid if we aren't moving the climber
-            lift.update();
+                lift.update();
+                if(!(gamepad2.left_stick_y == 0)){
+                    climbingState = climbingState.CLIMB;
+                }
+
+            case CLIMB:
+                climber.setPower(-gamepad2.left_stick_y);
+                // Lift things
+                // Let it coast and be pulled up if
+                lift.setRawPowerDangerous(0);
+                resetLiftController();
+                // Update so we can get the lift's position
+                lift.update(false);
+
+                if(gamepad2.left_stick_y == 0){
+                    Climber.targetLiftHeight = lift.getHeight();
+                    lift.setHeight(Climber.targetLiftHeight);
+                    climber.setTargetPos(climber.getPos());
+                    climbingState = climbingState.HOLD;
+                }
         }
     }
 

@@ -13,7 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 
 // This has way more functions than you really need
-public class TeleMecDrive {
+public class  TeleMecDrive {
     private DcMotorEx lf;
     private DcMotorEx lb;
     private DcMotorEx rf;
