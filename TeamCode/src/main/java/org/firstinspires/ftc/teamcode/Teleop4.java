@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoIntake;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.TapeMeasure;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
@@ -36,6 +37,7 @@ public class Teleop4 extends LinearOpMode {
     DroneLauncher launcher;
     Climber climber;
     ElapsedTime climberTimer = new ElapsedTime();
+    TapeMeasure tapeMeasure;
 
     PIDFController headingController;
     public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
@@ -93,6 +95,7 @@ public class Teleop4 extends LinearOpMode {
         intake = new ExtendoIntake(hardwareMap);
         climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
+        tapeMeasure = new TapeMeasure(hardwareMap);
 
         headingController = new PIDFController(headingCoeffs);
         boardDistanceController = new PIDFController(boardCoeffs);
@@ -110,6 +113,8 @@ public class Teleop4 extends LinearOpMode {
         // START OF TELEOP LOOP
         while (opModeIsActive()){
             // DRIVING
+            tapeMeasure.releaseTM();
+
             if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 drivingState = 1;
                 // Lock onto the board if we're scoring and it's close enough

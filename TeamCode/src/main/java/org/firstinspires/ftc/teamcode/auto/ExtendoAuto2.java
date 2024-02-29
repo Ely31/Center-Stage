@@ -22,6 +22,7 @@ import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
 
 import java.util.Objects;
 
+//TODO: test stuff, WPBD, 1 or 2 auto path runs, test button code, and test tape measure park
 @Config
 //@Photon
 @Autonomous
@@ -42,6 +43,10 @@ public class ExtendoAuto2 extends LinearOpMode {
     boolean prevDelayDecrease = false;
     boolean prevToggleOffset = false;
     boolean prevAvoidYellows = false;
+    boolean prevOppositeAuto = false;
+    boolean prevToggleWPD1 = false;
+    boolean prevToggleWPD2 = false;
+    boolean prevToggleTMP = false;
 
     // For the giant fsm to run everything asynchronously
     enum AutoState{
@@ -66,15 +71,6 @@ public class ExtendoAuto2 extends LinearOpMode {
     final double yellowExtendProximity = 23;
     final double whiteExtendProximity = 36;
 
-    private boolean lastInputOA;
-    private boolean OAToggledStatus;
-    private boolean lastInputWPD1;
-    private boolean WPD1ToggledStatus;
-    private boolean lastInputWPD2;
-    private boolean WPD2ToggledStatus;
-    private boolean lastInputTMP;
-    private boolean TMPToggledStatus;
-
 
     @Override
     public void runOpMode(){
@@ -85,6 +81,7 @@ public class ExtendoAuto2 extends LinearOpMode {
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new ExtendoAutoConstants2(drive);
+        tapeMeasure = new TapeMeasure(hardwareMap);
         // Juice telemetry speed and allow changing color
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         telemetry.setMsTransmissionInterval(100);
@@ -92,14 +89,6 @@ public class ExtendoAuto2 extends LinearOpMode {
 
         // Init loop
         while (!isStarted()&&!isStopRequested()){
-            //opposite auto
-            toggleOA(gamepad2.cross);
-            //backstage drop option
-            toggleWPD1(gamepad2.circle);
-            toggleWPD2(gamepad2.triangle);
-            //tape measure park option
-            toggleTMP(gamepad2.square);
-
             // Configure the alliance with the gamepad
             if (gamepad1.circle) autoConstants.setAlliance(1); // Red alliance
             if (gamepad1.cross) autoConstants.setAlliance(-1); // Blue alliance
@@ -128,6 +117,14 @@ public class ExtendoAuto2 extends LinearOpMode {
             if (gamepad1.dpad_left && !prevDelayDecrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() - 1);
             if (gamepad1.y && !prevToggleOffset) autoConstants.setDropIsOffset(!autoConstants.isDropOffset());
             if (gamepad1.x && !prevAvoidYellows) autoConstants.setAvoidYellows(!autoConstants.isAvoidingYellows());
+            //gamepad 2
+            //set opposite auto
+            if(gamepad2.cross && !prevOppositeAuto) autoConstants.setOppositeAuto(!autoConstants.getOppositeAuto());
+            //set backstage drop
+            if(gamepad2.circle && !prevToggleWPD1) autoConstants.setWhitePixelDropBackstage1(!autoConstants.getWhitePixelDropBackstage1());
+            if(gamepad2.triangle && !prevToggleWPD2) autoConstants.setWhitePixelDropBackstage2(!autoConstants.getWhitePixelDropBackstage2());
+            //set tape measure park
+            if(gamepad2.square && !prevToggleTMP) autoConstants.setTapeMeasurePark(!autoConstants.isTapeMeasurePark());
 
             prevCycleIncrease = gamepad1.dpad_up;
             prevCycleDecrease = gamepad1.dpad_down;
@@ -135,6 +132,10 @@ public class ExtendoAuto2 extends LinearOpMode {
             prevDelayDecrease = gamepad1.dpad_left;
             prevToggleOffset = gamepad1.y;
             prevAvoidYellows = gamepad1.x;
+            prevOppositeAuto = gamepad2.cross;
+            prevToggleWPD1 = gamepad2.circle;
+            prevToggleWPD2 = gamepad2.triangle;
+            prevToggleTMP = gamepad2.square;
 
             // Recompute trajectories every few seconds or every time you make a change
             if (pipelineThrottle.seconds() > 5 || !(Objects.equals(autoConstants.autoConfigToEnglish(), autoConstants.prevConfigToEnglish))){
@@ -227,21 +228,29 @@ public class ExtendoAuto2 extends LinearOpMode {
                         scoringMech.resetScoringState();
                         addCycle();
 
-                        if(autoConstants.getWhitePixelDropBackstage1() && autoConstants.getNumCycles() == 1){
-                            moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstage);
+                        //this is a terrible way of declaring the white backstage drop, but I could not get it to work any other way
+                        if(autoConstants.getNumCycles() == 1){
+                            if(autoConstants.getWhitePixelDropBackstage1()){
+                                moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstage);
+                            }
+                            else{
+                                moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+                            }
                         }
-                        else if(autoConstants.getWhitePixelDropBackstage2() && autoConstants.getNumCycles() == 0){
-                            moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstage);
-                        }
-                        else{
-                            moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+                        else if(autoConstants.getNumCycles() == 0){
+                            if(autoConstants.getWhitePixelDropBackstage2()){
+                                moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstage);
+                            }
+                            else{
+                                moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+                            }
                         }
                     }
                     break;
 
-               //Im calling it now, there will be a bug with the interaction between cycle counter and this case
+                //TODO: fix a continuity error ish
                 case SCORING_WHITE_BACKSTAGE:
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 5 : whiteExtendProximity))){
                         scoringMech.scoreAsync(0, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());
@@ -292,7 +301,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                     scoringMech.scoreAsync(3, false);
                     // Once the bot is parked, stop the OpMode
                     if(drive.isBusy() && autoConstants.tapeMeasurePark){
-                        tapeMeasure.executeBPM();
+                        tapeMeasure.yeetKids();
                     }
                     else if(!drive.isBusy()){
                         // I swear this method used to be called stop
@@ -342,32 +351,5 @@ public class ExtendoAuto2 extends LinearOpMode {
     void addCycle(){
         autoConstants.setNumCycles(autoConstants.getNumCycles()-1);
         autoConstants.addFinishedCycle();
-    }
-
-    public void toggleOA(boolean input){
-        if (input && !lastInputOA)OAToggledStatus = !OAToggledStatus;
-        if (OAToggledStatus) autoConstants.setOppositeAuto(true);
-        else autoConstants.setOppositeAuto(false);
-        lastInputOA = input;
-    }
-    public void toggleWPD1(boolean input){
-        if (input && !lastInputWPD1)WPD1ToggledStatus = !WPD1ToggledStatus;
-        if (WPD1ToggledStatus) autoConstants.setWhitePixelDropBackstage1(true);
-        else autoConstants.setWhitePixelDropBackstage1(false);
-        lastInputWPD1 = input;
-    }
-
-    public void toggleWPD2(boolean input){
-        if (input && !lastInputWPD2)WPD2ToggledStatus = !WPD2ToggledStatus;
-        if (WPD2ToggledStatus) autoConstants.setWhitePixelDropBackstage2(true);
-        else autoConstants.setWhitePixelDropBackstage2(false);
-        lastInputWPD2 = input;
-    }
-
-    public void toggleTMP(boolean input){
-        if (input && !lastInputTMP)TMPToggledStatus = !TMPToggledStatus;
-        if (TMPToggledStatus) autoConstants.setTapeMeasurePark(true);
-        else autoConstants.setTapeMeasurePark(false);
-        lastInputTMP = input;
     }
 }

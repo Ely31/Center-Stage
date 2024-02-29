@@ -18,10 +18,9 @@ public class TapeMeasure {
     ShootyBoi shootyBoi = ShootyBoi.YEET;
 
     public TapeMeasure(HardwareMap hwmap){
-       tapeMeasureMotor = hwmap.get(DcMotor.class, "TapeMeasureMotor");
+       tapeMeasureMotor = hwmap.get(DcMotor.class, "tapeMotor");
        tapeMeasureMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-       tapeMeasureRelease = hwmap.get(Servo.class, "tapeMeasureRelease");
-       zeroTapeMeasureMotor();
+       tapeMeasureRelease = hwmap.get(Servo.class, "tapeServo");
     }
 
     public void zeroTapeMeasureMotor(){ tapeMeasureMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);}
@@ -30,7 +29,7 @@ public class TapeMeasure {
 
     public int getPos(){return tapeMeasureMotor.getCurrentPosition();}
 
-    public void executeBPM(){
+    public void yeetKids(){
         switch(shootyBoi){
             case YEET:
                 tapeMeasureMotor.setTargetPosition(100);
