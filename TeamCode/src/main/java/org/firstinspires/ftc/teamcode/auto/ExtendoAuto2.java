@@ -67,6 +67,7 @@ public class ExtendoAuto2 extends LinearOpMode {
     ElapsedTime pipelineThrottle = new ElapsedTime(1000000000*5); // Start it at 5s so the telemetry pops up right away
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
+    ElapsedTime TMT = new ElapsedTime();
 
     final double yellowExtendProximity = 23;
     final double whiteExtendProximity = 36;
@@ -204,7 +205,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                 case SCORING_YELLOW:
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 3 : yellowExtendProximity))){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 8 : yellowExtendProximity))){
                         scoringMech.scoreAsync(1.05, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
@@ -250,7 +251,7 @@ public class ExtendoAuto2 extends LinearOpMode {
 
                 //TODO: fix a continuity error ish
                 case SCORING_WHITE_BACKSTAGE:
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 5 : whiteExtendProximity))){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 3 : whiteExtendProximity))){
                         scoringMech.scoreAsync(0, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());
@@ -277,7 +278,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                         }
                     }
                     else{
-                        if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
+                        if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 9 : whiteExtendProximity))){
                             scoringMech.scoreAsync(9, false);
                         }
                         else {
@@ -300,8 +301,8 @@ public class ExtendoAuto2 extends LinearOpMode {
                     // Keep the scoring mech running so it goes down
                     scoringMech.scoreAsync(3, false);
                     // Once the bot is parked, stop the OpMode
-                    if(drive.isBusy() && autoConstants.tapeMeasurePark){
-                        tapeMeasure.yeetKids();
+                    if(drive.isBusy() && autoConstants.tapeMeasurePark && TMT.seconds() < 2){
+                        tapeMeasure.fuckinYeeeet();
                     }
                     else if(!drive.isBusy()){
                         // I swear this method used to be called stop

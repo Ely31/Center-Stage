@@ -10,6 +10,9 @@ public class TapeMeasure {
     public static double holdTM = 0;
     public static double releaseTM = 1;
 
+    //1150rpm
+    //4in diameter wheel
+    //5.2:1
     enum ShootyBoi{
         YEET,
         HOLD
@@ -21,13 +24,18 @@ public class TapeMeasure {
        tapeMeasureMotor = hwmap.get(DcMotor.class, "tapeMotor");
        tapeMeasureMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
        tapeMeasureRelease = hwmap.get(Servo.class, "tapeServo");
+       tapeMeasureMotor.setPower(0);
     }
 
     public void zeroTapeMeasureMotor(){ tapeMeasureMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);}
+    public void zeroPower(){tapeMeasureMotor.setPower(0);}
 
     public void releaseTM(){tapeMeasureRelease.setPosition(releaseTM);}
 
     public int getPos(){return tapeMeasureMotor.getCurrentPosition();}
+
+    public void fuckinYeeeet(){tapeMeasureMotor.setPower(-1);}
+    public void noYeet(){tapeMeasureMotor.setPower(1);}
 
     public void yeetKids(){
         switch(shootyBoi){

@@ -62,6 +62,8 @@ public class Teleop4 extends LinearOpMode {
     public static double boardTargetDistance = 15;
     public static double boardControllerEnableDistance = 45;
     public static boolean displayDebugTelemetry = true;
+    boolean prevTPT1 = false;
+    boolean prevTPT2 = false;
 
     enum ScoringState {
         INTAKING,
@@ -146,6 +148,11 @@ public class Teleop4 extends LinearOpMode {
                 resetHeadingController();
             }
             prevHeadingResetInput = gamepad1.share;
+
+            if(gamepad2.left_stick_button){tapeMeasure.fuckinYeeeet();}
+            else if(gamepad2.right_stick_button){tapeMeasure.noYeet();}
+            else{tapeMeasure.zeroPower();}
+
 
             // Enable/disable autoPremove and autoRetract in case they causes problems
             if (!prevUsePixelSensorsInput && gamepad2.ps){
@@ -245,6 +252,7 @@ public class Teleop4 extends LinearOpMode {
                 telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistanceRollingAvg()));
                 telemetry.addData("Board lock error", boardDistanceController.getLastError());
                 telemetry.addData("Board lock target pos", boardDistanceController.getTargetPosition());
+                telemetry.addData("climbing state", climbingState.name());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -408,8 +416,6 @@ public class Teleop4 extends LinearOpMode {
 
         // Keep this at 0 until climbing mode is on
         climberTimer.reset();
-        // Reset the lift height that the climber will go to
-        Climber.targetLiftHeight = Climber.hangingHeight;
     }
 
     void updateClimibingSystem(){
@@ -424,11 +430,12 @@ public class Teleop4 extends LinearOpMode {
                 arm.setPivotPos(0.1);
                 climber.setPower(-1);
                 lift.setHeight(Climber.targetLiftHeight);
+                lift.update();
 
                 if (climberTimer.seconds() > climberSlackPullTime) {
-                   climber.setPower(0);
+                   //climber.setPower(0);
                    climber.setTargetPos(climber.getPos());
-                   climbingState = climbingState.HOLD;
+                   climbingState = ClimbingState.HOLD;
                 }
                 break;
 
@@ -436,7 +443,7 @@ public class Teleop4 extends LinearOpMode {
                 climber.goToTargetPos();
                 lift.update();
                 if(!(gamepad2.left_stick_y == 0)){
-                    climbingState = climbingState.CLIMB;
+                    climbingState = ClimbingState.CLIMB;
                 }
 
             case CLIMB:
@@ -452,7 +459,7 @@ public class Teleop4 extends LinearOpMode {
                     Climber.targetLiftHeight = lift.getHeight();
                     lift.setHeight(Climber.targetLiftHeight);
                     climber.setTargetPos(climber.getPos());
-                    climbingState = climbingState.HOLD;
+                    climbingState = ClimbingState.HOLD;
                 }
         }
     }
