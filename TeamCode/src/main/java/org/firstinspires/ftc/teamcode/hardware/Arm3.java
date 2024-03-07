@@ -226,6 +226,8 @@ public class Arm3 {
         }
     }
 
+    //none of this below will probably work
+    //horrible code, I did this during science show and I'm pretty sure I have ear/brain damage, nightmare nightmare nightmare
     public void neutralPos(){
         boardAligner.setPosition(neutralAligner);
     }

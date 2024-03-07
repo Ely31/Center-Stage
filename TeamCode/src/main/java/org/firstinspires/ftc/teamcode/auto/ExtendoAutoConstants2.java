@@ -170,7 +170,7 @@ public class ExtendoAutoConstants2 {
         final double yellowPixelXCoord = 52;
         final double whitePixelXCoord = 51.3;
         double whitePixelYCoord = -29.5;
-        final double wingSideWhiteY = -30;
+        final double wingSideWhiteY = -26;
         final double boardSideWhiteY = -40.5;
 
         //wing side auto
@@ -327,7 +327,7 @@ public class ExtendoAutoConstants2 {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(28.8, -24.5 * alliance, Math.toRadians(0 * alliance)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 5.5 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 4.5 - dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
@@ -366,17 +366,17 @@ public class ExtendoAutoConstants2 {
             else {
                 //this path runs through the truss on board side
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
+                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                         .setTangent(Math.toRadians(180 * alliance))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
-                        .splineToConstantHeading(new Vector2d(28, -57 * alliance), Math.toRadians(180 * alliance))
-                        .splineToConstantHeading(new Vector2d(-30, -56 * alliance), Math.toRadians(180 * alliance))
-                        // Ok we're out of the truss now
+                        .splineToConstantHeading(new Vector2d(28, -58 * alliance), Math.toRadians(180 * alliance))
+                        .splineToConstantHeading(new Vector2d(-30, -57 * alliance), Math.toRadians(180 * alliance))
                         .resetVelConstraint()
+                        // Ok we're out of the truss now
                         .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56 + sketcyBlueStackOffsetX : -57 + sketcyBlueStackOffsetX), (-39.5 + sketchyBlueStackOffsetY) * alliance, Math.toRadians(-20 * alliance)), Math.toRadians(110 * alliance))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
+                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                         .lineToSplineHeading(new Pose2d(-50, (-48 + sketchyBlueStackOffsetY) * alliance, Math.toRadians(0 * alliance)))
                         .splineToConstantHeading(new Vector2d(12, (-59.5 + sketchyBlueStackOffsetY) * alliance), 0 * alliance)
                         .resetVelConstraint()

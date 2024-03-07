@@ -115,7 +115,6 @@ public class Teleop4 extends LinearOpMode {
         // START OF TELEOP LOOP
         while (opModeIsActive()){
             // DRIVING
-            tapeMeasure.releaseTM();
 
             if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 drivingState = 1;
@@ -149,7 +148,7 @@ public class Teleop4 extends LinearOpMode {
             }
             prevHeadingResetInput = gamepad1.share;
 
-            if(gamepad2.left_stick_button){tapeMeasure.fuckinYeeeet();}
+            if(gamepad2.left_stick_button){tapeMeasure.Yeeeeeet();}
             else if(gamepad2.right_stick_button){tapeMeasure.noYeet();}
             else{tapeMeasure.zeroPower();}
 
@@ -424,43 +423,51 @@ public class Teleop4 extends LinearOpMode {
         // This entire section of code is terrible
         // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
         // holy crap ely you weren't kidding about this being terrible
-
-        switch(climbingState){
-            case REDUCE_SLACK:
-                arm.setPivotPos(0.1);
-                climber.setPower(-1);
-                lift.setHeight(Climber.targetLiftHeight);
-                lift.update();
-
-                if (climberTimer.seconds() > climberSlackPullTime) {
-                   //climber.setPower(0);
-                   climber.setTargetPos(climber.getPos());
-                   climbingState = ClimbingState.HOLD;
-                }
-                break;
-
-            case HOLD:
-                climber.goToTargetPos();
-                lift.update();
-                if(!(gamepad2.left_stick_y == 0)){
-                    climbingState = ClimbingState.CLIMB;
-                }
-
-            case CLIMB:
-                climber.setPower(-gamepad2.left_stick_y);
-                // Lift things
-                // Let it coast and be pulled up if
-                lift.setRawPowerDangerous(0);
-                resetLiftController();
-                // Update so we can get the lift's position
-                lift.update(false);
-
-                if(gamepad2.left_stick_y == 0){
-                    Climber.targetLiftHeight = lift.getHeight();
+        //this is bad, why is wrong, Braindamage, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare.
+        if(isClimbing){
+            switch(climbingState){
+                case REDUCE_SLACK:
+                    arm.setPivotPos(0.1);
+                    climber.setPower(-1);
                     lift.setHeight(Climber.targetLiftHeight);
-                    climber.setTargetPos(climber.getPos());
-                    climbingState = ClimbingState.HOLD;
-                }
+                    lift.update();
+
+                    if (climberTimer.seconds() > climberSlackPullTime) {
+                        climber.setPower(0);
+                        climber.setTargetPos(climber.getPos());
+                        climbingState = climbingState.HOLD;
+                    }
+                    break;
+
+                case HOLD:
+                    climber.goToTargetPos();
+                    lift.update();
+                    if(!(gamepad2.left_stick_y == 0)){
+                        climbingState = climbingState.CLIMB;
+                    }
+                    break;
+
+                case CLIMB:
+                    climber.setPower(-gamepad2.left_stick_y);
+                    // Lift things
+                    // Let it coast and be pulled up if
+                    lift.setRawPowerDangerous(0);
+                    resetLiftController();
+                    // Update so we can get the lift's position
+                    lift.update(false);
+
+                    if(gamepad2.left_stick_y == 0){
+                        Climber.targetLiftHeight = lift.getHeight();
+                        lift.setHeight(Climber.targetLiftHeight);
+                        climber.setTargetPos(climber.getPos());
+                        climbingState = climbingState.HOLD;
+                    }
+                    break;
+            }
+        }
+        else{
+            lift.retract();
+            arm.pivotGoToIntake();
         }
     }
 

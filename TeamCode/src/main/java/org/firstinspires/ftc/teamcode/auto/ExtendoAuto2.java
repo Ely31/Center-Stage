@@ -22,7 +22,6 @@ import org.firstinspires.ftc.teamcode.vision.workspace.TeamPropDetector2;
 
 import java.util.Objects;
 
-//TODO: test stuff, WPBD, 1 or 2 auto path runs, test button code, and test tape measure park
 @Config
 //@Photon
 @Autonomous
@@ -302,7 +301,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                     scoringMech.scoreAsync(3, false);
                     // Once the bot is parked, stop the OpMode
                     if(drive.isBusy() && autoConstants.tapeMeasurePark && TMT.seconds() < 2){
-                        tapeMeasure.fuckinYeeeet();
+                        tapeMeasure.Yeeeeeet();
                     }
                     else if(!drive.isBusy()){
                         // I swear this method used to be called stop
