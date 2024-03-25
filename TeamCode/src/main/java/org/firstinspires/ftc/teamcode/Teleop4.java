@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
-import org.firstinspires.ftc.teamcode.hardware.ExtendoIntake;
+import org.firstinspires.ftc.teamcode.hardware.ExtendoIntakeAngleHolding;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
@@ -32,13 +32,13 @@ public class Teleop4 extends LinearOpMode {
     ElapsedTime pivotTimer = new ElapsedTime();
     ElapsedTime gripperTimer = new ElapsedTime();
     ElapsedTime doubleTapTimer = new ElapsedTime();
-    ExtendoIntake intake;
+    ExtendoIntakeAngleHolding intake;
     DroneLauncher launcher;
     Climber climber;
     ElapsedTime climberTimer = new ElapsedTime();
 
     PIDFController headingController;
-    public static PIDCoefficients headingCoeffs = new PIDCoefficients(0.7,0.005,0.01);
+    public static PIDCoefficients headingCoeffs = new PIDCoefficients(2, 0.005, 0.2); // old vals (0.7,0.005,0.01)
     PIDFController boardDistanceController;
     public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.05,0.000,5); // Old i val 0.0001
 
@@ -66,7 +66,8 @@ public class Teleop4 extends LinearOpMode {
         WAITING_FOR_GRIPPERS,
         PREMOVED,
         SCORING,
-        SLIDING_UP
+        SLIDING_UP,
+        BUMPING_UP
     }
 
     enum ClimbingState{
@@ -79,6 +80,7 @@ public class Teleop4 extends LinearOpMode {
     ClimbingState climbingState = ClimbingState.REDUCE_SLACK;
 
     int drivingState;
+    ElapsedTime drivingTimer = new ElapsedTime();
     double climberSlackPullTime = 1.3;
 
     @Override
@@ -90,7 +92,7 @@ public class Teleop4 extends LinearOpMode {
         drive = new TeleMecDrive(hardwareMap, 0.3, false);
         lift = new Lift(hardwareMap);
         arm = new Arm3(hardwareMap);
-        intake = new ExtendoIntake(hardwareMap);
+        intake = new ExtendoIntakeAngleHolding(hardwareMap);
         climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
 
@@ -110,7 +112,7 @@ public class Teleop4 extends LinearOpMode {
         // START OF TELEOP LOOP
         while (opModeIsActive()){
             // DRIVING
-            if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
+            if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance) {
                 drivingState = 1;
                 // Lock onto the board if we're scoring and it's close enough
                 drive.driveFieldCentric(
@@ -120,6 +122,15 @@ public class Teleop4 extends LinearOpMode {
                         -headingController.update(drive.getHeading()),
                         1
                 );
+            } else if (useBoardSensor && gamepad1.right_stick_x == 0 && drivingTimer.seconds() > 0.3){
+                // Lock heading with pid controller if you aren't turning
+                drive.driveFieldCentric(
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        -headingController.update(drive.getHeading()),
+                        gamepad1.right_trigger
+                    );
+                    drivingState = 2;
             } else {
                 drivingState = 0;
                 // Drive the bot normally
@@ -132,6 +143,9 @@ public class Teleop4 extends LinearOpMode {
                 // Reset pid controllers so they don't do weird things when they turn back on
                 resetHeadingController();
                 resetBoardDistanceController();
+            }
+            if (gamepad1.right_stick_x != 0){
+                drivingTimer.reset();
             }
 
             // Manually calibrate field centric with a button
@@ -236,6 +250,7 @@ public class Teleop4 extends LinearOpMode {
                 telemetry.addData("Target heading", headingController.getTargetPosition());
                 telemetry.addData("Heading", drive.getHeading());
                 telemetry.addData("Heading error", headingController.getLastError());
+                telemetry.addData("Driving timer", drivingTimer.seconds());
                 telemetry.addData("Scoring state", scoringState.name());
                 telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistanceRollingAvg()));
                 telemetry.addData("Board lock error", boardDistanceController.getLastError());
@@ -356,11 +371,6 @@ public class Teleop4 extends LinearOpMode {
                     arm.setBothGrippersState(false);
                     poking = false;
                 }
-                // But more often used, drop them both at once
-                //if (gamepad2.left_bumper) {
-                    //arm.setBothGrippersState(false);
-                    //poking = false;
-                //}
 
                 // Toggle the poker
                 if (gamepad2.b && !prevPokingInput){
@@ -375,7 +385,7 @@ public class Teleop4 extends LinearOpMode {
                         (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
                 ){
 
-                    scoringState = ScoringState.SLIDING_UP;
+                    scoringState = ScoringState.BUMPING_UP;
                     lift.setExtendedPos(lift.getExtendedPos() + 2);
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
@@ -387,7 +397,7 @@ public class Teleop4 extends LinearOpMode {
                 }
                 break;
 
-            case SLIDING_UP:
+            case BUMPING_UP:
                 lift.extend();
                 // Once it's gone up enough, switch states and retract
                 if (Utility.withinErrorOfValue(lift.getHeight(), lift.getExtendedPos(), 0.5)) {
