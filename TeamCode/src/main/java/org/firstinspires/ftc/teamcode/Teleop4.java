@@ -385,15 +385,22 @@ public class Teleop4 extends LinearOpMode {
                         (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
                 ){
 
-                    scoringState = ScoringState.BUMPING_UP;
-                    lift.setExtendedPos(lift.getExtendedPos() + 2);
-                    // Reset timer so the clock ticks on the arm being away from the board
-                    pivotTimer.reset();
+                    scoringState = ScoringState.SLIDING_UP;
                 }
                 // Go back to premoved if we wish
                 if (gamepad2.dpad_left){
                     scoringState = ScoringState.PREMOVED;
                     pivotTimer.reset();
+                }
+                break;
+
+            case SLIDING_UP:
+                // Raise the lift up gradually to get clear of pixels
+                lift.setExtendedPos(lift.getExtendedPos() + liftPosEditStep);
+                if (!(arm.pixelIsInTop() && arm.pixelIsInBottom())){
+                    scoringState = ScoringState.BUMPING_UP;
+                    // Bump up
+                    lift.setExtendedPos(lift.getExtendedPos() + 2);
                 }
                 break;
 
