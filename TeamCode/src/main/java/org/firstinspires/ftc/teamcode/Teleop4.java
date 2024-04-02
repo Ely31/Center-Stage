@@ -62,8 +62,6 @@ public class Teleop4 extends LinearOpMode {
     public static double boardTargetDistance = 15;
     public static double boardControllerEnableDistance = 45;
     public static boolean displayDebugTelemetry = true;
-    boolean prevTPT1 = false;
-    boolean prevTPT2 = false;
 
     enum ScoringState {
         INTAKING,
@@ -149,9 +147,8 @@ public class Teleop4 extends LinearOpMode {
             prevHeadingResetInput = gamepad1.share;
 
             if(gamepad2.left_stick_button){tapeMeasure.Yeeeeeet();}
-            else if(gamepad2.right_stick_button){tapeMeasure.noYeet();}
+            else if(gamepad2.right_stick_button) {tapeMeasure.noYeet();}
             else{tapeMeasure.zeroPower();}
-
 
             // Enable/disable autoPremove and autoRetract in case they causes problems
             if (!prevUsePixelSensorsInput && gamepad2.ps){
@@ -368,11 +365,6 @@ public class Teleop4 extends LinearOpMode {
                     arm.setBothGrippersState(false);
                     poking = false;
                 }
-                // But more often used, drop them both at once
-                //if (gamepad2.left_bumper) {
-                    //arm.setBothGrippersState(false);
-                    //poking = false;
-                //}
 
                 // Toggle the poker
                 if (gamepad2.b && !prevPokingInput){
@@ -392,7 +384,7 @@ public class Teleop4 extends LinearOpMode {
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
                 }
-                // Go back to premoved if we wish
+                // Go back to premoved if we wish, si
                 if (gamepad2.dpad_left){
                     scoringState = ScoringState.PREMOVED;
                     pivotTimer.reset();

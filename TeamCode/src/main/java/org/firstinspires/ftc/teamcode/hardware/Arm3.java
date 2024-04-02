@@ -53,8 +53,8 @@ public class Arm3 {
     public static double stopperOpenPos = 0.9;
     boolean stopperState = false;
 
-    public static double bottomSensorThreshold = 1500;
-    public static double topSensorThreshold = 3000;
+    public static double bottomSensorThreshold = 800;
+    public static double topSensorThreshold = 800;
     public static double armSensorThreshold = 1000;
     public static double headingCounter;
 

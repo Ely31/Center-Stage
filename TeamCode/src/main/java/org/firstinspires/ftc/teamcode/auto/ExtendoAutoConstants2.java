@@ -20,30 +20,18 @@ public class ExtendoAutoConstants2 {
         randomMessageIndex = new Random().nextInt(messageList.length);
     }
 
-    // 1 is red, -1 is blue
-    private int alliance = 1;
-    public int getAlliance() {return alliance;}
-    public void setAlliance(int alliance) {this.alliance = alliance;}
-    public boolean isRedAlliance(){
-        return alliance == 1;
-    }
-    public String allianceToString(){
-        if (alliance == 1) return "red alliance";
-        else return "blue alliance";
-    }
-
-    //this modifys the routes of our auto code so that it will go on the opposite routes
+    //this modifies the routes of our auto code so that it will go on the opposite routes
     //needed for flexibility
-    private boolean OppositeAuto = false;
+    public boolean OppositeAuto = false;
     public boolean getOppositeAuto() {return OppositeAuto;}
     public void setOppositeAuto(boolean OppositeAuto) {this.OppositeAuto = OppositeAuto;}
 
     //allows us to drop white pixels in the backstage to avoid backdrop collisions in auto
-    private boolean whitePixelDropBackstage1 = false;
+    public boolean whitePixelDropBackstage1 = false;
     public boolean getWhitePixelDropBackstage1() {return whitePixelDropBackstage1;}
     public void setWhitePixelDropBackstage1(boolean whitePixelDropBackstage1) {this.whitePixelDropBackstage1 = whitePixelDropBackstage1;}
 
-    private boolean whitePixelDropBackstage2 = false;
+    public boolean whitePixelDropBackstage2 = false;
     public boolean getWhitePixelDropBackstage2() {return whitePixelDropBackstage2;}
     public void setWhitePixelDropBackstage2(boolean whitePixelDropBackstage2) {this.whitePixelDropBackstage2 = whitePixelDropBackstage2;}
 
@@ -69,7 +57,7 @@ public class ExtendoAutoConstants2 {
     public boolean isTapeMeasurePark(){ return tapeMeasurePark; }
     public void setTapeMeasurePark(boolean tapeMeasureParkA){this.tapeMeasurePark = tapeMeasureParkA;}
 
-    private int correctedSpikeMarkPos = 1;
+    public int correctedSpikeMarkPos = 1;
     public int getCorrectedSpikeMarkPos() {
         return correctedSpikeMarkPos;
     }
@@ -84,11 +72,11 @@ public class ExtendoAutoConstants2 {
         return dropIsOffset;
     }
 
-    private int numCycles = 2;
+    public int numCycles = 2;
     public int getNumCycles() {return numCycles;}
     public void setNumCycles(int numCycles) {this.numCycles = numCycles;}
 
-    private int numFinishedCycles = 0;
+    public int numFinishedCycles = 0;
     public void addFinishedCycle(){
         numFinishedCycles ++;
     }
@@ -96,18 +84,27 @@ public class ExtendoAutoConstants2 {
         return numFinishedCycles;
     }
 
-    private int delaySeconds = 0; // To be used to avoid collisions
+    public int delaySeconds = 0; // To be used to avoid collisions
     public int getDelaySeconds(){return delaySeconds;}
     public void setDelaySeconds(int seconds){
         delaySeconds = seconds;
     }
 
-    private boolean avoidYellows = true;
+    public boolean avoidYellows = true;
     public void setAvoidYellows(boolean val){
         avoidYellows = val;
     }
     public boolean isAvoidingYellows(){
         return avoidYellows;
+    }
+    // 1 is red, -1 is blue
+    private int alliance = 1;
+    public int getAlliance() {return alliance;}
+    public void setAlliance(int alliance) {this.alliance = alliance;}
+    public boolean isRedAlliance(){return alliance == 1;}
+    public String allianceToString(){
+        if (alliance == 1) return "red alliance";
+        else return "blue alliance";
     }
 
     boolean sketchyBlueOffsets = true;
@@ -119,11 +116,8 @@ public class ExtendoAutoConstants2 {
         switch(visionResult){
             case 1:
                 // Switch 1 and 3 if we're on blue terminal
-                if (getAlliance() == 1){
-                    correctedSpikeMarkPos = 1;
-                } else {
-                    correctedSpikeMarkPos = 3;
-                }
+                if (getAlliance() == 1){correctedSpikeMarkPos = 1;}
+                else {correctedSpikeMarkPos = 3;}
                 break;
             case 2:
                 // We don't have to change the middle positon however
@@ -131,11 +125,8 @@ public class ExtendoAutoConstants2 {
                 break;
             case 3:
                 // Switch 3 and 1 if we're on blue terminal
-                if (getAlliance() == 1) {
-                    correctedSpikeMarkPos = 3;
-                } else {
-                    correctedSpikeMarkPos = 1;
-                }
+                if (getAlliance() == 1) {correctedSpikeMarkPos = 3;}
+                else {correctedSpikeMarkPos = 1;}
                 break;
         }
     }
@@ -144,6 +135,7 @@ public class ExtendoAutoConstants2 {
     public TrajectorySequence dropOffPurplePixel;
     public TrajectorySequence scoreYellowPixel;
     public TrajectorySequence toStack;
+    public TrajectorySequence toStackWPB;
     public TrajectorySequence scoreWhitePixels;
     public TrajectorySequence scoreWhitePixelsBackstage;
     public TrajectorySequence park;
@@ -172,6 +164,7 @@ public class ExtendoAutoConstants2 {
         double whitePixelYCoord = -29.5;
         final double wingSideWhiteY = -26;
         final double boardSideWhiteY = -40.5;
+        double whitePixelYCoordB = -35;
 
         //wing side auto
         if (isWingSide()) {
@@ -188,11 +181,11 @@ public class ExtendoAutoConstants2 {
             double afterPurpleTangent = 180;
             // Avoid dropping whites on top of a future mosaic if we want
             if(getOppositeAuto()){
-                if(avoidYellows && correctedSpikeMarkPos == 3) whitePixelYCoord = wingSideWhiteY;
+                if(avoidYellows && correctedSpikeMarkPos == 3) {whitePixelYCoord = wingSideWhiteY;}
                 whitePixelYCoord = boardSideWhiteY + 5;
             }
             else{
-                if (avoidYellows && correctedSpikeMarkPos == 1) whitePixelYCoord = boardSideWhiteY;
+                if (avoidYellows && correctedSpikeMarkPos == 1) {whitePixelYCoord = boardSideWhiteY;}
                 whitePixelYCoord = wingSideWhiteY;
             }
 
@@ -201,19 +194,18 @@ public class ExtendoAutoConstants2 {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-46, -20.5 * alliance, Math.toRadians(90 * alliance)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - dropOffset;
+                    yellowPixelYCoord = 2 + baseYellowPixelYCoord - dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 case 2:
-                    yellowPixelYCoord = baseYellowPixelYCoord - 6 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 4 - dropOffset;
                     afterPurpleTangent = 90;
 
                     if (getOppositeAuto()) {
                         dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                                 .lineToSplineHeading(new Pose2d(-41, -36 * alliance, Math.toRadians(-90 * alliance)))
                                 .build();
-                    }
-                    else {
+                    } else {
                         dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                                 .lineToSplineHeading(new Pose2d(-40, -11.5 * alliance, Math.toRadians(89.9 * alliance))) // 89.9 so it turns CW
                                 .build();
@@ -223,7 +215,7 @@ public class ExtendoAutoConstants2 {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-37, -34 * alliance, Math.toRadians(179.5 * alliance)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 10 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 6 - dropOffset;
                     break;
             }
 
@@ -241,7 +233,7 @@ public class ExtendoAutoConstants2 {
 
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(180 * alliance))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
+                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(70, Math.toRadians(180), 14))
                         .splineToConstantHeading(new Vector2d(28, -58 * alliance), Math.toRadians(180 * alliance))
                         .splineToConstantHeading(new Vector2d(-30, -57 * alliance), Math.toRadians(180 * alliance))
                         // Ok we're out of the truss now
@@ -267,17 +259,17 @@ public class ExtendoAutoConstants2 {
                         // Drive under the door
                         .resetVelConstraint()
                         .resetAccelConstraint()
-                        .splineTo(new Vector2d(20, -12 * alliance), Math.toRadians(0 * alliance))
+                        .splineTo(new Vector2d(21.5, -12 * alliance), Math.toRadians(0 * alliance))
                         // To the board
-                        .splineToSplineHeading(new Pose2d(yellowPixelXCoord + 0.6, yellowPixelYCoord * alliance, Math.toRadians(0 * alliance)), Math.toRadians(0 * alliance))
+                        .splineToConstantHeading(new Vector2d(yellowPixelXCoord + 0.6, yellowPixelYCoord * alliance), Math.toRadians(0 * alliance))
                         .build();
 
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(180 * alliance))
                         .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
-                        .splineToConstantHeading(new Vector2d(28, -9.5 * alliance), Math.toRadians(180 * alliance))
-                        .splineToConstantHeading(new Vector2d(-30, -9.5 * alliance), Math.toRadians(180 * alliance))
+                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(65, Math.toRadians(180), 14))
+                        .splineToConstantHeading(new Vector2d(28, -5 * alliance), Math.toRadians(180 * alliance))
+                        .splineToConstantHeading(new Vector2d(-30, -5 * alliance), Math.toRadians(180 * alliance))
                         // Ok we're out of the truss now
                         .resetVelConstraint()
                         .resetAccelConstraint()
@@ -290,7 +282,7 @@ public class ExtendoAutoConstants2 {
                         .splineToConstantHeading(new Vector2d(24, -11 * alliance), 0 * alliance)
                         .resetVelConstraint()
                         .resetAccelConstraint()
-                        .splineTo(new Vector2d(whitePixelXCoord + 0.6, whitePixelYCoord * alliance), 0 * alliance)
+                        .splineToConstantHeading(new Vector2d(whitePixelXCoord + 0.6, whitePixelYCoord-1 * alliance), 0 * alliance)
                         .build();
             }
             // END OF WINGSIDE
@@ -306,7 +298,7 @@ public class ExtendoAutoConstants2 {
             }
             // Board side
             // Avoid dropping whites on top of a future mosaic if we want
-            //additional logic for opposite side autos
+            // additional logic for opposite side autos
             if(getOppositeAuto()){
                 if(avoidYellows && correctedSpikeMarkPos == 1) whitePixelYCoord = boardSideWhiteY;
                 else whitePixelYCoord = wingSideWhiteY;
@@ -321,13 +313,13 @@ public class ExtendoAutoConstants2 {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(13, -34 * alliance, Math.toRadians(0 * alliance)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord + 1 - dropOffset;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(28.8, -24.5 * alliance, Math.toRadians(0 * alliance)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 4.5 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 6.5 - dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
@@ -364,7 +356,7 @@ public class ExtendoAutoConstants2 {
                         .build();
             }
             else {
-                //this path runs through the truss on board side
+                //this path runs through the truss on board side\
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                         .setTangent(Math.toRadians(180 * alliance))
@@ -372,24 +364,25 @@ public class ExtendoAutoConstants2 {
                         .splineToConstantHeading(new Vector2d(-30, -57 * alliance), Math.toRadians(180 * alliance))
                         .resetVelConstraint()
                         // Ok we're out of the truss now
-                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56 + sketcyBlueStackOffsetX : -57 + sketcyBlueStackOffsetX), (-39.5 + sketchyBlueStackOffsetY) * alliance, Math.toRadians(-20 * alliance)), Math.toRadians(110 * alliance))
+                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -55 + sketcyBlueStackOffsetX : -56 + sketcyBlueStackOffsetX), (-42 + sketchyBlueStackOffsetY) * alliance, Math.toRadians(-20 * alliance)), Math.toRadians(110 * alliance))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
+                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(65, Math.toRadians(180), 14))
                         .lineToSplineHeading(new Pose2d(-50, (-48 + sketchyBlueStackOffsetY) * alliance, Math.toRadians(0 * alliance)))
                         .splineToConstantHeading(new Vector2d(12, (-59.5 + sketchyBlueStackOffsetY) * alliance), 0 * alliance)
                         .resetVelConstraint()
-                        .splineTo(new Vector2d(whitePixelXCoord + sketchyBlueBoardOffsetX, (whitePixelYCoord) * alliance), 0 * alliance)
+                        .splineToConstantHeading(new Vector2d(whitePixelXCoord + sketchyBlueBoardOffsetX, (whitePixelYCoordB) * alliance), 0 * alliance)
                         .build();
             }
             // END OF BOARDSIDE
         }
 
+        //All of the stuff below is Wingside/Audience side stuff
         ParkingStuff parkingStuff = null;
         if (tapeMeasurePark) { parkingStuff = ParkingStuff.TAPE_MEASURE_PARK;}
-        else if(parkingClose && tapeMeasurePark == false) { parkingStuff = ParkingStuff.PARK_CLOSE;}
-        else if(parkingClose == false && tapeMeasurePark == false) {parkingStuff = ParkingStuff.PARK_FAR;}
+        else if(parkingClose && !tapeMeasurePark) { parkingStuff = ParkingStuff.PARK_CLOSE;}
+        else if(!parkingClose && !tapeMeasurePark) {parkingStuff = ParkingStuff.PARK_FAR;}
 
         switch (parkingStuff) {
             case PARK_CLOSE:
@@ -407,6 +400,16 @@ public class ExtendoAutoConstants2 {
                             .resetAccelConstraint()
                             .splineToConstantHeading(new Vector2d(45, -12 * alliance), Math.toRadians(90 * alliance))
                             .build();
+
+                    toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
+                            .setTangent(Math.toRadians(180 * alliance))
+                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
+                            .splineToConstantHeading(new Vector2d(28, -10 * alliance), Math.toRadians(180 * alliance))
+                            .splineToConstantHeading(new Vector2d(-30, -10 * alliance), Math.toRadians(180 * alliance))
+                            // Ok we're out of the truss now
+                            .splineToConstantHeading(new Vector2d(-55, -11 * alliance), Math.toRadians(180 * alliance))
+                            .resetVelConstraint()
+                            .build();
                 }
                 else{
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
@@ -417,6 +420,16 @@ public class ExtendoAutoConstants2 {
                             //the above x value was originally 12
                             .resetVelConstraint()
                             //.splineToConstantHeading(new Vector2d(45, -61 * alliance), Math.toRadians(-90 * alliance))
+                            .build();
+
+                    toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
+                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
+                            .setTangent(Math.toRadians(180 * alliance))
+                            .splineToConstantHeading(new Vector2d(28, -58 * alliance), Math.toRadians(180 * alliance))
+                            .splineToConstantHeading(new Vector2d(-30, -57 * alliance), Math.toRadians(180 * alliance))
+                            .resetVelConstraint()
+                            // Ok we're out of the truss now
+                            .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56 + sketcyBlueStackOffsetX : -57 + sketcyBlueStackOffsetX), (-39.5 + sketchyBlueStackOffsetY) * alliance, Math.toRadians(-20 * alliance)), Math.toRadians(110 * alliance))
                             .build();
                 }
                 break;
@@ -435,15 +448,36 @@ public class ExtendoAutoConstants2 {
                             .resetVelConstraint()
                             .splineToConstantHeading(new Vector2d(45, -61 * alliance), Math.toRadians(-90 * alliance))
                             .build();
+
+                    toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
+                            .setTangent(Math.toRadians(180 * alliance))
+                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(70, Math.toRadians(180), 14))
+                            .splineToConstantHeading(new Vector2d(28, -58 * alliance), Math.toRadians(180 * alliance))
+                            .splineToConstantHeading(new Vector2d(-30, -57 * alliance), Math.toRadians(180 * alliance))
+                            // Ok we're out of the truss now
+                            .resetVelConstraint()
+                            .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56 + sketcyBlueStackOffsetX : -57 + sketcyBlueStackOffsetX), (-40.5 + sketchyBlueStackOffsetY) * alliance, Math.toRadians(-20 * alliance)), Math.toRadians(110 * alliance))
+                            .build();
                 }
                 else{
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(80, Math.toRadians(180), 14))
+                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
                             .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
                             .splineToConstantHeading(new Vector2d(24, -11 * alliance), 0 * alliance)
                             .resetVelConstraint()
                             .resetAccelConstraint()
                             .splineToConstantHeading(new Vector2d(45, -12 * alliance), Math.toRadians(90 * alliance))
+                            .build();
+
+                    toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
+                            .setTangent(Math.toRadians(180 * alliance))
+                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
+                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(65, Math.toRadians(180), 14))
+                            .splineToConstantHeading(new Vector2d(28, -9.5 * alliance), Math.toRadians(180 * alliance))
+                            .splineToConstantHeading(new Vector2d(-30, -9.5 * alliance), Math.toRadians(180 * alliance))
+                            .resetVelConstraint()
+                            .resetAccelConstraint()
+                            .splineToConstantHeading(new Vector2d(-55, -11 * alliance), Math.toRadians(180 * alliance))
                             .build();
                 }
                 break;

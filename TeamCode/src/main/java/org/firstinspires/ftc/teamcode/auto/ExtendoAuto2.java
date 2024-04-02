@@ -229,6 +229,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                         addCycle();
 
                         //this is a terrible way of declaring the white backstage drop, but I could not get it to work any other way
+                        //literally, I condensed this before which would mean the same thing and it did not work that way, IDK why
                         if(autoConstants.getNumCycles() == 1){
                             if(autoConstants.getWhitePixelDropBackstage1()){
                                 moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstage);
@@ -248,7 +249,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                     }
                     break;
 
-                //TODO: fix a continuity error ish
+                //TODO: fix the continuity problem
                 case SCORING_WHITE_BACKSTAGE:
                     if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 3 : whiteExtendProximity))){
                         scoringMech.scoreAsync(0, false);
@@ -260,7 +261,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                         autoConstants.updateTrajectories();
                         if (autoConstants.getNumCycles() > 0){
                             scoringMech.resetStackGrabbingState();
-                            moveOnToState(AutoState.TO_STACK, autoConstants.toStack);
+                            moveOnToState(AutoState.TO_STACK, autoConstants.toStackWPB);
                         } else {
                             moveOnToState(AutoState.PARKING, autoConstants.park);
                         }
