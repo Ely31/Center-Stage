@@ -23,7 +23,7 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 @Config
 //@Photon
 @TeleOp
-public class Teleop5 extends LinearOpMode {
+public class TeleopSolo extends LinearOpMode {
     // Pre init
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
@@ -177,9 +177,9 @@ public class Teleop5 extends LinearOpMode {
                 if (scoringState == ScoringState.SCORING) {
                     // If you press the trigger, change the lift height slower
                     if (gamepad2.right_trigger > 0.2) {
-                        lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep * 0.5);
+                        lift.editExtendedPos(-gamepad1.right_stick_y * liftPosEditStep * 0.5);
                     } else {
-                        lift.editExtendedPos(-gamepad2.left_stick_y * liftPosEditStep);
+                        lift.editExtendedPos(-gamepad1.right_stick_y * liftPosEditStep);
                     }
                 }
                 // Update the entire scoring mech, very important
@@ -213,17 +213,17 @@ public class Teleop5 extends LinearOpMode {
                 if (intake.getToggledStatus()) intake.goToStackPosition(intake.getStackPosition());
 
                 // Edit intake stack position
-                if (gamepad2.dpad_up && ! prevStackUp){
+                if (gamepad1.dpad_up && ! prevStackUp){
                     intake.goToStackPosition(intake.getStackPosition() + 1);
                 }
-                if (gamepad2.dpad_down && ! prevStackDown){
+                if (gamepad1.dpad_down && ! prevStackDown){
                     intake.goToStackPosition(intake.getStackPosition() - 1);
                 }
-                prevStackUp = gamepad2.dpad_up;
-                prevStackDown = gamepad2.dpad_down;
+                prevStackUp = gamepad1.dpad_up;
+                prevStackDown = gamepad1.dpad_down;
                 // Go all the way up or down
-                if (gamepad2.cross) intake.goToStackPosition(0);
-                if (gamepad2.triangle) intake.goToStackPosition(5);
+                if (gamepad1.cross) intake.goToStackPosition(0);
+                if (gamepad1.triangle) intake.goToStackPosition(5);
             }
             else intake.off();
 
@@ -312,7 +312,7 @@ public class Teleop5 extends LinearOpMode {
                 dontRetractThisTime = false;
                 // Switch states when bumper pressed
                 // Or, (and this'll happen 95% of the time) when it has both pixels
-                if ((usePixelSensors && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad2.right_bumper)){
+                if ((usePixelSensors && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad1.right_bumper)){
                     // Grab 'em and move the arm up
                     arm.setBothGrippersState(true);
                     gripperTimer.reset();
@@ -348,13 +348,13 @@ public class Teleop5 extends LinearOpMode {
                 // Switch states when bumper pressed
                 // Don't go to scoring if the arm has just been premoved though, this happens when the automatic raises it but the driver
                 // tries to manually raise it at the same time. This timer prevents that.
-                if (!prevLiftInput && gamepad2.right_bumper && doubleTapTimer.milliseconds() > 450){
+                if (!prevLiftInput && gamepad1.right_bumper && doubleTapTimer.milliseconds() > 450){
                     scoringState = ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
                 }
                 // Go back to intaking if the arm pulled up before getting both pixels
-                if (gamepad2.dpad_left){
+                if (gamepad1.dpad_left){
                     scoringState = ScoringState.INTAKING;
                 }
                 break;
@@ -389,13 +389,13 @@ public class Teleop5 extends LinearOpMode {
 
                 // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
                 if (
-                        (!prevLiftInput && gamepad2.right_bumper) ||
+                        (!prevLiftInput && gamepad1.right_bumper) ||
                         (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()))
                 ){
                     scoringState = ScoringState.SLIDING_UP;
                 }
                 // Go back to premoved if we wish
-                if (gamepad2.dpad_left){
+                if (gamepad1.dpad_left){
                     scoringState = ScoringState.PREMOVED;
                     pivotTimer.reset();
                 }
@@ -424,7 +424,7 @@ public class Teleop5 extends LinearOpMode {
                     pivotTimer.reset();
                 }
         }
-        prevLiftInput = gamepad2.right_bumper;
+        prevLiftInput = gamepad1.right_bumper;
         lift.update();
 
         // Keep this at 0 until climbing mode is on
