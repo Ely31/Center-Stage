@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 import java.util.Arrays;
@@ -21,20 +22,27 @@ public class Arm3 {
     Servo bottomPixel;
     Servo topPixel;
     Servo stopper;
+    Servo boardAligner;
     ColorSensor bottomPixelSensor;
     ColorSensor topPixelSensor;
     ColorSensor armSensor;
     Rev2mDistanceSensor boardSensor;
+    TeleMecDrive teleMecDrive;
 
     boolean bottomState = false; // True is closed, false open
     boolean topState = false;
 
     // Constants
+    public static double neutralAligner = 0.5;
+    public static double maxHeadingRight = -70;
+    public static double maxHeadingLeft = 70;
+    public static double pivotConstant = 0.00714;
+
     public static double pivotIntakingPos = 0.011;
     public static double pivotScoringPos = 0.938;
     public static double pivotPremovePos = 0.25;
     public static double pivotOffset = 0.002;
-    public static double pivotAwayFromBordTime = 300;
+    public static double pivotAwayFromBordTime = 450;
 
     public static double gripperClosedPos = 0.88;
     public static double gripperOpenPos = 0.6;
@@ -45,9 +53,10 @@ public class Arm3 {
     public static double stopperOpenPos = 0.9;
     boolean stopperState = false;
 
-    public static double bottomSensorThreshold = 1500;
-    public static double topSensorThreshold = 3000;
+    public static double bottomSensorThreshold = 800;
+    public static double topSensorThreshold = 800;
     public static double armSensorThreshold = 1000;
+    public static double headingCounter;
 
     double[] lastBottomSensorVals = new double[3];
     double[] lastTopSensorVals = new double[3];
@@ -58,11 +67,21 @@ public class Arm3 {
 
     double[] lastBoardSensorVals = new double[5];
     boolean useRollingBoardAvg = true;
+    private boolean withinBounds = true;
+    private int side = 0;
 
     ElapsedTime pixelSensorsPollTimer = new ElapsedTime();
     int pixelSensorsPollInterval = 100;
     ElapsedTime armSensorPollTimer = new ElapsedTime();
     int armSensorPollInterval = 200;
+
+    enum FollowBounds{
+        LEFT_TURN,
+        RIGHT_TURN,
+        NEUTRAL
+    }
+
+    FollowBounds followBounds = FollowBounds.NEUTRAL;
 
     public Arm3(HardwareMap hwmap){
         // Hardwaremap stuff
@@ -76,6 +95,7 @@ public class Arm3 {
         boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
         stopper = hwmap.get(Servo.class, "stopper");
         armSensor = hwmap.get(ColorSensor.class, "armSensor");
+        boardAligner = hwmap.get(Servo.class, "boardAligner");
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
@@ -203,6 +223,55 @@ public class Arm3 {
         if (useArmSensor && armSensorPollTimer.milliseconds() > armSensorPollInterval) {
             lastArmSensorVal = armSensor.alpha();
             armSensorPollTimer.reset();
+        }
+    }
+
+    //none of this below will probably work
+    //horrible code, I did this during science show and I'm pretty sure I have ear/brain damage, nightmare nightmare nightmare
+    public void neutralPos(){
+        boardAligner.setPosition(neutralAligner);
+    }
+
+    public boolean withinBounds(int side){
+        headingCounter = teleMecDrive.getHeading();
+        if(headingCounter > maxHeadingRight && headingCounter < 0 ){
+            this.side = -1;
+            return true;
+        }
+        else if(headingCounter < maxHeadingLeft && headingCounter > 0 ){
+            this.side = 1;
+            return true;
+        }
+        else{
+            this.side = 0;
+            return false;
+        }
+    }
+
+    public void followBoard(){
+        double meth;
+        if(withinBounds(-1)){
+            followBounds = FollowBounds.RIGHT_TURN;
+        }
+        else if(withinBounds(1)){
+            followBounds = FollowBounds.LEFT_TURN;
+        }
+        else{
+            followBounds = FollowBounds.NEUTRAL;
+        }
+
+        switch (followBounds){
+            case NEUTRAL:
+                neutralPos();
+                break;
+            case LEFT_TURN:
+                meth = teleMecDrive.getHeading() * pivotConstant;
+                boardAligner.setPosition(meth);
+                break;
+            case RIGHT_TURN:
+                meth = teleMecDrive.getHeading() * -pivotConstant;
+                boardAligner.setPosition(meth);
+                break;
         }
     }
 

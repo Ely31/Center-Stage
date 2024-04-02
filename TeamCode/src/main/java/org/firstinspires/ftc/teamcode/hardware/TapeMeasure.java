@@ -2,46 +2,25 @@ package org.firstinspires.ftc.teamcode.hardware;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.teamcode.hardware.actuators.LinearActuator;
 
 public class TapeMeasure {
+    LinearActuator TMActuator;
     DcMotor tapeMeasureMotor;
-    Servo tapeMeasureRelease;
-    public static double holdTM = 0;
-    public static double releaseTM = 1;
 
-    enum ShootyBoi{
-        YEET,
-        HOLD
-    }
-
-    ShootyBoi shootyBoi = ShootyBoi.YEET;
-
+    //1150rpm
+    //4in diameter wheel
+    //5.2:1
     public TapeMeasure(HardwareMap hwmap){
-       tapeMeasureMotor = hwmap.get(DcMotor.class, "TapeMeasureMotor");
-       tapeMeasureMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-       tapeMeasureRelease = hwmap.get(Servo.class, "tapeMeasureRelease");
-       zeroTapeMeasureMotor();
+       tapeMeasureMotor = hwmap.get(DcMotor.class, "tapeMeasure");
+       tapeMeasureMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
-    public void zeroTapeMeasureMotor(){ tapeMeasureMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);}
-
-    public void releaseTM(){tapeMeasureRelease.setPosition(releaseTM);}
-
+    public void zeroPower(){tapeMeasureMotor.setPower(0);}
     public int getPos(){return tapeMeasureMotor.getCurrentPosition();}
 
-    public void executeBPM(){
-        switch(shootyBoi){
-            case YEET:
-                tapeMeasureMotor.setTargetPosition(100);
-                tapeMeasureMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                tapeMeasureMotor.setPower(1);
-                if(getPos() == 100){
-                    shootyBoi = shootyBoi.HOLD;
-                }
+    public void Yeeeeeet(){tapeMeasureMotor.setPower(1);}
+    public void noYeet(){tapeMeasureMotor.setPower(-1);}
 
-            case HOLD:
-                tapeMeasureRelease.setPosition(holdTM);
-        }
-    }
 }

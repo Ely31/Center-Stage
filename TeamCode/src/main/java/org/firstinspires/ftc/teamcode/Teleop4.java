@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoIntakeAngleHolding;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.TapeMeasure;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
@@ -36,6 +37,7 @@ public class Teleop4 extends LinearOpMode {
     DroneLauncher launcher;
     Climber climber;
     ElapsedTime climberTimer = new ElapsedTime();
+    TapeMeasure tapeMeasure;
 
     PIDFController headingController;
     public static PIDCoefficients headingCoeffs = new PIDCoefficients(2, 0.005, 0.2); // old vals (0.7,0.005,0.01)
@@ -95,6 +97,7 @@ public class Teleop4 extends LinearOpMode {
         intake = new ExtendoIntakeAngleHolding(hardwareMap);
         climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
+        tapeMeasure = new TapeMeasure(hardwareMap);
 
         headingController = new PIDFController(headingCoeffs);
         boardDistanceController = new PIDFController(boardCoeffs);
@@ -112,7 +115,7 @@ public class Teleop4 extends LinearOpMode {
         // START OF TELEOP LOOP
         while (opModeIsActive()){
             // DRIVING
-            if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance) {
+            if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
                 drivingState = 1;
                 // Lock onto the board if we're scoring and it's close enough
                 drive.driveFieldCentric(
@@ -155,6 +158,10 @@ public class Teleop4 extends LinearOpMode {
                 resetHeadingController();
             }
             prevHeadingResetInput = gamepad1.share;
+
+            if(gamepad2.left_stick_button){tapeMeasure.Yeeeeeet();}
+            else if(gamepad2.right_stick_button) {tapeMeasure.noYeet();}
+            else{tapeMeasure.zeroPower();}
 
             // Enable/disable autoPremove and autoRetract in case they causes problems
             if (!prevUsePixelSensorsInput && gamepad2.ps){
@@ -255,6 +262,7 @@ public class Teleop4 extends LinearOpMode {
                 telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistanceRollingAvg()));
                 telemetry.addData("Board lock error", boardDistanceController.getLastError());
                 telemetry.addData("Board lock target pos", boardDistanceController.getTargetPosition());
+                telemetry.addData("climbing state", climbingState.name());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -387,7 +395,7 @@ public class Teleop4 extends LinearOpMode {
 
                     scoringState = ScoringState.SLIDING_UP;
                 }
-                // Go back to premoved if we wish
+                // Go back to premoved if we wish, si
                 if (gamepad2.dpad_left){
                     scoringState = ScoringState.PREMOVED;
                     pivotTimer.reset();
@@ -420,8 +428,6 @@ public class Teleop4 extends LinearOpMode {
 
         // Keep this at 0 until climbing mode is on
         climberTimer.reset();
-        // Reset the lift height that the climber will go to
-        Climber.targetLiftHeight = Climber.hangingHeight;
     }
 
     void updateClimibingSystem(){
@@ -430,42 +436,51 @@ public class Teleop4 extends LinearOpMode {
         // This entire section of code is terrible
         // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
         // holy crap ely you weren't kidding about this being terrible
-
-        switch(climbingState){
-            case REDUCE_SLACK:
-                arm.setPivotPos(0.1);
-                climber.setPower(-1);
-                lift.setHeight(Climber.targetLiftHeight);
-
-                if (climberTimer.seconds() > climberSlackPullTime) {
-                   climber.setPower(0);
-                   climber.setTargetPos(climber.getPos());
-                   climbingState = climbingState.HOLD;
-                }
-                break;
-
-            case HOLD:
-                climber.goToTargetPos();
-                lift.update();
-                if(!(gamepad2.left_stick_y == 0)){
-                    climbingState = climbingState.CLIMB;
-                }
-
-            case CLIMB:
-                climber.setPower(-gamepad2.left_stick_y);
-                // Lift things
-                // Let it coast and be pulled up if
-                lift.setRawPowerDangerous(0);
-                resetLiftController();
-                // Update so we can get the lift's position
-                lift.update(false);
-
-                if(gamepad2.left_stick_y == 0){
-                    Climber.targetLiftHeight = lift.getHeight();
+        //this is bad, why is wrong, Braindamage, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare.
+        if(isClimbing){
+            switch(climbingState){
+                case REDUCE_SLACK:
+                    arm.setPivotPos(0.1);
+                    climber.setPower(-1);
                     lift.setHeight(Climber.targetLiftHeight);
-                    climber.setTargetPos(climber.getPos());
-                    climbingState = climbingState.HOLD;
-                }
+                    lift.update();
+
+                    if (climberTimer.seconds() > climberSlackPullTime) {
+                        climber.setPower(0);
+                        climber.setTargetPos(climber.getPos());
+                        climbingState = climbingState.HOLD;
+                    }
+                    break;
+
+                case HOLD:
+                    climber.goToTargetPos();
+                    lift.update();
+                    if(!(gamepad2.left_stick_y == 0)){
+                        climbingState = climbingState.CLIMB;
+                    }
+                    break;
+
+                case CLIMB:
+                    climber.setPower(-gamepad2.left_stick_y);
+                    // Lift things
+                    // Let it coast and be pulled up if
+                    lift.setRawPowerDangerous(0);
+                    resetLiftController();
+                    // Update so we can get the lift's position
+                    lift.update(false);
+
+                    if(gamepad2.left_stick_y == 0){
+                        Climber.targetLiftHeight = lift.getHeight();
+                        lift.setHeight(Climber.targetLiftHeight);
+                        climber.setTargetPos(climber.getPos());
+                        climbingState = climbingState.HOLD;
+                    }
+                    break;
+            }
+        }
+        else{
+            lift.retract();
+            arm.pivotGoToIntake();
         }
     }
 

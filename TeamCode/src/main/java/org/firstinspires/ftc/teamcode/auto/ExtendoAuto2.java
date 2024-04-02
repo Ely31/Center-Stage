@@ -42,6 +42,10 @@ public class ExtendoAuto2 extends LinearOpMode {
     boolean prevDelayDecrease = false;
     boolean prevToggleOffset = false;
     boolean prevAvoidYellows = false;
+    boolean prevOppositeAuto = false;
+    boolean prevToggleWPD1 = false;
+    boolean prevToggleWPD2 = false;
+    boolean prevToggleTMP = false;
 
     // For the giant fsm to run everything asynchronously
     enum AutoState{
@@ -62,9 +66,11 @@ public class ExtendoAuto2 extends LinearOpMode {
     ElapsedTime pipelineThrottle = new ElapsedTime(1000000000*5); // Start it at 5s so the telemetry pops up right away
     ElapsedTime actionTimer = new ElapsedTime();
     ElapsedTime loopTimer = new ElapsedTime();
+    ElapsedTime TMT = new ElapsedTime();
 
     final double yellowExtendProximity = 23;
     final double whiteExtendProximity = 36;
+
 
     @Override
     public void runOpMode(){
@@ -75,6 +81,7 @@ public class ExtendoAuto2 extends LinearOpMode {
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new ExtendoAutoConstants2(drive);
+        tapeMeasure = new TapeMeasure(hardwareMap);
         // Juice telemetry speed and allow changing color
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         telemetry.setMsTransmissionInterval(100);
@@ -82,18 +89,6 @@ public class ExtendoAuto2 extends LinearOpMode {
 
         // Init loop
         while (!isStarted()&&!isStopRequested()){
-            //different auto path choices
-            if(gamepad2.cross) autoConstants.setOppositeAuto(true);
-            if(gamepad2.triangle) autoConstants.setOppositeAuto(false);
-
-            //different white pixel placement choices
-            if (gamepad2.circle) autoConstants.setWhitePixelDropBackstageA(true);
-            if (gamepad2.square) autoConstants.setWhitePixelDropBackstageA(false);
-
-            //different backstage drop options
-            if(gamepad2.left_trigger > 0.5) autoConstants.setWhitePixelDropBackstageB(true);
-            if(gamepad2.right_trigger > 0.5) autoConstants.setWhitePixelDropBackstageB(false);
-
             // Configure the alliance with the gamepad
             if (gamepad1.circle) autoConstants.setAlliance(1); // Red alliance
             if (gamepad1.cross) autoConstants.setAlliance(-1); // Blue alliance
@@ -103,7 +98,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                 autoConstants.setWingSide(true);
                 // Do this too for convenience
                 autoConstants.setParkingClose(false);
-                autoConstants.setNumCycles(1);
+                autoConstants.setNumCycles(2);
             }
             if (gamepad1.right_bumper){
                 autoConstants.setWingSide(false);
@@ -115,9 +110,6 @@ public class ExtendoAuto2 extends LinearOpMode {
             if (gamepad1.left_trigger > 0.5) autoConstants.setParkingClose(true);
             if (gamepad1.right_trigger > 0.5) autoConstants.setParkingClose(false);
 
-            if(gamepad2.left_bumper) autoConstants.setTapeMeasurePark(true);
-            if(gamepad2.right_bumper) autoConstants.setTapeMeasurePark(false);
-
             // Buncha rising edge detectors
             if (gamepad1.dpad_up && !prevCycleIncrease) autoConstants.setNumCycles(autoConstants.getNumCycles() + 1);
             if (gamepad1.dpad_down && !prevCycleDecrease) autoConstants.setNumCycles(autoConstants.getNumCycles() - 1);
@@ -125,6 +117,14 @@ public class ExtendoAuto2 extends LinearOpMode {
             if (gamepad1.dpad_left && !prevDelayDecrease) autoConstants.setDelaySeconds(autoConstants.getDelaySeconds() - 1);
             if (gamepad1.y && !prevToggleOffset) autoConstants.setDropIsOffset(!autoConstants.isDropOffset());
             if (gamepad1.x && !prevAvoidYellows) autoConstants.setAvoidYellows(!autoConstants.isAvoidingYellows());
+            //gamepad 2
+            //set opposite auto
+            if(gamepad2.cross && !prevOppositeAuto) autoConstants.setOppositeAuto(!autoConstants.getOppositeAuto());
+            //set backstage drop
+            if(gamepad2.circle && !prevToggleWPD1) autoConstants.setWhitePixelDropBackstage1(!autoConstants.getWhitePixelDropBackstage1());
+            if(gamepad2.triangle && !prevToggleWPD2) autoConstants.setWhitePixelDropBackstage2(!autoConstants.getWhitePixelDropBackstage2());
+            //set tape measure park
+            if(gamepad2.square && !prevToggleTMP) autoConstants.setTapeMeasurePark(!autoConstants.isTapeMeasurePark());
 
             prevCycleIncrease = gamepad1.dpad_up;
             prevCycleDecrease = gamepad1.dpad_down;
@@ -132,6 +132,10 @@ public class ExtendoAuto2 extends LinearOpMode {
             prevDelayDecrease = gamepad1.dpad_left;
             prevToggleOffset = gamepad1.y;
             prevAvoidYellows = gamepad1.x;
+            prevOppositeAuto = gamepad2.cross;
+            prevToggleWPD1 = gamepad2.circle;
+            prevToggleWPD2 = gamepad2.triangle;
+            prevToggleTMP = gamepad2.square;
 
             // Recompute trajectories every few seconds or every time you make a change
             if (pipelineThrottle.seconds() > 5 || !(Objects.equals(autoConstants.autoConfigToEnglish(), autoConstants.prevConfigToEnglish))){
@@ -200,7 +204,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                 case SCORING_YELLOW:
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 3 : yellowExtendProximity))){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 8 : yellowExtendProximity))){
                         scoringMech.scoreAsync(1.05, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
@@ -224,22 +228,30 @@ public class ExtendoAuto2 extends LinearOpMode {
                         scoringMech.resetScoringState();
                         addCycle();
 
-                        if(autoConstants.getWhitePixelDropBackstageA() && autoConstants.getNumCycles() == 0){
-                            moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstageA);
+                        //this is a terrible way of declaring the white backstage drop, but I could not get it to work any other way
+                        //literally, I condensed this before which would mean the same thing and it did not work that way, IDK why
+                        if(autoConstants.getNumCycles() == 1){
+                            if(autoConstants.getWhitePixelDropBackstage1()){
+                                moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstage);
+                            }
+                            else{
+                                moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+                            }
                         }
-                        else if(autoConstants.getWhitePixelDropBackstageB() && autoConstants.getNumCycles() == 1){
-                            moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstageB);
-                        }
-                        else{
-                            moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+                        else if(autoConstants.getNumCycles() == 0){
+                            if(autoConstants.getWhitePixelDropBackstage2()){
+                                moveOnToState(AutoState.SCORING_WHITE_BACKSTAGE, autoConstants.scoreWhitePixelsBackstage);
+                            }
+                            else{
+                                moveOnToState(AutoState.SCORING_WHITE, autoConstants.scoreWhitePixels);
+                            }
                         }
                     }
                     break;
 
-               //Im calling it now, there will be a bug with the interaction between cycle counter and this case
-                //TODO: turn this into a state machine for ease of use
+                //TODO: fix the continuity problem
                 case SCORING_WHITE_BACKSTAGE:
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstageA.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 3 : whiteExtendProximity))){
                         scoringMech.scoreAsync(0, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());
@@ -249,7 +261,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                         autoConstants.updateTrajectories();
                         if (autoConstants.getNumCycles() > 0){
                             scoringMech.resetStackGrabbingState();
-                            moveOnToState(AutoState.TO_STACK, autoConstants.toStack);
+                            moveOnToState(AutoState.TO_STACK, autoConstants.toStackWPB);
                         } else {
                             moveOnToState(AutoState.PARKING, autoConstants.park);
                         }
@@ -266,7 +278,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                         }
                     }
                     else{
-                        if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 10 : whiteExtendProximity))){
+                        if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 9 : whiteExtendProximity))){
                             scoringMech.scoreAsync(9, false);
                         }
                         else {
@@ -279,9 +291,8 @@ public class ExtendoAuto2 extends LinearOpMode {
                         if (autoConstants.getNumCycles() > 0){
                             scoringMech.resetStackGrabbingState();
                             moveOnToState(AutoState.TO_STACK, autoConstants.toStack);
-                        } else {
-                            moveOnToState(AutoState.PARKING, autoConstants.park);
                         }
+                        else{ moveOnToState(AutoState.PARKING, autoConstants.park); }
                     }
                     break;
 
@@ -290,8 +301,8 @@ public class ExtendoAuto2 extends LinearOpMode {
                     // Keep the scoring mech running so it goes down
                     scoringMech.scoreAsync(3, false);
                     // Once the bot is parked, stop the OpMode
-                    if(drive.isBusy() && autoConstants.tapeMeasurePark){
-                        tapeMeasure.executeBPM();
+                    if(drive.isBusy() && autoConstants.tapeMeasurePark && TMT.seconds() < 2){
+                        tapeMeasure.Yeeeeeet();
                     }
                     else if(!drive.isBusy()){
                         // I swear this method used to be called stop
@@ -319,7 +330,7 @@ public class ExtendoAuto2 extends LinearOpMode {
             telemetry.addData("Num finished cycles", autoConstants.getNumFinishedCycles());
             telemetry.addData("Time", loopTimer.seconds());
             telemetry.addData("Delay in seconds", autoConstants.getDelaySeconds());
-            telemetry.addData("Backstage drop", autoConstants.getWhitePixelDropBackstageA());
+            telemetry.addData("Backstage drop", autoConstants.getWhitePixelDropBackstage1());
             telemetry.addData("Opposite routes", autoConstants.getOppositeAuto());
             telemetry.addData("Tape measure park", autoConstants.isTapeMeasurePark());
             drive.displayDeug(telemetry);
