@@ -95,7 +95,7 @@ public class Arm3 {
         boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
         stopper = hwmap.get(Servo.class, "stopper");
         armSensor = hwmap.get(ColorSensor.class, "armSensor");
-        boardAligner = hwmap.get(Servo.class, "boardAligner");
+        //boardAligner = hwmap.get(Servo.class, "boardAligner");
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
