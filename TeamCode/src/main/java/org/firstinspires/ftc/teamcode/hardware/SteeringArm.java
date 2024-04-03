@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 import java.util.Arrays;
@@ -36,6 +37,9 @@ public class SteeringArm {
     public static double pivotPremovePos = 0.25;
     public static double pivotOffset = 0.002;
     public static double pivotAwayFromBordTime = 300;
+
+    public static double steerNeutralPos = 0.5;
+    double headingError;
 
     public static double gripperClosedPos = 0.88;
     public static double gripperOpenPos = 0.6;
@@ -78,6 +82,7 @@ public class SteeringArm {
         stopper = hwmap.get(Servo.class, "stopper");
         armSensor = hwmap.get(ColorSensor.class, "armSensor");
         steer = hwmap.get(Servo.class, "steer");
+        centerSteer();
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
@@ -174,7 +179,19 @@ public class SteeringArm {
     }
 
     double angleToServoPos(double angle){
-        return 0;
+        // This is negative or positive 90deg depending on which alliance
+        double targetAngle = Math.PI/2 * -AutoToTele.allianceSide;
+        headingError = targetAngle-angle;
+        double servoPos = steerNeutralPos + headingError*1;
+        Utility.clipValue(0,1, servoPos);
+        return servoPos;
+    }
+
+    public void updateSteer(double angle){
+        steer.setPosition(angleToServoPos(angle));
+    }
+    public void centerSteer(){
+        steer.setPosition(steerNeutralPos);
     }
 
     public void updateSensors(boolean usePixelSensors, boolean useArmSensor, boolean useBoardSensor){
@@ -240,5 +257,7 @@ public class SteeringArm {
         telemetry.addData("Rolling board distance", getBoardDistanceRollingAvg());
         telemetry.addData("Arm sensor val", lastArmSensorVal);
         telemetry.addData("Arm is down", armIsDown());
+        telemetry.addData("Heading error", headingError);
+        telemetry.addData("Steer pos", steer.getPosition());
     }
 }
