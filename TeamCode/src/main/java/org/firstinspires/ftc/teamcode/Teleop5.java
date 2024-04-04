@@ -436,45 +436,54 @@ public class Teleop5 extends LinearOpMode {
     void updateClimibingSystem(){
         // CLIMBER CONTROL
         // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
-        switch(climbingState){
-            case REDUCE_SLACK:
-                arm.setPivotPos(0.1);
-                climber.setPower(-1);
-                lift.setHeight(Climber.targetLiftHeight);
-
-                if (climberTimer.seconds() > climberSlackPullTime) {
-                   climber.setPower(0);
-                   climber.setTargetPos(climber.getPos());
-                   climbingState = ClimbingState.HOLD;
-                }
-                break;
-
-            case HOLD:
-                climber.goToTargetPos();
-                lift.update();
-                // Move it with the right stick if something isn't right (normally this isn't necessary)
-                Climber.targetLiftHeight += (Climber.targetLiftHeight + 0.2*-gamepad2.right_stick_y);
-                lift.setHeight(Climber.targetLiftHeight);
-
-                if(!(gamepad2.left_stick_y == 0)){
-                    climbingState = ClimbingState.CLIMB;
-                }
-
-            case CLIMB:
-                climber.setPower(-gamepad2.left_stick_y);
-                // Lift things
-                // Let it coast and be pulled up if
-                lift.setRawPowerDangerous(0);
-                resetLiftController();
-                // Update so we can get the lift's position
-                lift.update(false);
-
-                if(gamepad2.left_stick_y == 0){
-                    Climber.targetLiftHeight = lift.getHeight();
+        if(isClimbing) {
+            switch (climbingState) {
+                case REDUCE_SLACK:
+                    arm.setPivotPos(0.1);
+                    climber.setPower(-1);
                     lift.setHeight(Climber.targetLiftHeight);
-                    climber.setTargetPos(climber.getPos());
-                    climbingState = ClimbingState.HOLD;
-                }
+                    lift.update();
+
+                    if (climberTimer.seconds() > climberSlackPullTime) {
+                        climber.setPower(0);
+                        climber.setTargetPos(climber.getPos());
+                        climbingState = climbingState.HOLD;
+                    }
+                    break;
+
+                case HOLD:
+                    climber.goToTargetPos();
+                    lift.update();
+                    // Move it with the right stick if something isn't right (normally this isn't necessary)
+                    //Climber.targetLiftHeight += (Climber.targetLiftHeight + 0.2 * -gamepad2.right_stick_y);
+                    //lift.setHeight(Climber.targetLiftHeight);
+
+                    if (!(gamepad2.left_stick_y == 0)) {
+                        climbingState = climbingState.CLIMB;
+                    }
+                    break;
+
+                case CLIMB:
+                    climber.setPower(-gamepad2.left_stick_y);
+                    // Lift things
+                    // Let it coast and be pulled up if
+                    lift.setRawPowerDangerous(0);
+                    resetLiftController();
+                    // Update so we can get the lift's position
+                    lift.update(false);
+
+                    if (gamepad2.left_stick_y == 0) {
+                        Climber.targetLiftHeight = lift.getHeight();
+                        lift.setHeight(Climber.targetLiftHeight);
+                        climber.setTargetPos(climber.getPos());
+                        climbingState = climbingState.HOLD;
+                    }
+                    break;
+            }
+        }
+        else{
+            lift.retract();
+            arm.pivotGoToIntake();
         }
     }
 

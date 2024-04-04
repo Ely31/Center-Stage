@@ -70,7 +70,8 @@ public class ExtendoAuto2 extends LinearOpMode {
 
     final double yellowExtendProximity = 23;
     final double whiteExtendProximity = 36;
-
+    final double BSEP = 48;
+    //BSEP means BackstageScoringExtendProximity Ely
 
     @Override
     public void runOpMode(){
@@ -205,7 +206,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
                     if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 8 : yellowExtendProximity))){
-                        scoringMech.scoreAsync(1.05, true);
+                        scoringMech.scoreAsync(1, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
                         // If not doing cycles, park
@@ -249,9 +250,8 @@ public class ExtendoAuto2 extends LinearOpMode {
                     }
                     break;
 
-                //TODO: fix the continuity problem
                 case SCORING_WHITE_BACKSTAGE:
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 3 : whiteExtendProximity))){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? BSEP : BSEP))){
                         scoringMech.scoreAsync(0, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());

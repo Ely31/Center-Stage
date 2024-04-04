@@ -437,7 +437,7 @@ public class Teleop4 extends LinearOpMode {
         // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
         // holy crap ely you weren't kidding about this being terrible
         //this is bad, why is wrong, Braindamage, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare.
-        if(isClimbing){
+        if(isClimbing) {
             switch(climbingState){
                 case REDUCE_SLACK:
                     arm.setPivotPos(0.1);
