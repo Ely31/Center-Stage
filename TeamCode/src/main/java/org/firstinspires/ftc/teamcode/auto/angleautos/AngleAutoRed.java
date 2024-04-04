@@ -1,9 +1,10 @@
-package org.firstinspires.ftc.teamcode.auto.newauto;
+package org.firstinspires.ftc.teamcode.auto.angleautos;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -25,14 +26,15 @@ import java.util.Objects;
 @Config
 //@Photon
 @Autonomous
-public class ExtendoAutoBlue extends LinearOpMode {
+@Disabled
+public class AngleAutoRed extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
     Camera camera;
-    TeamPropDetector2 propPipeline = new TeamPropDetector2(false);
+    TeamPropDetector2 propPipeline = new TeamPropDetector2(true);
     ExtendoScoringMech scoringMech;
     TimeUtil timeUtil = new TimeUtil();
-    ExtendoAutoConstantsBlue autoConstants;
+    AngleAutoConstantsRed autoConstants;
     TapeMeasure tapeMeasure;
 
     // For the rising egde detectors
@@ -81,7 +83,7 @@ public class ExtendoAutoBlue extends LinearOpMode {
         scoringMech = new ExtendoScoringMech(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
-        autoConstants = new ExtendoAutoConstantsBlue(drive);
+        autoConstants = new AngleAutoConstantsRed(drive);
         tapeMeasure = new TapeMeasure(hardwareMap);
         // Juice telemetry speed and allow changing color
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
@@ -140,7 +142,7 @@ public class ExtendoAutoBlue extends LinearOpMode {
                 autoConstants.updateCorrectedSpikeMarkPos(propPipeline.getAnalysis());
                 autoConstants.updateTrajectories();
                 // switch propPipeline between red and blue based on alliance selected
-                propPipeline = new TeamPropDetector2(false);
+                propPipeline = new TeamPropDetector2(true);
                 camera.setPipeline(propPipeline);
 
                 drive.setPoseEstimate(autoConstants.startPos);
@@ -247,7 +249,7 @@ public class ExtendoAutoBlue extends LinearOpMode {
                     break;
 
                 case SCORING_WHITE_BACKSTAGE:
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), BSEP)){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (BSEP))){
                         scoringMech.scoreAsync(0, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());
