@@ -22,7 +22,6 @@ public class Arm3 {
     Servo bottomPixel;
     Servo topPixel;
     Servo stopper;
-    Servo boardAligner;
     ColorSensor bottomPixelSensor;
     ColorSensor topPixelSensor;
     ColorSensor armSensor;
@@ -75,14 +74,6 @@ public class Arm3 {
     ElapsedTime armSensorPollTimer = new ElapsedTime();
     int armSensorPollInterval = 200;
 
-    enum FollowBounds{
-        LEFT_TURN,
-        RIGHT_TURN,
-        NEUTRAL
-    }
-
-    FollowBounds followBounds = FollowBounds.NEUTRAL;
-
     public Arm3(HardwareMap hwmap){
         // Hardwaremap stuff
         pivot = hwmap.get(ServoImplEx.class, "pivot");
@@ -95,7 +86,6 @@ public class Arm3 {
         boardSensor = hwmap.get(Rev2mDistanceSensor.class, "boardSensor");
         stopper = hwmap.get(Servo.class, "stopper");
         armSensor = hwmap.get(ColorSensor.class, "armSensor");
-        boardAligner = hwmap.get(Servo.class, "boardAligner");
 
         // Warning: Robot moves on intitialization
         pivotGoToIntake();
@@ -223,55 +213,6 @@ public class Arm3 {
         if (useArmSensor && armSensorPollTimer.milliseconds() > armSensorPollInterval) {
             lastArmSensorVal = armSensor.alpha();
             armSensorPollTimer.reset();
-        }
-    }
-
-    //none of this below will probably work
-    //horrible code, I did this during science show and I'm pretty sure I have ear/brain damage, nightmare nightmare nightmare
-    public void neutralPos(){
-        boardAligner.setPosition(neutralAligner);
-    }
-
-    public boolean withinBounds(int side){
-        headingCounter = teleMecDrive.getHeading();
-        if(headingCounter > maxHeadingRight && headingCounter < 0 ){
-            this.side = -1;
-            return true;
-        }
-        else if(headingCounter < maxHeadingLeft && headingCounter > 0 ){
-            this.side = 1;
-            return true;
-        }
-        else{
-            this.side = 0;
-            return false;
-        }
-    }
-
-    public void followBoard(){
-        double meth;
-        if(withinBounds(-1)){
-            followBounds = FollowBounds.RIGHT_TURN;
-        }
-        else if(withinBounds(1)){
-            followBounds = FollowBounds.LEFT_TURN;
-        }
-        else{
-            followBounds = FollowBounds.NEUTRAL;
-        }
-
-        switch (followBounds){
-            case NEUTRAL:
-                neutralPos();
-                break;
-            case LEFT_TURN:
-                meth = teleMecDrive.getHeading() * pivotConstant;
-                boardAligner.setPosition(meth);
-                break;
-            case RIGHT_TURN:
-                meth = teleMecDrive.getHeading() * -pivotConstant;
-                boardAligner.setPosition(meth);
-                break;
         }
     }
 
