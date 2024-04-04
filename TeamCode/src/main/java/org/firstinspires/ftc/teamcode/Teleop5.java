@@ -294,6 +294,8 @@ public class Teleop5 extends LinearOpMode {
                 } else {
                     arm.preMove();
                 }
+                // Make sure the deposit doesn't crash into stuff
+                arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
                 if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
                     lift.retract();
@@ -329,6 +331,7 @@ public class Teleop5 extends LinearOpMode {
 
             case PREMOVED:
                 arm.preMove();
+                arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
                 if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
@@ -386,6 +389,8 @@ public class Teleop5 extends LinearOpMode {
                 // Press this button to stop the lift from autoRetracting before it autoRetracts.
                 // Used when we want to to poke pixels after placing some to avoid the lift going down and back up again.
                 if (gamepad2.y) dontRetractThisTime = true;
+
+                arm.updateSteer(drive.getHeading());
 
                 // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
                 if (
