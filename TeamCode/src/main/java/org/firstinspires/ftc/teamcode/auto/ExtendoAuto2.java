@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoIntake;
-import org.firstinspires.ftc.teamcode.hardware.ExtendoScoringMech;
+import org.firstinspires.ftc.teamcode.hardware.SteeringScoringMech;
 import org.firstinspires.ftc.teamcode.hardware.TapeMeasure;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
@@ -30,7 +30,7 @@ public class ExtendoAuto2 extends LinearOpMode {
     SampleMecanumDrive drive;
     Camera camera;
     TeamPropDetector2 propPipeline = new TeamPropDetector2(true);
-    ExtendoScoringMech scoringMech;
+    SteeringScoringMech scoringMech;
     TimeUtil timeUtil = new TimeUtil();
     ExtendoAutoConstants2 autoConstants;
     TapeMeasure tapeMeasure;
@@ -78,7 +78,7 @@ public class ExtendoAuto2 extends LinearOpMode {
         // Init
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
-        scoringMech = new ExtendoScoringMech(hardwareMap);
+        scoringMech = new SteeringScoringMech(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new ExtendoAutoConstants2(drive);
@@ -313,7 +313,7 @@ public class ExtendoAuto2 extends LinearOpMode {
             // Update all the things
             drive.update();
             // Only use the sensors we need
-            if (scoringMech.getStackGrabbingState() == ExtendoScoringMech.StackGrabbingState.INTAKING){
+            if (scoringMech.getStackGrabbingState() == SteeringScoringMech.StackGrabbingState.INTAKING){
                 scoringMech.update(true, false);
             } else {
                 scoringMech.update(false, false);

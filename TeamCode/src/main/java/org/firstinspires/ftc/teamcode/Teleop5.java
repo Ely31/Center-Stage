@@ -227,6 +227,8 @@ public class Teleop5 extends LinearOpMode {
             }
             else intake.off();
 
+            if (gamepad2.square) intake.goToVertical();
+
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it
             if (gamepad2.left_trigger > 0.8 && gamepad2.right_trigger > 0.8) launcher.release();
