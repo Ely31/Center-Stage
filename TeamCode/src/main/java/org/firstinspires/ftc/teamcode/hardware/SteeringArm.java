@@ -38,7 +38,9 @@ public class SteeringArm {
     public static double pivotOffset = 0.002;
     public static double pivotAwayFromBordTime = 300;
 
-    public static double steerNeutralPos = 0.5;
+    public static double steerNeutralPos = 0.47;
+    public static double steerRange = 0.06;
+    public static double steeringConstant = 0.26;
     double headingError;
 
     public static double gripperClosedPos = 0.88;
@@ -82,6 +84,7 @@ public class SteeringArm {
         stopper = hwmap.get(Servo.class, "stopper");
         armSensor = hwmap.get(ColorSensor.class, "armSensor");
         steer = hwmap.get(Servo.class, "steer");
+        steer.setDirection(Servo.Direction.REVERSE);
         centerSteer();
 
         // Warning: Robot moves on intitialization
@@ -182,8 +185,8 @@ public class SteeringArm {
         // This is negative or positive 90deg depending on which alliance
         double targetAngle = Math.PI/2 * -AutoToTele.allianceSide;
         headingError = targetAngle-angle;
-        double servoPos = steerNeutralPos + headingError*1;
-        Utility.clipValue(0,1, servoPos);
+        double servoPos = steerNeutralPos + headingError* steeringConstant;
+        Utility.clipValue(steerNeutralPos-steerRange,steerNeutralPos+steerRange, servoPos);
         return servoPos;
     }
 

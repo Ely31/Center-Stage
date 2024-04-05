@@ -8,14 +8,14 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
-public class ExtendoScoringMech {
+public class SteeringScoringMech {
     Lift lift;
-    Arm3 arm;
+    SteeringArm arm;
     ExtendoIntake intake;
     // Constructor
-    public ExtendoScoringMech(HardwareMap hwmap){
+    public SteeringScoringMech(HardwareMap hwmap){
         lift = new Lift(hwmap);
-        arm = new Arm3(hwmap);
+        arm = new SteeringArm(hwmap);
         intake = new ExtendoIntake(hwmap);
     }
 

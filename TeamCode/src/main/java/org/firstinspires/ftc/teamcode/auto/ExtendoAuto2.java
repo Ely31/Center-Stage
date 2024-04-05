@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoIntake;
-import org.firstinspires.ftc.teamcode.hardware.ExtendoScoringMech;
+import org.firstinspires.ftc.teamcode.hardware.SteeringScoringMech;
 import org.firstinspires.ftc.teamcode.hardware.TapeMeasure;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
@@ -30,7 +30,7 @@ public class ExtendoAuto2 extends LinearOpMode {
     SampleMecanumDrive drive;
     Camera camera;
     TeamPropDetector2 propPipeline = new TeamPropDetector2(true);
-    ExtendoScoringMech scoringMech;
+    SteeringScoringMech scoringMech;
     TimeUtil timeUtil = new TimeUtil();
     ExtendoAutoConstants2 autoConstants;
     TapeMeasure tapeMeasure;
@@ -70,14 +70,15 @@ public class ExtendoAuto2 extends LinearOpMode {
 
     final double yellowExtendProximity = 23;
     final double whiteExtendProximity = 36;
-
+    final double BSEP = 48;
+    //BSEP means BackstageScoringExtendProximity Ely
 
     @Override
     public void runOpMode(){
         // Init
         // Bind stuff to the hardwaremap
         drive = new SampleMecanumDrive(hardwareMap);
-        scoringMech = new ExtendoScoringMech(hardwareMap);
+        scoringMech = new SteeringScoringMech(hardwareMap);
         scoringMech.grabJustForPreload();
         camera = new Camera(hardwareMap, propPipeline);
         autoConstants = new ExtendoAutoConstants2(drive);
@@ -205,7 +206,7 @@ public class ExtendoAuto2 extends LinearOpMode {
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
                     if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 8 : yellowExtendProximity))){
-                        scoringMech.scoreAsync(1.05, true);
+                        scoringMech.scoreAsync(1, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
                         // If not doing cycles, park
@@ -249,9 +250,8 @@ public class ExtendoAuto2 extends LinearOpMode {
                     }
                     break;
 
-                //TODO: fix the continuity problem
                 case SCORING_WHITE_BACKSTAGE:
-                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 3 : whiteExtendProximity))){
+                    if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixelsBackstage.end(), (autoConstants.isWingSide() ? BSEP : BSEP))){
                         scoringMech.scoreAsync(0, false);
                     } else {
                         scoringMech.grabOffStackAsync(true, drive.isBusy());
@@ -313,7 +313,7 @@ public class ExtendoAuto2 extends LinearOpMode {
             // Update all the things
             drive.update();
             // Only use the sensors we need
-            if (scoringMech.getStackGrabbingState() == ExtendoScoringMech.StackGrabbingState.INTAKING){
+            if (scoringMech.getStackGrabbingState() == SteeringScoringMech.StackGrabbingState.INTAKING){
                 scoringMech.update(true, false);
             } else {
                 scoringMech.update(false, false);
