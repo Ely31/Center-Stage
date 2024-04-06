@@ -185,7 +185,7 @@ public class SteeringArm {
         // This is negative or positive 90deg depending on which alliance
         double targetAngle = Math.PI/2 * -AutoToTele.allianceSide;
         headingError = targetAngle-angle;
-        double servoPos = steerNeutralPos + headingError* steeringConstant;
+        double servoPos = steerNeutralPos + headingError*steeringConstant;
         Utility.clipValue(steerNeutralPos-steerRange,steerNeutralPos+steerRange, servoPos);
         return servoPos;
     }
