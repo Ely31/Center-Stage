@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.util.AutoToTele;
 
 import java.util.Random;
 
-//max velo of our auto is 105
+//max velo of our auto is 105 Nope luke that's wayyyy wrong
 public class AngleAutoConstantsRed {
     SampleMecanumDrive drive;
     int randomMessageIndex;
@@ -198,7 +198,6 @@ public class AngleAutoConstantsRed {
             if (getOppositeAuto()){
                 scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
                         //this path will drive through the truss instead of the truss door
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                         .lineToSplineHeading(new Pose2d(-41, (-46.5), Math.toRadians(0)))
                         //drive through the truss
                         .splineToConstantHeading(new Vector2d(12, (-58)), 0 )
@@ -209,7 +208,6 @@ public class AngleAutoConstantsRed {
 
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(180))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(70, Math.toRadians(180), 13))
                         .splineToConstantHeading(new Vector2d(28, -58), Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(-30, -57), Math.toRadians(180))
                         // Ok we're out of the truss now
@@ -218,7 +216,6 @@ public class AngleAutoConstantsRed {
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                         .lineToSplineHeading(new Pose2d(-50, (-48), Math.toRadians(0)))
                         .splineToConstantHeading(new Vector2d(12, (-58)), 0)
                         .resetVelConstraint()
@@ -229,7 +226,6 @@ public class AngleAutoConstantsRed {
                 scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
                         //This path will run the normal wingside path (go through the truss door)
                         .setTangent(Math.toRadians(afterPurpleTangent))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(65, Math.toRadians(180), 13))
                         .splineToSplineHeading(new Pose2d(-29, -12, Math.toRadians(0)), Math.toRadians(0))
                         // Drive under the door
                         .resetVelConstraint()
@@ -240,7 +236,6 @@ public class AngleAutoConstantsRed {
 
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(180))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 13))
                         .splineToConstantHeading(new Vector2d(28, -3), Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(-30, -3), Math.toRadians(180))
                         // Ok we're out of the truss now
@@ -249,7 +244,6 @@ public class AngleAutoConstantsRed {
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
                         .splineToConstantHeading(new Vector2d(24, -11), 0)
                         .resetVelConstraint()
                         .splineToConstantHeading(new Vector2d(whitePixelXCoord, whitePixelYCoord), 0)
@@ -302,7 +296,6 @@ public class AngleAutoConstantsRed {
                 //this path runs through the truss door on board side
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(180))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
                         .splineToConstantHeading(new Vector2d(28, -10), Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(-30, -10), Math.toRadians(180))
                         // Ok we're out of the truss now
@@ -311,8 +304,6 @@ public class AngleAutoConstantsRed {
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
-                        .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
                         .splineToConstantHeading(new Vector2d(24, -11), 0)
                         .resetVelConstraint()
                         .resetAccelConstraint()
@@ -322,7 +313,6 @@ public class AngleAutoConstantsRed {
             else {
                 //this path runs through the truss on board side\
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                         .setTangent(Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(28, -57), Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(-30, -56), Math.toRadians(180))
@@ -332,7 +322,6 @@ public class AngleAutoConstantsRed {
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(65, Math.toRadians(180), 14))
                         .lineToSplineHeading(new Pose2d(-50, (-48), Math.toRadians(0)))
                         .splineToConstantHeading(new Vector2d(12, (-61.5)), 0)
                         .resetVelConstraint()
@@ -357,8 +346,6 @@ public class AngleAutoConstantsRed {
 
                 if(getOppositeAuto()){
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
-                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
                             .splineToConstantHeading(new Vector2d(24, -11), 0)
                             .resetVelConstraint()
                             .resetAccelConstraint()
@@ -367,7 +354,6 @@ public class AngleAutoConstantsRed {
 
                     toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
                             .setTangent(Math.toRadians(180))
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
                             .splineToConstantHeading(new Vector2d(28, -10), Math.toRadians(180))
                             .splineToConstantHeading(new Vector2d(-30, -10), Math.toRadians(180))
                             // Ok we're out of the truss now
@@ -377,15 +363,12 @@ public class AngleAutoConstantsRed {
                 }
                 else{
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
-                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
                             .lineToSplineHeading(new Pose2d(-50, (-48), Math.toRadians(0)))
                             .splineToConstantHeading(new Vector2d(45, (-59.5)), 0)
                             .resetVelConstraint()
                             .build();
 
                     toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                             .setTangent(Math.toRadians(180))
                             .splineToConstantHeading(new Vector2d(28, -58), Math.toRadians(180))
                             .splineToConstantHeading(new Vector2d(-30, -57), Math.toRadians(180))
@@ -404,7 +387,6 @@ public class AngleAutoConstantsRed {
 
                 if(getOppositeAuto()){
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                             .lineToSplineHeading(new Pose2d(-50, (-48), Math.toRadians(0)))
                             .splineToConstantHeading(new Vector2d(12, (-58)), 0)
                             .resetVelConstraint()
@@ -413,7 +395,6 @@ public class AngleAutoConstantsRed {
 
                     toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
                             .setTangent(Math.toRadians(180))
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(70, Math.toRadians(180), 14))
                             .splineToConstantHeading(new Vector2d(28, -58), Math.toRadians(180))
                             .splineToConstantHeading(new Vector2d(-30, -57), Math.toRadians(180))
                             // Ok we're out of the truss now
@@ -423,8 +404,6 @@ public class AngleAutoConstantsRed {
                 }
                 else{
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
-                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
                             .splineToConstantHeading(new Vector2d(24, -11), 0)
                             .resetVelConstraint()
                             .resetAccelConstraint()
@@ -433,8 +412,6 @@ public class AngleAutoConstantsRed {
 
                     toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
                             .setTangent(Math.toRadians(180))
-                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(60))
-                            .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(65, Math.toRadians(180), 14))
                             .splineToConstantHeading(new Vector2d(28, -9.5), Math.toRadians(180))
                             .splineToConstantHeading(new Vector2d(-30, -9.5), Math.toRadians(180))
                             .resetVelConstraint()
@@ -447,7 +424,6 @@ public class AngleAutoConstantsRed {
             case TAPE_MEASURE_PARK:
                 park = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(180))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
                         .splineToConstantHeading(new Vector2d(28, -10), Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(-30, -12), Math.toRadians(180))
                         .build();

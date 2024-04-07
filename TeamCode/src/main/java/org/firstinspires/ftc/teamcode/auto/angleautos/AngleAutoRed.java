@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -26,7 +25,7 @@ import java.util.Objects;
 @Config
 //@Photon
 @Autonomous
-@Disabled
+//@Disabled
 public class AngleAutoRed extends LinearOpMode {
     // Pre init
     SampleMecanumDrive drive;
