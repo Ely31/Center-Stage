@@ -142,8 +142,8 @@ public class AngleAutoConstantsBlue {
         dropOffset = (isDropOffset() ? 2.4 : 0);
 
         // Ahhhh we have to have six unique purple pixel trajectories
-        double yellowPixelYCoord = -27.5;
-        final double baseYellowPixelYCoord = -29;
+        double yellowPixelYCoord = 27.5;
+        final double baseYellowPixelYCoord = 30.5;
         final double yellowPixelXCoord = 52;
         final double whitePixelXCoord = 50.7;
         double whitePixelYCoord = -29.5;
@@ -163,23 +163,27 @@ public class AngleAutoConstantsBlue {
                 whitePixelYCoord = wingSideWhiteY;
             }
 
+            //TODO: clean up pos 1 yellow drop and tune 3 a little
             switch (correctedSpikeMarkPos) {
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-46, 20.5, Math.toRadians(-90)))
                             .build();
-                    yellowPixelYCoord = 2 + baseYellowPixelYCoord - dropOffset;
-                    afterPurpleTangent = 90;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 5.25 + dropOffset;
+                    afterPurpleTangent = -90;
                     break;
                 case 2:
-                    yellowPixelYCoord = baseYellowPixelYCoord - 4.3 - dropOffset;
-                    afterPurpleTangent = 90;
-
                     if (getOppositeAuto()) {
+                        yellowPixelYCoord = baseYellowPixelYCoord + 9.5 + dropOffset;
+                        afterPurpleTangent = -90;
+
                         dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                                 .lineToSplineHeading(new Pose2d(-41, 36, Math.toRadians(90)))
                                 .build();
                     } else {
+                        yellowPixelYCoord = baseYellowPixelYCoord + 9.5 + dropOffset;
+                        afterPurpleTangent = -90;
+
                         dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                                 .lineToSplineHeading(new Pose2d(-40, 11.5, Math.toRadians(-89.9))) // 89.9 so it turns CW
                                 .build();
@@ -189,67 +193,56 @@ public class AngleAutoConstantsBlue {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-37, 34, Math.toRadians(-179.5)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 8 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord + 5.5 + dropOffset;
                     break;
             }
 
             if (getOppositeAuto()){
                 scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
                         //this path will drive through the truss instead of the truss door
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
-                        .lineToSplineHeading(new Pose2d(-41, (42.5), Math.toRadians(-0)))
+                        .lineToSplineHeading(new Pose2d(-41, (42.5), Math.toRadians(0)))
                         //drive through the truss
-                        .splineToConstantHeading(new Vector2d(12, (54)), -0)
+                        .splineToConstantHeading(new Vector2d(12, (54)), 0)
                         // To the board
-                        .resetVelConstraint()
-                        .splineToSplineHeading(new Pose2d(yellowPixelXCoord + 0.6, -yellowPixelYCoord, Math.toRadians(-0)), Math.toRadians(-0))
+                        .splineToSplineHeading(new Pose2d(yellowPixelXCoord + 0.6, yellowPixelYCoord, Math.toRadians(-0)), Math.toRadians(-0))
                         .build();
 
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(-180))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(70, Math.toRadians(180), 13))
                         .splineToConstantHeading(new Vector2d(28, 58), Math.toRadians(-180))
                         .splineToConstantHeading(new Vector2d(-30, 57), Math.toRadians(-180))
                         // Ok we're out of the truss now
-                        .resetVelConstraint()
                         .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.8  : -55.8), (36.5), Math.toRadians(20)), Math.toRadians(-110))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60, Math.toRadians(180), 14))
                         .lineToSplineHeading(new Pose2d(-50, (44), Math.toRadians(-0)))
                         .splineToConstantHeading(new Vector2d(12, (54)), -0)
-                        .resetVelConstraint()
                         .splineTo(new Vector2d(whitePixelXCoord + 1.1, (-whitePixelYCoord)), -0)
                         .build();
             }
             else {
                 scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
                         //This path will run the normal wingside path (go through the truss door)
-                        .setTangent(Math.toRadians(-afterPurpleTangent))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(65, Math.toRadians(180), 13))
-                        .splineToSplineHeading(new Pose2d(-29, 12, Math.toRadians(-0)), Math.toRadians(-0))
+                        .setTangent(Math.toRadians(afterPurpleTangent))
+                        .splineToSplineHeading(new Pose2d(-29, 12, Math.toRadians(0)), Math.toRadians(0))
                         // Drive under the door
                         .resetVelConstraint()
-                        .splineTo(new Vector2d(21.5, 12), Math.toRadians(-0))
+                        .splineTo(new Vector2d(21.5, 14.5), Math.toRadians(0))
                         // To the board
-                        .splineToConstantHeading(new Vector2d(yellowPixelXCoord - 1, -yellowPixelYCoord), Math.toRadians(-0))
+                        .splineToConstantHeading(new Vector2d(yellowPixelXCoord - 1, yellowPixelYCoord), Math.toRadians(0))
                         .build();
 
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(-180))
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 13))
                         .splineToConstantHeading(new Vector2d(28, 3), Math.toRadians(-180))
                         .splineToConstantHeading(new Vector2d(-30, 3), Math.toRadians(-180))
                         // Ok we're out of the truss now
-                        .resetVelConstraint()
                         .splineToConstantHeading(new Vector2d(-55, 12), Math.toRadians(-180))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(75, Math.toRadians(180), 14))
                         .splineToConstantHeading(new Vector2d(24, 11), -0)
-                        .resetVelConstraint()
                         .splineToConstantHeading(new Vector2d(whitePixelXCoord, -whitePixelYCoord), -0)
                         .build();
             }
@@ -275,25 +268,25 @@ public class AngleAutoConstantsBlue {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(13, 34, Math.toRadians(-0)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord + 2 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord + dropOffset;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(28.8, 24.5, Math.toRadians(-0)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 5.5 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord + 5.5 + dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(35, 34, Math.toRadians(-0)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 11.4 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord + 11.4 + dropOffset;
                     break;
             }
 
             scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
                     // Go straight to the board
-                    .lineToSplineHeading(new Pose2d(yellowPixelXCoord, -yellowPixelYCoord, Math.toRadians(-0)))
+                    .lineToSplineHeading(new Pose2d(yellowPixelXCoord, yellowPixelYCoord, Math.toRadians(-0)))
                     .build();
 
             if (getOppositeAuto()) {

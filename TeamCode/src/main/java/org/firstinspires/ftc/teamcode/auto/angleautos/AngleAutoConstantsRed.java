@@ -140,7 +140,7 @@ public class AngleAutoConstantsRed {
             startPos = new Pose2d(11.75, -63.5, Math.toRadians(-90));
         }
         // Switch this so we don't drop our pixel in the same spot as our partner
-        dropOffset = (isDropOffset() ? 2.4 : 0);
+        dropOffset = (isDropOffset() ? 2.5 : 0);
 
         // Ahhhh we have to have six unique purple pixel trajectories
         double yellowPixelYCoord = -27.5;
@@ -167,30 +167,34 @@ public class AngleAutoConstantsRed {
             switch (correctedSpikeMarkPos) {
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(40))
                             .lineToSplineHeading(new Pose2d(-46, -20.5, Math.toRadians(90)))
                             .build();
-                    yellowPixelYCoord = 2 + baseYellowPixelYCoord - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 1.5 - dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 case 2:
-                    yellowPixelYCoord = baseYellowPixelYCoord - 4.3 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 7.2 - dropOffset;
                     afterPurpleTangent = 90;
 
                     if (getOppositeAuto()) {
                         dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                                .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(40))
                                 .lineToSplineHeading(new Pose2d(-41, -36, Math.toRadians(-90)))
                                 .build();
                     } else {
                         dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                                .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(40))
                                 .lineToSplineHeading(new Pose2d(-40, -11.5, Math.toRadians(89.9))) // 89.9 so it turns CW
                                 .build();
                     }
                     break;
                 default:
+                    //TODO: Fix the error with 3rd position where it overshoots
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-37, -34, Math.toRadians(179.5)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 8 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 13.4 - dropOffset;
                     break;
             }
 
@@ -199,9 +203,8 @@ public class AngleAutoConstantsRed {
                         //this path will drive through the truss instead of the truss door
                         .lineToSplineHeading(new Pose2d(-41, (-46.5), Math.toRadians(0)))
                         //drive through the truss
-                        .splineToConstantHeading(new Vector2d(12, (-58)), 0 )
+                        .splineToConstantHeading(new Vector2d(14, (-58)), 0 )
                         // To the board
-                        .resetVelConstraint()
                         .splineToSplineHeading(new Pose2d(yellowPixelXCoord + 0.6, yellowPixelYCoord, Math.toRadians(0)), Math.toRadians(0))
                         .build();
 
@@ -267,15 +270,19 @@ public class AngleAutoConstantsRed {
             switch (correctedSpikeMarkPos) {
                 case 1:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(50))
                             .lineToSplineHeading(new Pose2d(13, -34, Math.toRadians(0)))
+                            .resetAccelConstraint()
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 1.5 - dropOffset;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
+                            .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(20))
                             .lineToSplineHeading(new Pose2d(28.8, -24.5, Math.toRadians(0)))
+                            .resetAccelConstraint()
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 5.5 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 7.5 - dropOffset;
                     break;
                 default:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)

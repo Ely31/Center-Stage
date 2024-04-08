@@ -203,7 +203,7 @@ public class AngleAutoBlue extends LinearOpMode {
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
                     if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 8 : yellowExtendProximity))){
-                        scoringMech.scoreAsync(1, true);
+                        scoringMech.scoreAsync(2, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
                         // If not doing cycles, park
