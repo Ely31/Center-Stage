@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.Utility;
 
 @Config
@@ -96,6 +97,7 @@ public class SteeringScoringMech {
             case SETUP:
                 arm.pivotGoToIntake();
                 intake.goToStackPosition(intake.getStackPosition());
+                arm.centerSteer();
                 intake.updateCurrent();
                 stackGrabbingWait.reset();
                 stackGrabbingState = StackGrabbingState.INTAKING;
@@ -149,9 +151,10 @@ public class SteeringScoringMech {
         return stackGrabbingState == StackGrabbingState.DONE;
     }
 
-    public void scoreAsync(double height, boolean bumpUp){
+    public void scoreAsync(double height, boolean bumpUp, double heading){
         switch (scoringState){
             case SETUP:
+                arm.centerSteer();
                 scoringWait.reset();
                 scoringState = ScoringState.EXTENDING;
                 break;
@@ -168,6 +171,8 @@ public class SteeringScoringMech {
                 break;
 
             case WAITING_FOR_ARM_PIVOT:
+                // Wait til the arm has moved some before steering to avoid crashing the deposit into the bot on the way up
+                if (scoringWait.seconds() > 0.25) arm.updateSteer(heading);
                 if (scoringWait.seconds() > 1.4) { // Wait for the arm to move all the way
                     arm.setBothGrippersState(false); // Drop the pixels
                     scoringWait.reset();
@@ -176,6 +181,7 @@ public class SteeringScoringMech {
                 break;
 
             case WAITING_FOR_PIXELS_DROP:
+                arm.updateSteer(heading);
                 if (scoringWait.seconds() > 0.25){ // Wait for them to fall out
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
@@ -189,6 +195,7 @@ public class SteeringScoringMech {
 
             case BUMPING_UP:
                 lift.setHeight(height+2);
+                arm.updateSteer(heading);
                 if (Utility.withinErrorOfValue(lift.getHeight(), height+2, 0.5)) {
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
@@ -197,6 +204,7 @@ public class SteeringScoringMech {
 
             case WAITING_FOR_ARM_RETRACT:
                 arm.pivotGoToIntake();
+                arm.centerSteer();
                 if (scoringWait.milliseconds() > Arm3.pivotAwayFromBordTime){
                     scoringWait.reset();
                     lift.retract();
@@ -221,6 +229,10 @@ public class SteeringScoringMech {
             case DONE:
                 break;
         }
+    }
+
+    public void scoreAsync(double height, boolean bumpUp){
+        this.scoreAsync(height, bumpUp, AutoToTele.allianceSide*Math.toRadians(-90));
     }
 
     public boolean liftIsGoingDown(){

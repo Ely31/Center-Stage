@@ -357,6 +357,7 @@ public class Teleop5 extends LinearOpMode {
                     scoringState = ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
+                    pivotTimer.reset();
                 }
                 // Go back to intaking if the arm pulled up before getting both pixels
                 if (gamepad2.dpad_left){
@@ -392,14 +393,17 @@ public class Teleop5 extends LinearOpMode {
                 // Used when we want to to poke pixels after placing some to avoid the lift going down and back up again.
                 if (gamepad2.y) dontRetractThisTime = true;
 
-                arm.updateSteer(drive.getHeading());
+                // Wait for the arm to move a bit so the deposit doesn't hit the bot
+                if (pivotTimer.seconds() > 0.25) arm.updateSteer(drive.getHeading());
 
                 // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
-                if (
-                        (!prevLiftInput && gamepad2.right_bumper) ||
-                        (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()))
-                ){
+                if (usePixelSensors && (!arm.getTopGripperState() && !arm.getBottomGripperState())){
                     scoringState = ScoringState.SLIDING_UP;
+                }
+                if (!prevLiftInput && gamepad2.right_bumper){
+                    scoringState = ScoringState.BUMPING_UP;
+                    // Bump up
+                    lift.setExtendedPos(lift.getExtendedPos() + 2);
                 }
                 // Go back to premoved if we wish
                 if (gamepad2.dpad_left){
