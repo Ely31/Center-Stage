@@ -30,7 +30,7 @@ public class Utility {
     }
 
     public static boolean pointsAreWithinDistance(Pose2d p1, Pose2d p2, double distance){
-        // Phythagorean theorem
+        // Pythagorean theorem
         double distanceBetweenPoints = Math.sqrt(Math.pow(p1.getX()-p2.getX(),2) + Math.pow(p1.getY()-p2.getY(),2));
         return distanceBetweenPoints < distance;
     }

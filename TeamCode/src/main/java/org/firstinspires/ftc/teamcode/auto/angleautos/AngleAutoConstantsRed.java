@@ -148,7 +148,8 @@ public class AngleAutoConstantsRed {
         final double yellowPixelXCoord = 52;
         final double whitePixelXCoord = 50.4;
         double whitePixelYCoord = -29.5;
-        final double wingSideWhiteY = -26;
+        final double wingSideWhiteY = -31;
+        final double boardSideAvoid = -29;
         final double boardSideWhiteY = -42.5;
 
         //wing side auto
@@ -170,7 +171,7 @@ public class AngleAutoConstantsRed {
                             .setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(40))
                             .lineToSplineHeading(new Pose2d(-46, -20.5, Math.toRadians(90)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 1.5 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 2 - dropOffset;
                     afterPurpleTangent = 90;
                     break;
                 case 2:
@@ -194,7 +195,8 @@ public class AngleAutoConstantsRed {
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-37, -34, Math.toRadians(179.5)))
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 13.4 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - 3.5 - dropOffset;
+                    numCycles = 0;
                     break;
             }
 
@@ -220,17 +222,14 @@ public class AngleAutoConstantsRed {
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
                         .lineToSplineHeading(new Pose2d(-50, (-48), Math.toRadians(0)))
                         .splineToConstantHeading(new Vector2d(12, (-58)), 0)
-                        .resetVelConstraint()
                         .splineTo(new Vector2d(whitePixelXCoord, (whitePixelYCoord)), 0)
                         .build();
-            }
-            else {
+            } else {
                 scoreYellowPixel = drive.trajectorySequenceBuilder(dropOffPurplePixel.end())
                         //This path will run the normal wingside path (go through the truss door)
                         .setTangent(Math.toRadians(afterPurpleTangent))
                         .splineToSplineHeading(new Pose2d(-29, -12, Math.toRadians(0)), Math.toRadians(0))
                         // Drive under the door
-                        .resetVelConstraint()
                         .splineTo(new Vector2d(21.5, -12), Math.toRadians(0))
                         // To the board
                         .splineToConstantHeading(new Vector2d(yellowPixelXCoord - 1, yellowPixelYCoord), Math.toRadians(0))
@@ -238,17 +237,17 @@ public class AngleAutoConstantsRed {
 
                 toStack = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
                         .setTangent(Math.toRadians(180))
-                        .splineToConstantHeading(new Vector2d(28, -3), Math.toRadians(180))
-                        .splineToConstantHeading(new Vector2d(-30, -3), Math.toRadians(180))
+                        .splineToConstantHeading(new Vector2d(28, -13), Math.toRadians(180))
+                        .splineToConstantHeading(new Vector2d(-30, -13), Math.toRadians(180))
                         // Ok we're out of the truss now
-                        .resetVelConstraint()
-                        .splineToConstantHeading(new Vector2d(-55, -12), Math.toRadians(180 ))
+                        .splineToConstantHeading(new Vector2d(-53.3, -10.5), Math.toRadians(180))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
-                        .splineToConstantHeading(new Vector2d(24, -11), 0)
+                        .setVelConstraint(SampleMecanumDrive.getVelocityConstraint(60,4, 13))
+                        .splineToConstantHeading(new Vector2d(24, -14), 0)
+                        .splineToConstantHeading(new Vector2d(whitePixelXCoord, whitePixelYCoord - 2), 0)
                         .resetVelConstraint()
-                        .splineToConstantHeading(new Vector2d(whitePixelXCoord, whitePixelYCoord), 0)
                         .build();
             }
             // END OF WINGSIDE
@@ -262,7 +261,7 @@ public class AngleAutoConstantsRed {
             }
             else{
                 if (avoidYellows && correctedSpikeMarkPos == 3){
-                    whitePixelYCoord = wingSideWhiteY;
+                    whitePixelYCoord = boardSideAvoid;
                 }
                 else whitePixelYCoord = boardSideWhiteY;
             }
@@ -304,7 +303,7 @@ public class AngleAutoConstantsRed {
                         .splineToConstantHeading(new Vector2d(28, -10), Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(-30, -10), Math.toRadians(180))
                         // Ok we're out of the truss now
-                        .splineToConstantHeading(new Vector2d(-55, -11), Math.toRadians(180))
+                        .splineToConstantHeading(new Vector2d(getNumFinishedCycles() == 0 ? -51.5 : -53, correctedSpikeMarkPos == 1 ? -8 : -5), Math.toRadians(180))
                         .resetVelConstraint()
                         .build();
 
@@ -312,7 +311,7 @@ public class AngleAutoConstantsRed {
                         .splineToConstantHeading(new Vector2d(24, -11), 0)
                         .resetVelConstraint()
                         .resetAccelConstraint()
-                        .splineTo(new Vector2d(whitePixelXCoord + 0.6, whitePixelYCoord), 0)
+                        .splineToConstantHeading(new Vector2d(whitePixelXCoord + 0.6, whitePixelYCoord), 0)
                         .build();
             }
             else {
@@ -323,7 +322,7 @@ public class AngleAutoConstantsRed {
                         .splineToConstantHeading(new Vector2d(-30, -57.5), Math.toRadians(180))
                         .resetVelConstraint()
                         // Ok we're out of the truss now
-                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -55 : -55), (-40), Math.toRadians(-20)), Math.toRadians(110))
+                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.5 : -56), (-39), Math.toRadians(-20)), Math.toRadians(110))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
