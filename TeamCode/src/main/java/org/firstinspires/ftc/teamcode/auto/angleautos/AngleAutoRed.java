@@ -70,7 +70,7 @@ public class AngleAutoRed extends LinearOpMode {
     ElapsedTime TMT = new ElapsedTime();
 
     final double yellowExtendProximity = 23;
-    final double whiteExtendProximity = 36;
+    final double whiteExtendProximity = 32.5;
     final double BSEP = 48;
     //BSEP means BackstageScoringExtendProximity Ely
 
