@@ -327,6 +327,7 @@ public class AngleAutoConstantsBlue {
                         .resetVelConstraint()
                         //.splineToSplineHeading(new Pose2d(whitePixelXCoord + 1.1 - 1, whitePixelYCoordB, Math.toRadians(-30)), Math.toRadians(0))
                         .splineToConstantHeading(new Vector2d(whitePixelXCoord + 1.1, whitePixelYCoordB), Math.toRadians(0))
+                        .splineToSplineHeading(new Pose2d(whitePixelXCoord + 1.1 - 1, whitePixelYCoordB, Math.toRadians(-30)), Math.toRadians(0))
                         .build();
             }
             // END OF BOARDSIDE

@@ -270,7 +270,9 @@ public class AngleAutoBlue extends LinearOpMode {
                     if(autoConstants.getOppositeAuto()){
                         if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 20 : whiteExtendProximity))){
                             scoringMech.scoreAsync(9, false);
-                            //drive.getPoseEstimate().getHeading() + Math.toRadians(-90))
+                            //drive.getPoseEstimate().getHeading() + Math.toRadians(-90)
+                            scoringMech.scoreAsync(9, false, drive.getPoseEstimate().getHeading() + Math.toRadians(-90));
+
                         }
                         else {
                             scoringMech.grabOffStackAsync(true, drive.isBusy());
@@ -280,6 +282,7 @@ public class AngleAutoBlue extends LinearOpMode {
                         if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 9 : whiteExtendProximity))){
                             scoringMech.scoreAsync(9, false);
                             //drive.getPoseEstimate().getHeading() + Math.toRadians(-90))
+                            scoringMech.scoreAsync(9, false, drive.getPoseEstimate().getHeading() + Math.toRadians(-90));
                         }
                         else {
                             scoringMech.grabOffStackAsync(true, drive.isBusy());
