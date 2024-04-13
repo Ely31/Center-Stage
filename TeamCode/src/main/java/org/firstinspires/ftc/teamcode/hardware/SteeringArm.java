@@ -40,7 +40,7 @@ public class SteeringArm {
 
     public static double steerNeutralPos = 0.47;
     public static double steerRange = 0.06;
-    public static double steeringConstant = 0.26;
+    public static double steeringConstant = 0.22;
     double headingError;
     double steerTargetAngle;
 
@@ -263,7 +263,7 @@ public class SteeringArm {
         telemetry.addData("Arm is down", armIsDown());
         telemetry.addData("Heading error", headingError);
         telemetry.addData("Steer pos", steer.getPosition());
-        telemetry.addData("steering heading tARGETttttttttttttttttttttttttttttttttt", steerTargetAngle);
+        telemetry.addData("steering heading target", steerTargetAngle);
         //telemetry.addData("steer heading",  program.getme the steer heading please)
     }
 }

@@ -10,8 +10,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class Climber {
 
     DcMotor climberMotor;
-    public static double targetLiftHeight = 17;
-    public static double hangingHeight = 17;
+    public static double targetLiftHeight = 16.5;
+    public static double hangingHeight = 16.5;
 
     public Climber(HardwareMap hwmap){
         climberMotor = hwmap.get(DcMotor.class, "climber");

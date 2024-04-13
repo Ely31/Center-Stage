@@ -176,7 +176,7 @@ public class TeleopSolo extends LinearOpMode {
                 // Only works when the lift is up
                 if (scoringState == ScoringState.SCORING) {
                     // If you press the trigger, change the lift height slower
-                    if (gamepad2.right_trigger > 0.2) {
+                    if (gamepad1.right_trigger > 0.2) {
                         lift.editExtendedPos(-gamepad1.right_stick_y * liftPosEditStep * 0.5);
                     } else {
                         lift.editExtendedPos(-gamepad1.right_stick_y * liftPosEditStep);
@@ -294,6 +294,8 @@ public class TeleopSolo extends LinearOpMode {
                 } else {
                     arm.preMove();
                 }
+                // Make sure the deposit doesn't crash into stuff
+                arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
                 if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
                     lift.retract();
@@ -316,19 +318,20 @@ public class TeleopSolo extends LinearOpMode {
                     // Grab 'em and move the arm up
                     arm.setBothGrippersState(true);
                     gripperTimer.reset();
-                    scoringState = ScoringState.WAITING_FOR_GRIPPERS;
+                    scoringState = TeleopSolo.ScoringState.WAITING_FOR_GRIPPERS;
                 }
                 break;
 
             case WAITING_FOR_GRIPPERS:
                 if (gripperTimer.milliseconds() > Arm3.gripperActuationTime){
-                    scoringState = ScoringState.PREMOVED;
+                    scoringState = TeleopSolo.ScoringState.PREMOVED;
                     doubleTapTimer.reset();
                 }
                 break;
 
             case PREMOVED:
                 arm.preMove();
+                arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
                 if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
@@ -349,13 +352,14 @@ public class TeleopSolo extends LinearOpMode {
                 // Don't go to scoring if the arm has just been premoved though, this happens when the automatic raises it but the driver
                 // tries to manually raise it at the same time. This timer prevents that.
                 if (!prevLiftInput && gamepad1.right_bumper && doubleTapTimer.milliseconds() > 450){
-                    scoringState = ScoringState.SCORING;
+                    scoringState = TeleopSolo.ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
+                    pivotTimer.reset();
                 }
                 // Go back to intaking if the arm pulled up before getting both pixels
                 if (gamepad1.dpad_left){
-                    scoringState = ScoringState.INTAKING;
+                    scoringState = TeleopSolo.ScoringState.INTAKING;
                 }
                 break;
 
@@ -377,7 +381,7 @@ public class TeleopSolo extends LinearOpMode {
                 }
 
                 // Toggle the poker
-                if (gamepad2.b && !prevPokingInput){
+                if (gamepad1.b && !prevPokingInput){
                     poking = !poking;
                 }
                 prevPokingInput = gamepad2.b;
@@ -387,16 +391,21 @@ public class TeleopSolo extends LinearOpMode {
                 // Used when we want to to poke pixels after placing some to avoid the lift going down and back up again.
                 if (gamepad2.y) dontRetractThisTime = true;
 
+                // Wait for the arm to move a bit so the deposit doesn't hit the bot
+                if (pivotTimer.seconds() > 0.25) arm.updateSteer(drive.getHeading());
+
                 // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
-                if (
-                        (!prevLiftInput && gamepad1.right_bumper) ||
-                        (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()))
-                ){
-                    scoringState = ScoringState.SLIDING_UP;
+                if (usePixelSensors && (!arm.getTopGripperState() && !arm.getBottomGripperState())){
+                    scoringState = TeleopSolo.ScoringState.SLIDING_UP;
+                }
+                if (!prevLiftInput && gamepad2.right_bumper){
+                    scoringState = TeleopSolo.ScoringState.BUMPING_UP;
+                    // Bump up
+                    lift.setExtendedPos(lift.getExtendedPos() + 2);
                 }
                 // Go back to premoved if we wish
                 if (gamepad1.dpad_left){
-                    scoringState = ScoringState.PREMOVED;
+                    scoringState = TeleopSolo.ScoringState.PREMOVED;
                     pivotTimer.reset();
                 }
                 break;
@@ -407,7 +416,7 @@ public class TeleopSolo extends LinearOpMode {
                 lift.setExtendedPos(lift.getExtendedPos() + 0.15);
                 lift.extend();
                 if (!arm.pixelIsInTop() && !arm.pixelIsInBottom()){
-                    scoringState = ScoringState.BUMPING_UP;
+                    scoringState = TeleopSolo.ScoringState.BUMPING_UP;
                     // Bump up
                     lift.setExtendedPos(lift.getExtendedPos() + 2);
                 }
@@ -419,12 +428,12 @@ public class TeleopSolo extends LinearOpMode {
                 if (Utility.withinErrorOfValue(lift.getHeight(), lift.getExtendedPos(), 0.5)) {
                     // Reset that back to normal because we temporarily changed it
                     lift.setExtendedPos(lift.getExtendedPos() - 2);
-                    scoringState = ScoringState.INTAKING;
+                    scoringState = TeleopSolo.ScoringState.INTAKING;
                     // Reset timer so the clock ticks on the arm being away from the board
                     pivotTimer.reset();
                 }
         }
-        prevLiftInput = gamepad1.right_bumper;
+        prevLiftInput = gamepad2.right_bumper;
         lift.update();
 
         // Keep this at 0 until climbing mode is on

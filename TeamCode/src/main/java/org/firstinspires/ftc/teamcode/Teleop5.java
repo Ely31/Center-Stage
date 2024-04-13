@@ -450,6 +450,7 @@ public class Teleop5 extends LinearOpMode {
         if(isClimbing) {
             switch (climbingState) {
                 case REDUCE_SLACK:
+                    arm.setStopperState(false);
                     arm.setPivotPos(0.1);
                     climber.setPower(-1);
                     lift.setHeight(Climber.targetLiftHeight);
