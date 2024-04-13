@@ -258,7 +258,7 @@ public class AngleAutoConstantsBlue {
             else{
                 if (avoidYellows && correctedSpikeMarkPos == 3){
                     whitePixelYCoord = wingSideWhiteY;
-                    whitePixelYCoordB = wingSideWhiteY;
+                    whitePixelYCoordB = wingSideWhiteY + 6;
                 }
                 else whitePixelYCoord = boardSideWhiteY;
             }
@@ -317,7 +317,7 @@ public class AngleAutoConstantsBlue {
                         .splineToConstantHeading(new Vector2d(28, 59), Math.toRadians(-180))
                         .splineToConstantHeading(new Vector2d(-30, 59), Math.toRadians(-180))
                         // Ok we're out of the truss now
-                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -53.8 : -54.8), (38), Math.toRadians(20)), Math.toRadians(-110))
+                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.2 : -55.3), (38), Math.toRadians(20)), Math.toRadians(-110))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
@@ -327,7 +327,6 @@ public class AngleAutoConstantsBlue {
                         .resetVelConstraint()
                         //.splineToSplineHeading(new Pose2d(whitePixelXCoord + 1.1 - 1, whitePixelYCoordB, Math.toRadians(-30)), Math.toRadians(0))
                         .splineToConstantHeading(new Vector2d(whitePixelXCoord + 1.1, whitePixelYCoordB), Math.toRadians(0))
-                        .splineToSplineHeading(new Pose2d(whitePixelXCoord + 1.1 - 1, whitePixelYCoordB, Math.toRadians(-30)), Math.toRadians(0))
                         .build();
             }
             // END OF BOARDSIDE

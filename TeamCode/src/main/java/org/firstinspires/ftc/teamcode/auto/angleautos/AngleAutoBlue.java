@@ -159,7 +159,7 @@ public class AngleAutoBlue extends LinearOpMode {
         actionTimer.reset();
         loopTimer.reset();
         // Save this for tele
-        AutoToTele.allianceSide = autoConstants.getAlliance();
+        AutoToTele.allianceSide = -1;
         // Used sometimes to avoid potential collisions with a partner
         sleep(Math.abs(autoConstants.getDelaySeconds()*1000));
         while (opModeIsActive()){
@@ -281,8 +281,6 @@ public class AngleAutoBlue extends LinearOpMode {
                     else{
                         if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 9 : whiteExtendProximity))){
                             scoringMech.scoreAsync(9, false);
-                            //drive.getPoseEstimate().getHeading() + Math.toRadians(-90))
-                            scoringMech.scoreAsync(9, false, drive.getPoseEstimate().getHeading() + Math.toRadians(-90));
                         }
                         else {
                             scoringMech.grabOffStackAsync(true, drive.isBusy());
