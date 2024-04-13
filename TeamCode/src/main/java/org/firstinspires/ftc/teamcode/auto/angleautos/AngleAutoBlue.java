@@ -73,6 +73,7 @@ public class AngleAutoBlue extends LinearOpMode {
     final double whiteExtendProximity = 36;
     final double BSEP = 48;
     //BSEP means BackstageScoringExtendProximity Ely
+    double HendrickMotorsports = 999999999;
 
     @Override
     public void runOpMode(){
@@ -203,7 +204,7 @@ public class AngleAutoBlue extends LinearOpMode {
                     // If we're close to the board, raise the lift and stuff up
                     // A simple timed delay doesn't work in this case because the length of the path is different depending on drop zone
                     if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreYellowPixel.end(), (autoConstants.isWingSide() ? yellowExtendProximity - 8 : yellowExtendProximity))){
-                        scoringMech.scoreAsync(1, true);
+                        scoringMech.scoreAsync(2, true);
                     }
                     if (scoringMech.liftIsGoingDown()){
                         // If not doing cycles, park
@@ -269,6 +270,9 @@ public class AngleAutoBlue extends LinearOpMode {
                     if(autoConstants.getOppositeAuto()){
                         if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 20 : whiteExtendProximity))){
                             scoringMech.scoreAsync(9, false);
+                            //drive.getPoseEstimate().getHeading() + Math.toRadians(-90)
+                            scoringMech.scoreAsync(9, false, drive.getPoseEstimate().getHeading() + Math.toRadians(-90));
+
                         }
                         else {
                             scoringMech.grabOffStackAsync(true, drive.isBusy());
@@ -277,6 +281,8 @@ public class AngleAutoBlue extends LinearOpMode {
                     else{
                         if (Utility.pointsAreWithinDistance(drive.getPoseEstimate(), autoConstants.scoreWhitePixels.end(), (autoConstants.isWingSide() ? whiteExtendProximity - 9 : whiteExtendProximity))){
                             scoringMech.scoreAsync(9, false);
+                            //drive.getPoseEstimate().getHeading() + Math.toRadians(-90))
+                            scoringMech.scoreAsync(9, false, drive.getPoseEstimate().getHeading() + Math.toRadians(-90));
                         }
                         else {
                             scoringMech.grabOffStackAsync(true, drive.isBusy());
@@ -309,6 +315,7 @@ public class AngleAutoBlue extends LinearOpMode {
             }
             // Update all the things
             drive.update();
+            HendrickMotorsports = drive.getPoseEstimate().getHeading();
             // Only use the sensors we need
             if (scoringMech.getStackGrabbingState() == SteeringScoringMech.StackGrabbingState.INTAKING){
                 scoringMech.update(true, false);
@@ -330,6 +337,7 @@ public class AngleAutoBlue extends LinearOpMode {
             telemetry.addData("Backstage drop", autoConstants.getWhitePixelDropBackstage1());
             telemetry.addData("Opposite routes", autoConstants.getOppositeAuto());
             telemetry.addData("Tape measure park", autoConstants.isTapeMeasurePark());
+            telemetry.addData("Steering Target Headinggggggggggggggggggg", HendrickMotorsports);
             drive.displayDeug(telemetry);
             scoringMech.displayDebug(telemetry);
             timeUtil.displayDebug(telemetry, loopTimer);

@@ -30,7 +30,7 @@ public class ExtendoIntakeAngleHolding {
 
     private int stackPosition = 5;
     public int getStackPosition(){return stackPosition;}
-    private double stackpositions[] = new double[]{0.335,0.36,0.38,0.42,0.44, aboveStackPos};
+    private double stackpositions[] = new double[]{0.34,0.36,0.38,0.42,0.44, aboveStackPos};
 
     ElapsedTime jamTimer = new ElapsedTime();
     ElapsedTime startCorrectingAngleTimer = new ElapsedTime();

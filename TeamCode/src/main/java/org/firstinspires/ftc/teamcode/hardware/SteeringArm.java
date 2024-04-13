@@ -42,6 +42,7 @@ public class SteeringArm {
     public static double steerRange = 0.06;
     public static double steeringConstant = 0.26;
     double headingError;
+    double steerTargetAngle;
 
     public static double gripperClosedPos = 0.88;
     public static double gripperOpenPos = 0.6;
@@ -183,8 +184,8 @@ public class SteeringArm {
 
     double angleToServoPos(double angle){
         // This is negative or positive 90deg depending on which alliance
-        double targetAngle = Math.PI/2 * -AutoToTele.allianceSide;
-        headingError = targetAngle-angle;
+        steerTargetAngle = Math.PI/2 * -AutoToTele.allianceSide;
+        headingError = steerTargetAngle-angle;
         double servoPos = steerNeutralPos + headingError*steeringConstant;
         Utility.clipValue(steerNeutralPos-steerRange,steerNeutralPos+steerRange, servoPos);
         return servoPos;
@@ -262,5 +263,7 @@ public class SteeringArm {
         telemetry.addData("Arm is down", armIsDown());
         telemetry.addData("Heading error", headingError);
         telemetry.addData("Steer pos", steer.getPosition());
+        telemetry.addData("steering heading tARGETttttttttttttttttttttttttttttttttt", steerTargetAngle);
+        //telemetry.addData("steer heading",  program.getme the steer heading please)
     }
 }

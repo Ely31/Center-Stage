@@ -12,12 +12,12 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 public class SteeringScoringMech {
     Lift lift;
     SteeringArm arm;
-    ExtendoIntake intake;
+    ExtendoIntakeAngleHolding intake;
     // Constructor
     public SteeringScoringMech(HardwareMap hwmap){
         lift = new Lift(hwmap);
         arm = new SteeringArm(hwmap);
-        intake = new ExtendoIntake(hwmap);
+        intake = new ExtendoIntakeAngleHolding(hwmap);
     }
 
     public void score(){
@@ -107,6 +107,7 @@ public class SteeringScoringMech {
                 retract();
                 arm.setStopperState(true);
                 intake.on(true, 0.75);
+                intake.updateCurrent();
                 if (stackGrabbingWait.seconds() > 1){
                     stackGrabbingState = StackGrabbingState.MOVING_ARM_DOWN;
                 }
@@ -205,7 +206,7 @@ public class SteeringScoringMech {
             case WAITING_FOR_ARM_RETRACT:
                 arm.pivotGoToIntake();
                 arm.centerSteer();
-                if (scoringWait.milliseconds() > Arm3.pivotAwayFromBordTime){
+                if (scoringWait.seconds() > 0.5){
                     scoringWait.reset();
                     lift.retract();
                     scoringState = ScoringState.RETRACTING;
