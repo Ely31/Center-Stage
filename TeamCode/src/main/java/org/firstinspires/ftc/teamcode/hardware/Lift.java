@@ -54,6 +54,7 @@ public class Lift {
         extendedPos = Utility.clipValue(minHeight, maxHeight, extendedPos);
     }
     public void setExtendedPos(double height){
+        height = Utility.clipValue(minHeight, maxHeight, height);
         extendedPos = height;
     }
     public double getExtendedPos(){
