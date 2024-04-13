@@ -158,7 +158,7 @@ public class AngleAutoRed extends LinearOpMode {
         actionTimer.reset();
         loopTimer.reset();
         // Save this for tele
-        AutoToTele.allianceSide = autoConstants.getAlliance();
+        AutoToTele.allianceSide = 1;
         // Used sometimes to avoid potential collisions with a partner
         sleep(Math.abs(autoConstants.getDelaySeconds()*1000));
         while (opModeIsActive()){

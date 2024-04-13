@@ -258,7 +258,7 @@ public class AngleAutoConstantsBlue {
             else{
                 if (avoidYellows && correctedSpikeMarkPos == 3){
                     whitePixelYCoord = wingSideWhiteY;
-                    whitePixelYCoordB = wingSideWhiteY;
+                    whitePixelYCoordB = wingSideWhiteY + 6;
                 }
                 else whitePixelYCoord = boardSideWhiteY;
             }
@@ -317,7 +317,7 @@ public class AngleAutoConstantsBlue {
                         .splineToConstantHeading(new Vector2d(28, 59), Math.toRadians(-180))
                         .splineToConstantHeading(new Vector2d(-30, 59), Math.toRadians(-180))
                         // Ok we're out of the truss now
-                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -53.8 : -54.8), (38), Math.toRadians(20)), Math.toRadians(-110))
+                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.2 : -55.3), (38), Math.toRadians(20)), Math.toRadians(-110))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
@@ -327,7 +327,6 @@ public class AngleAutoConstantsBlue {
                         .resetVelConstraint()
                         //.splineToSplineHeading(new Pose2d(whitePixelXCoord + 1.1 - 1, whitePixelYCoordB, Math.toRadians(-30)), Math.toRadians(0))
                         .splineToConstantHeading(new Vector2d(whitePixelXCoord + 1.1, whitePixelYCoordB), Math.toRadians(0))
-                        .splineToSplineHeading(new Pose2d(whitePixelXCoord + 1.1 - 1, whitePixelYCoordB, Math.toRadians(-30)), Math.toRadians(0))
                         .build();
             }
             // END OF BOARDSIDE
@@ -470,6 +469,30 @@ public class AngleAutoConstantsBlue {
         telemetry.addData("Opposite autos", getOppositeAuto());
         telemetry.addData("White pixels backstage first cycle (1)", getWhitePixelDropBackstage1());
         telemetry.addData("White pixel backstage second cycle (2)", getWhitePixelDropBackstage2());
+        telemetry.addLine();
+        telemetry.addLine(autoConfigToEnglish());
+        telemetry.addLine();
+        telemetry.addLine(ramdomAutoCheckMessage());
+
+        prevConfigToEnglish = autoConfigToEnglish();
+    }
+
+    public void addTelemetryColorV4UpdateNewPog(Telemetry telemetry){
+        // Write the alliance in its color\
+
+       telemetry.addLine(
+               "<font color =#" + "00C8FF" + "Side: " + (isWingSide() ? "Wing /\\" : "Board [") + // First time using this funny switchy thing; Ely says the ide is wrong
+        "\nCorrected Spike Mark Pos: " + getCorrectedSpikeMarkPos() +
+        "\nDelay in seconds: " + getDelaySeconds() +
+        "\nNumber of cycles: " + getNumCycles() +
+        "\nParking close: " + isParkingClose() +
+        "\nDrop is offset: " + isDropOffset() +
+        "\nAvoiding yellows: " + isAvoidingYellows() +
+        "\nTape measure park: " +  isTapeMeasurePark() +
+        "\nOpposite autos: " + getOppositeAuto() +
+        "\nBackstage first cycle: " + getWhitePixelDropBackstage1() +
+        "\nBackstage second cycle: " + getWhitePixelDropBackstage2() + "</font>"
+       );
         telemetry.addLine();
         telemetry.addLine(autoConfigToEnglish());
         telemetry.addLine();
