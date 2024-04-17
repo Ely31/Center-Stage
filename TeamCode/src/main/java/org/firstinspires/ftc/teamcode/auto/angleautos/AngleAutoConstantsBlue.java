@@ -476,6 +476,30 @@ public class AngleAutoConstantsBlue {
 
         prevConfigToEnglish = autoConfigToEnglish();
     }
+
+    public void addTelemetryColorV4UpdateNewPog(Telemetry telemetry){
+        // Write the alliance in its color\
+
+       telemetry.addLine(
+               "<font color =#" + "00C8FF" + "Side: " + (isWingSide() ? "Wing /\\" : "Board [") + // First time using this funny switchy thing; Ely says the ide is wrong
+        "\nCorrected Spike Mark Pos: " + getCorrectedSpikeMarkPos() +
+        "\nDelay in seconds: " + getDelaySeconds() +
+        "\nNumber of cycles: " + getNumCycles() +
+        "\nParking close: " + isParkingClose() +
+        "\nDrop is offset: " + isDropOffset() +
+        "\nAvoiding yellows: " + isAvoidingYellows() +
+        "\nTape measure park: " +  isTapeMeasurePark() +
+        "\nOpposite autos: " + getOppositeAuto() +
+        "\nBackstage first cycle: " + getWhitePixelDropBackstage1() +
+        "\nBackstage second cycle: " + getWhitePixelDropBackstage2() + "</font>"
+       );
+        telemetry.addLine();
+        telemetry.addLine(autoConfigToEnglish());
+        telemetry.addLine();
+        telemetry.addLine(ramdomAutoCheckMessage());
+
+        prevConfigToEnglish = autoConfigToEnglish();
+    }
     String[] messageList = {
             "CHECK THE AUTO, REMEMBER NANO FINALS 3!",
             "Ok apparently it was Nano Finals 2",
