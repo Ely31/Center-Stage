@@ -146,7 +146,7 @@ public class AngleAutoRed extends LinearOpMode {
 
                 drive.setPoseEstimate(autoConstants.startPos);
                 // Display auto configuration to telemetry
-                autoConstants.addTelemetry(telemetry);
+                autoConstants.addTelemetryColorV4UpdateNewPog(telemetry);
                 telemetry.update();
                 pipelineThrottle.reset();
             } // End of throttled section
