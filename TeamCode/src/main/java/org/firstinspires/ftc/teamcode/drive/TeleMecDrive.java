@@ -41,6 +41,20 @@ public class  TeleMecDrive {
 
         return angle;
     }
+    public double getFunnyCorrectedHeading(){
+        // Try to fix steering deposit calibration being wrong
+        double chunk;
+        double correctedHeading = heading;
+        if (Math.abs(heading) > 2*Math.PI){
+            chunk = heading % 2*Math.PI;
+            if (heading < 0){
+                correctedHeading = chunk;
+            } else {
+                correctedHeading = -chunk;
+            }
+        }
+        return correctedHeading;
+    }
     private double headingOffset = 0;
 
     private double rotX;
@@ -133,22 +147,6 @@ public class  TeleMecDrive {
         rb.setPower(rbPower*slowInput);
     }
 
-    public void driveBoardLocked(double x, double y, double turn, double slowInput){
-        // Only difference between this and driveRobotCentric is that the slow button only effects strafing
-        // So that the control loops on heading and board distance don't get affected
-        slowInput = ((-1 + slowFactor) * slowInput)+1;
-
-        double lfPower = y + x*slowInput + turn*slowInput;
-        double lbPower = y - x*slowInput + turn*slowInput;
-        double rfPower = y - x*slowInput - turn*slowInput;
-        double rbPower = y + x*slowInput - turn*slowInput;
-
-        lf.setPower(lfPower);
-        lb.setPower(lbPower);
-        rf.setPower(rfPower);
-        rb.setPower(rbPower);
-    }
-
     public void resetIMU(){
         imu.resetYaw();
     }
@@ -164,6 +162,7 @@ public class  TeleMecDrive {
         telemetry.addData("Heading in radians", getHeading());
         telemetry.addData("Heading in degrees", Math.toDegrees(getHeading()));
         telemetry.addData("Normalized heading in radians", getNormalizedHeading());
+        telemetry.addData("Funny corrected heading", getFunnyCorrectedHeading());
         telemetry.addData("End of auto heading", AutoToTele.endOfAutoHeading);
         telemetry.addData("End of auto heading in degrees", Math.toDegrees(AutoToTele.endOfAutoHeading));
         telemetry.addData("End of auto side", AutoToTele.allianceSide);
