@@ -10,12 +10,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
-import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoIntakeAngleHolding;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
-import org.firstinspires.ftc.teamcode.hardware.TapeMeasure;
+import org.firstinspires.ftc.teamcode.hardware.SteeringArm;
 import org.firstinspires.ftc.teamcode.util.AutoToTele;
 import org.firstinspires.ftc.teamcode.util.TimeUtil;
 import org.firstinspires.ftc.teamcode.util.Utility;
@@ -23,13 +22,13 @@ import org.firstinspires.ftc.teamcode.util.Utility;
 @Config
 //@Photon
 @TeleOp
-public class Teleop4 extends LinearOpMode {
+public class Teleop6 extends LinearOpMode {
     // Pre init
     TimeUtil timeUtil = new TimeUtil();
     ElapsedTime matchTimer = new ElapsedTime();
     TeleMecDrive drive;
     Lift lift;
-    Arm3 arm;
+    SteeringArm arm;
     ElapsedTime pivotTimer = new ElapsedTime();
     ElapsedTime gripperTimer = new ElapsedTime();
     ElapsedTime doubleTapTimer = new ElapsedTime();
@@ -37,12 +36,9 @@ public class Teleop4 extends LinearOpMode {
     DroneLauncher launcher;
     Climber climber;
     ElapsedTime climberTimer = new ElapsedTime();
-    TapeMeasure tapeMeasure;
 
     PIDFController headingController;
     public static PIDCoefficients headingCoeffs = new PIDCoefficients(2, 0.005, 0.2); // old vals (0.7,0.005,0.01)
-    PIDFController boardDistanceController;
-    public static PIDCoefficients boardCoeffs = new PIDCoefficients(0.05,0.000,5); // Old i val 0.0001
 
     public static double liftPosEditStep = 0.45;
     boolean prevLiftInput = false;
@@ -57,10 +53,7 @@ public class Teleop4 extends LinearOpMode {
     boolean prevUsePixelSensorsInput = false;
     boolean prevStackUp = false;
     boolean prevStackDown = false;
-    public static boolean useBoardSensor = false;
-    public static boolean prevUseBoardSensorInput = false;
-    public static double boardTargetDistance = 15;
-    public static double boardControllerEnableDistance = 45;
+    boolean dontRetractThisTime = false;
     public static boolean displayDebugTelemetry = true;
 
     enum ScoringState {
@@ -83,6 +76,7 @@ public class Teleop4 extends LinearOpMode {
 
     int drivingState;
     ElapsedTime drivingTimer = new ElapsedTime();
+    boolean hasCalibratedFC = false;
     double climberSlackPullTime = 1.3;
 
     @Override
@@ -93,15 +87,12 @@ public class Teleop4 extends LinearOpMode {
         // Bind hardware to the hardwaremap
         drive = new TeleMecDrive(hardwareMap, 0.3, false);
         lift = new Lift(hardwareMap);
-        arm = new Arm3(hardwareMap);
+        arm = new SteeringArm(hardwareMap);
         intake = new ExtendoIntakeAngleHolding(hardwareMap);
         climber = new Climber(hardwareMap);
         launcher = new DroneLauncher(hardwareMap);
-        tapeMeasure = new TapeMeasure(hardwareMap);
 
         headingController = new PIDFController(headingCoeffs);
-        boardDistanceController = new PIDFController(boardCoeffs);
-        boardDistanceController.setTargetPosition(boardTargetDistance);
 
         waitForStart();
 
@@ -115,17 +106,8 @@ public class Teleop4 extends LinearOpMode {
         // START OF TELEOP LOOP
         while (opModeIsActive()){
             // DRIVING
-            if (useBoardSensor && scoringState == ScoringState.SCORING && arm.getBoardDistanceRollingAvg() < boardControllerEnableDistance){
-                drivingState = 1;
-                // Lock onto the board if we're scoring and it's close enough
-                drive.driveFieldCentric(
-                        // Multiply by alliance because the board is to the right on red and left on blue
-                        -boardDistanceController.update(arm.getBoardDistanceRollingAvg()) * AutoToTele.allianceSide,
-                        gamepad1.left_stick_y,
-                        -headingController.update(drive.getHeading()),
-                        1
-                );
-            } else if (useBoardSensor && gamepad1.right_stick_x == 0 && drivingTimer.seconds() > 0.3){
+
+            if (false && gamepad1.right_stick_x == 0 && drivingTimer.seconds() > 0.3){
                 // Lock heading with pid controller if you aren't turning
                 drive.driveFieldCentric(
                         gamepad1.left_stick_x,
@@ -145,7 +127,6 @@ public class Teleop4 extends LinearOpMode {
                 );
                 // Reset pid controllers so they don't do weird things when they turn back on
                 resetHeadingController();
-                resetBoardDistanceController();
             }
             if (gamepad1.right_stick_x != 0){
                 drivingTimer.reset();
@@ -156,12 +137,9 @@ public class Teleop4 extends LinearOpMode {
                 drive.resetIMU();
                 drive.resetHeadingOffset();
                 resetHeadingController();
+                hasCalibratedFC = true;
             }
             prevHeadingResetInput = gamepad1.share;
-
-            if(gamepad2.left_stick_button){tapeMeasure.Yeeeeeet();}
-            else if(gamepad2.right_stick_button) {tapeMeasure.noYeet();}
-            else{tapeMeasure.zeroPower();}
 
             // Enable/disable autoPremove and autoRetract in case they causes problems
             if (!prevUsePixelSensorsInput && gamepad2.ps){
@@ -169,14 +147,19 @@ public class Teleop4 extends LinearOpMode {
             }
             prevUsePixelSensorsInput = gamepad2.ps;
 
-            // Enable/disable using the board distance sensor
+            /* Enable/disable using the board distance sensor
             if (!prevUseBoardSensorInput && gamepad1.ps){
                 useBoardSensor = !useBoardSensor;
             }
             prevUseBoardSensorInput = gamepad1.ps;
+             */
 
             // ARM AND LIFT CONTROL
             if (!isClimbing) {
+                // Reset some climber things
+                climber.setTargetPos(0);
+                climber.goToTargetPos();
+                climbingState = ClimbingState.REDUCE_SLACK;
                 // Edit the extended position with the joystick on gamepad two
                 // Only works when the lift is up
                 if (scoringState == ScoringState.SCORING) {
@@ -232,6 +215,8 @@ public class Teleop4 extends LinearOpMode {
             }
             else intake.off();
 
+            if (gamepad2.square) intake.goToVertical();
+
             // DRONE LAUNCHER CONTROL
             // Require pressing two keys at once to reduce the chance of accidentally shooting it
             if (gamepad2.left_trigger > 0.8 && gamepad2.right_trigger > 0.8) launcher.release();
@@ -248,21 +233,18 @@ public class Teleop4 extends LinearOpMode {
             prevClimbingInput = gamepad2.left_bumper && gamepad2.right_bumper;
 
             // TELEMETRY
-            telemetry.addData("Using pixel sensors", usePixelSensors);
-            telemetry.addData("Using board distance", useBoardSensor);
-            telemetry.addData("Climbing", isClimbing);
+            //telemetry.addData("Using pixel sensors", usePixelSensors);
             if (displayDebugTelemetry) {
                 telemetry.addLine();
-                telemetry.addData("Driving mode", drivingState);
-                telemetry.addData("Target heading", headingController.getTargetPosition());
+                //telemetry.addData("Driving mode", drivingState);
+                //telemetry.addData("Target heading", headingController.getTargetPosition());
+                telemetry.addData("Climbing", isClimbing);
+                telemetry.addData("Climbing state", climbingState.name());
                 telemetry.addData("Heading", drive.getHeading());
                 telemetry.addData("Heading error", headingController.getLastError());
+                telemetry.addData("Funny corrected heading", (hasCalibratedFC ? drive.getHeading() : getCorrectedSteeringHeading()));
                 telemetry.addData("Driving timer", drivingTimer.seconds());
                 telemetry.addData("Scoring state", scoringState.name());
-                telemetry.addData("Board lock .update", boardDistanceController.update(arm.getBoardDistanceRollingAvg()));
-                telemetry.addData("Board lock error", boardDistanceController.getLastError());
-                telemetry.addData("Board lock target pos", boardDistanceController.getTargetPosition());
-                telemetry.addData("climbing state", climbingState.name());
                 telemetry.addLine();
                 telemetry.addLine("SUBSYSTEMS");
                 telemetry.addLine();
@@ -294,14 +276,16 @@ public class Teleop4 extends LinearOpMode {
                 // Only poll the sensors we need when we need them to reduce loop times
                 arm.updateSensors(true, true, false);
                 // Move the arm to the intake, duh
-                // Prevent arm hitting stuff near the intake because we spapped it for a speed
+                // Prevent arm hitting stuff near the intake because we swapped it for a speed
                 if (Utility.withinErrorOfValue(lift.getHeight(), 0, 2)){
                     arm.pivotGoToIntake();
                 } else {
                     arm.preMove();
                 }
+                // Make sure the deposit doesn't crash into stuff
+                arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
+                if (pivotTimer.milliseconds() > SteeringArm.pivotAwayFromBordTime) {
                     lift.retract();
                 }
                 // Put up the stopper so pixels don't fly out the back, but only after the arm's back to avoid hooking a pixel on it
@@ -314,6 +298,8 @@ public class Teleop4 extends LinearOpMode {
                 arm.setBothGrippersState(!arm.armIsDown());
                 // Reset poker
                 poking = false;
+                // Reset this too
+                dontRetractThisTime = false;
                 // Switch states when bumper pressed
                 // Or, (and this'll happen 95% of the time) when it has both pixels
                 if ((usePixelSensors && arm.pixelIsInBottom() && arm.pixelIsInTop()) || (!prevLiftInput && gamepad2.right_bumper)){
@@ -325,7 +311,7 @@ public class Teleop4 extends LinearOpMode {
                 break;
 
             case WAITING_FOR_GRIPPERS:
-                if (gripperTimer.milliseconds() > Arm3.gripperActuationTime){
+                if (gripperTimer.milliseconds() > SteeringArm.gripperActuationTime){
                     scoringState = ScoringState.PREMOVED;
                     doubleTapTimer.reset();
                 }
@@ -333,8 +319,9 @@ public class Teleop4 extends LinearOpMode {
 
             case PREMOVED:
                 arm.preMove();
+                arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) lift.retract();
+                if (pivotTimer.milliseconds() > SteeringArm.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
                 arm.setStopperState(false);
@@ -342,7 +329,7 @@ public class Teleop4 extends LinearOpMode {
                 intake.forceToggleOff();
                 // Spit out just a little to avoid dragging a third under the tubing
                 // Using the gripper timer for this is hacky but oh well
-                if (gripperTimer.milliseconds() < (Arm3.gripperActuationTime + 200)) intake.reverse();
+                if (gripperTimer.milliseconds() < (SteeringArm.gripperActuationTime + 200)) intake.reverse();
                 else intake.off();
                 // Reset poker
                 poking = false;
@@ -356,6 +343,7 @@ public class Teleop4 extends LinearOpMode {
                     scoringState = ScoringState.SCORING;
                     // Save this info to prevent it from going down right away if you have nothing
                     hadAnyPixelsWhenPremoved = (arm.pixelIsInBottom() || arm.pixelIsInTop());
+                    pivotTimer.reset();
                 }
                 // Go back to intaking if the arm pulled up before getting both pixels
                 if (gamepad2.dpad_left){
@@ -366,7 +354,7 @@ public class Teleop4 extends LinearOpMode {
             case SCORING:
                 // Update arm
                 // Only poll the sensors we need when we need them to reduce loop times
-                arm.updateSensors(true, false, useBoardSensor);
+                arm.updateSensors(true, false, false);
                 // Move it up
                 arm.pivotScore();
                 lift.extend();
@@ -387,15 +375,23 @@ public class Teleop4 extends LinearOpMode {
                 prevPokingInput = gamepad2.b;
                 arm.setStopperState(poking);
 
-                // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
-                if (
-                        (!prevLiftInput && gamepad2.right_bumper) ||
-                        (usePixelSensors && !(arm.getTopGripperState() || arm.getBottomGripperState()) && !(arm.pixelIsInBottom() || arm.pixelIsInTop()))
-                ){
+                // Press this button to stop the lift from autoRetracting before it autoRetracts.
+                // Used when we want to to poke pixels after placing some to avoid the lift going down and back up again.
+                if (gamepad2.y) dontRetractThisTime = true;
 
+                // Wait for the arm to move a bit so the deposit doesn't hit the bot
+                if (pivotTimer.seconds() > 0.25) arm.updateSteer(hasCalibratedFC ? drive.getHeading() : getCorrectedSteeringHeading());
+
+                // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
+                if (usePixelSensors && (!arm.getTopGripperState() && !arm.getBottomGripperState())){
                     scoringState = ScoringState.SLIDING_UP;
                 }
-                // Go back to premoved if we wish, si
+                if (!prevLiftInput && gamepad2.right_bumper){
+                    scoringState = ScoringState.BUMPING_UP;
+                    // Bump up
+                    lift.setExtendedPos(lift.getExtendedPos() + 2);
+                }
+                // Go back to premoved if we wish
                 if (gamepad2.dpad_left){
                     scoringState = ScoringState.PREMOVED;
                     pivotTimer.reset();
@@ -403,9 +399,12 @@ public class Teleop4 extends LinearOpMode {
                 break;
 
             case SLIDING_UP:
+                arm.updateSensors(true, false, false);
                 // Raise the lift up gradually to get clear of pixels
-                lift.setExtendedPos(lift.getExtendedPos() + liftPosEditStep);
-                if (!(arm.pixelIsInTop() && arm.pixelIsInBottom())){
+                lift.setExtendedPos(lift.getExtendedPos() + 0.15);
+                lift.extend();
+                // Add bumper to escape as well because we've had bugs with it staying up forever
+                if ((!arm.pixelIsInTop() && !arm.pixelIsInBottom()) || gamepad2.right_bumper){
                     scoringState = ScoringState.BUMPING_UP;
                     // Bump up
                     lift.setExtendedPos(lift.getExtendedPos() + 2);
@@ -415,7 +414,8 @@ public class Teleop4 extends LinearOpMode {
             case BUMPING_UP:
                 lift.extend();
                 // Once it's gone up enough, switch states and retract
-                if (Utility.withinErrorOfValue(lift.getHeight(), lift.getExtendedPos(), 0.5)) {
+                // Add bumper to escape as well because we've had bugs with it staying up forever
+                if (Utility.withinErrorOfValue(lift.getHeight(), lift.getExtendedPos(), 0.5) || gamepad2.right_bumper) {
                     // Reset that back to normal because we temporarily changed it
                     lift.setExtendedPos(lift.getExtendedPos() - 2);
                     scoringState = ScoringState.INTAKING;
@@ -428,35 +428,41 @@ public class Teleop4 extends LinearOpMode {
 
         // Keep this at 0 until climbing mode is on
         climberTimer.reset();
+        // Reset the lift height that the climber will go to
+        Climber.targetLiftHeight = Climber.hangingHeight;
     }
 
     void updateClimibingSystem(){
-        // TODO: make this a state machine
         // CLIMBER CONTROL
-        // This entire section of code is terrible
         // Climbing mode moves the arm out of the way, escapes all the pid stuff and just runs things with raw power
-        // holy crap ely you weren't kidding about this being terrible
-        //this is bad, why is wrong, Braindamage, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare, nightmare.
         if(isClimbing) {
-            switch(climbingState){
+            switch (climbingState) {
                 case REDUCE_SLACK:
-                    arm.setPivotPos(0.1);
-                    climber.setPower(-1);
+                    arm.pivotGoToIntake();
+                    arm.setStopperState(false);
+                    // Pull in slack
+                    climber.setTargetPos(Climber.slackPullPos);
+                    climber.goToTargetPos();
+
                     lift.setHeight(Climber.targetLiftHeight);
                     lift.update();
 
-                    if (climberTimer.seconds() > climberSlackPullTime) {
+                    if ((climber.getPos() - Climber.slackPullPos) < Climber.closeEnoughRange) {
                         climber.setPower(0);
                         climber.setTargetPos(climber.getPos());
-                        climbingState = climbingState.HOLD;
+                        climbingState = ClimbingState.HOLD;
                     }
                     break;
 
                 case HOLD:
                     climber.goToTargetPos();
                     lift.update();
-                    if(!(gamepad2.left_stick_y == 0)){
-                        climbingState = climbingState.CLIMB;
+                    // Move it with the right stick if something isn't right (normally this isn't necessary)
+                    //Climber.targetLiftHeight += (Climber.targetLiftHeight + 0.2 * -gamepad2.right_stick_y);
+                    //lift.setHeight(Climber.targetLiftHeight);
+
+                    if (!(gamepad2.left_stick_y == 0)) {
+                        climbingState = ClimbingState.CLIMB;
                     }
                     break;
 
@@ -469,11 +475,11 @@ public class Teleop4 extends LinearOpMode {
                     // Update so we can get the lift's position
                     lift.update(false);
 
-                    if(gamepad2.left_stick_y == 0){
+                    if (gamepad2.left_stick_y == 0) {
                         Climber.targetLiftHeight = lift.getHeight();
                         lift.setHeight(Climber.targetLiftHeight);
                         climber.setTargetPos(climber.getPos());
-                        climbingState = climbingState.HOLD;
+                        climbingState = ClimbingState.HOLD;
                     }
                     break;
             }
@@ -484,15 +490,39 @@ public class Teleop4 extends LinearOpMode {
         }
     }
 
-    void resetBoardDistanceController(){
-        boardDistanceController = new PIDFController(boardCoeffs);
-        boardDistanceController.setTargetPosition(boardTargetDistance);
-    }
     void resetHeadingController(){
         headingController = new PIDFController(headingCoeffs);
         headingController.setTargetPosition(drive.getHeading());
     }
     void resetLiftController(){
         lift.setCoefficients(Lift.coeffs);
+    }
+
+    double getCorrectedSteeringHeading(){
+        boolean ver = false;
+        if (ver) {
+            // Try to fix steering deposit calibration being wrong
+            double in = drive.getHeading();
+            double chunk;
+            double correctedHeading = in;
+            if (Math.abs(in) > (2 * Math.PI)) {
+                chunk = in % (2 * Math.PI);
+                if (in < 0) {
+                    correctedHeading = -chunk;
+                } else {
+                    correctedHeading = chunk;
+                }
+            }
+            return correctedHeading;
+        } else {
+            // Try to fix steering deposit calibration being wrong
+            double in = drive.getHeading();
+            double correctedHeading = Math.acos(Math.cos(in));
+            if (Math.sin(in) < 0){
+                return -correctedHeading;
+            } else {
+                return correctedHeading;
+            }
+        }
     }
 }

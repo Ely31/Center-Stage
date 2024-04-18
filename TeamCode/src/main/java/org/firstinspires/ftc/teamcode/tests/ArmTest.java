@@ -3,16 +3,16 @@ package org.firstinspires.ftc.teamcode.tests;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.hardware.Arm3;
+import org.firstinspires.ftc.teamcode.hardware.SteeringArm;
 
 @TeleOp(name="",group="test")
 public class ArmTest extends LinearOpMode {
     // Pre-init
-    Arm3 arm;
+    SteeringArm arm;
     @Override
     public void runOpMode() {
         // Init
-    arm = new Arm3(hardwareMap);
+    arm = new SteeringArm(hardwareMap);
 
         waitForStart();
         // Pre-run

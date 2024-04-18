@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.TeleMecDrive;
-import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.DroneLauncher;
 import org.firstinspires.ftc.teamcode.hardware.ExtendoIntakeAngleHolding;
@@ -77,6 +76,7 @@ public class Teleop5 extends LinearOpMode {
 
     int drivingState;
     ElapsedTime drivingTimer = new ElapsedTime();
+    boolean hasCalibratedFC = false;
     double climberSlackPullTime = 1.3;
 
     @Override
@@ -137,6 +137,7 @@ public class Teleop5 extends LinearOpMode {
                 drive.resetIMU();
                 drive.resetHeadingOffset();
                 resetHeadingController();
+                hasCalibratedFC = true;
             }
             prevHeadingResetInput = gamepad1.share;
 
@@ -236,7 +237,7 @@ public class Teleop5 extends LinearOpMode {
                 //telemetry.addData("Target heading", headingController.getTargetPosition());
                 telemetry.addData("Heading", drive.getHeading());
                 telemetry.addData("Heading error", headingController.getLastError());
-                telemetry.addData("Funny corrected heading", drive.getFunnyCorrectedHeading());
+                telemetry.addData("Funny corrected heading", (hasCalibratedFC ? drive.getHeading() : getCorrectedSteeringHeading()));
                 telemetry.addData("Driving timer", drivingTimer.seconds());
                 telemetry.addData("Scoring state", scoringState.name());
                 telemetry.addLine();
@@ -279,7 +280,7 @@ public class Teleop5 extends LinearOpMode {
                 // Make sure the deposit doesn't crash into stuff
                 arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) {
+                if (pivotTimer.milliseconds() > SteeringArm.pivotAwayFromBordTime) {
                     lift.retract();
                 }
                 // Put up the stopper so pixels don't fly out the back, but only after the arm's back to avoid hooking a pixel on it
@@ -305,7 +306,7 @@ public class Teleop5 extends LinearOpMode {
                 break;
 
             case WAITING_FOR_GRIPPERS:
-                if (gripperTimer.milliseconds() > Arm3.gripperActuationTime){
+                if (gripperTimer.milliseconds() > SteeringArm.gripperActuationTime){
                     scoringState = ScoringState.PREMOVED;
                     doubleTapTimer.reset();
                 }
@@ -315,7 +316,7 @@ public class Teleop5 extends LinearOpMode {
                 arm.preMove();
                 arm.centerSteer();
                 // Wait to retract the lift until the arm is safely away from the board
-                if (pivotTimer.milliseconds() > Arm3.pivotAwayFromBordTime) lift.retract();
+                if (pivotTimer.milliseconds() > SteeringArm.pivotAwayFromBordTime) lift.retract();
                 // Just make sure we're still holding on
                 arm.setBothGrippersState(true);
                 arm.setStopperState(false);
@@ -323,7 +324,7 @@ public class Teleop5 extends LinearOpMode {
                 intake.forceToggleOff();
                 // Spit out just a little to avoid dragging a third under the tubing
                 // Using the gripper timer for this is hacky but oh well
-                if (gripperTimer.milliseconds() < (Arm3.gripperActuationTime + 200)) intake.reverse();
+                if (gripperTimer.milliseconds() < (SteeringArm.gripperActuationTime + 200)) intake.reverse();
                 else intake.off();
                 // Reset poker
                 poking = false;
@@ -374,7 +375,7 @@ public class Teleop5 extends LinearOpMode {
                 if (gamepad2.y) dontRetractThisTime = true;
 
                 // Wait for the arm to move a bit so the deposit doesn't hit the bot
-                if (pivotTimer.seconds() > 0.25) arm.updateSteer(drive.getFunnyCorrectedHeading());
+                if (pivotTimer.seconds() > 0.25) arm.updateSteer(hasCalibratedFC ? drive.getHeading() : getCorrectedSteeringHeading());
 
                 // Switch states when the bumper is pressed or both pixels are gone if autoRetract is on
                 if (usePixelSensors && (!arm.getTopGripperState() && !arm.getBottomGripperState())){
@@ -487,5 +488,33 @@ public class Teleop5 extends LinearOpMode {
     }
     void resetLiftController(){
         lift.setCoefficients(Lift.coeffs);
+    }
+
+    double getCorrectedSteeringHeading(){
+        boolean ver = false;
+        if (ver) {
+            // Try to fix steering deposit calibration being wrong
+            double in = drive.getHeading();
+            double chunk;
+            double correctedHeading = in;
+            if (Math.abs(in) > (2 * Math.PI)) {
+                chunk = in % (2 * Math.PI);
+                if (in < 0) {
+                    correctedHeading = -chunk;
+                } else {
+                    correctedHeading = chunk;
+                }
+            }
+            return correctedHeading;
+        } else {
+            // Try to fix steering deposit calibration being wrong
+            double in = drive.getHeading();
+            double correctedHeading = Math.acos(Math.cos(in));
+            if (Math.sin(in) < 0){
+                return -correctedHeading;
+            } else {
+                return correctedHeading;
+            }
+        }
     }
 }

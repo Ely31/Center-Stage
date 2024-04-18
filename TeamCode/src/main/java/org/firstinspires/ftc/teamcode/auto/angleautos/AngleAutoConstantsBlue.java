@@ -238,7 +238,7 @@ public class AngleAutoConstantsBlue {
                         .splineToConstantHeading(new Vector2d(28, 12), Math.toRadians(-180))
                         .splineToConstantHeading(new Vector2d(-30, 12), Math.toRadians(-180))
                         // Ok we're out of the truss now
-                        .splineToConstantHeading(new Vector2d(-55, getNumFinishedCycles() == 0 ? 12 : 13), Math.toRadians(-180))
+                        .splineToConstantHeading(new Vector2d(-55.5, getNumFinishedCycles() == 0 ? 12 : 13), Math.toRadians(-180))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())

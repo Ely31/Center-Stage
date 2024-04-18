@@ -53,7 +53,7 @@ public class SteeringArm {
     public static double stopperOpenPos = 0.9;
     boolean stopperState = false;
 
-    public static double bottomSensorThreshold = 800;
+    public static double bottomSensorThreshold = 1000;
     public static double topSensorThreshold = 800;
     public static double armSensorThreshold = 1000;
 

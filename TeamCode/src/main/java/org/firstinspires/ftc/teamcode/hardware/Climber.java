@@ -13,6 +13,9 @@ public class Climber {
     public static double targetLiftHeight = 16.25;
     public static double hangingHeight = 16.25;
 
+    public static int slackPullPos = -3300;
+    public static int closeEnoughRange = 100;
+
     public Climber(HardwareMap hwmap){
         climberMotor = hwmap.get(DcMotor.class, "climber");
         climberMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

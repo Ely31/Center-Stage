@@ -190,13 +190,13 @@ public class AngleAutoConstantsRed {
                                 .build();
                     }
                     break;
+
                 default:
                     //TODO: Fix the error with 3rd position where it overshoots
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
                             .lineToSplineHeading(new Pose2d(-37, -34, Math.toRadians(179.5)))
                             .build();
                     yellowPixelYCoord = baseYellowPixelYCoord - 3.5 - dropOffset;
-                    numCycles = 0;
                     break;
             }
 
@@ -240,7 +240,7 @@ public class AngleAutoConstantsRed {
                         .splineToConstantHeading(new Vector2d(28, -13), Math.toRadians(180))
                         .splineToConstantHeading(new Vector2d(-30, -13), Math.toRadians(180))
                         // Ok we're out of the truss now
-                        .splineToConstantHeading(new Vector2d(-53.3, -10.5), Math.toRadians(180))
+                        .splineToConstantHeading(new Vector2d(-54, -10.5), Math.toRadians(180))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
@@ -273,7 +273,7 @@ public class AngleAutoConstantsRed {
                             .lineToSplineHeading(new Pose2d(13, -34, Math.toRadians(0)))
                             .resetAccelConstraint()
                             .build();
-                    yellowPixelYCoord = baseYellowPixelYCoord - 1.5 - dropOffset;
+                    yellowPixelYCoord = baseYellowPixelYCoord - dropOffset;
                     break;
                 case 2:
                     dropOffPurplePixel = drive.trajectorySequenceBuilder(startPos)
@@ -322,7 +322,7 @@ public class AngleAutoConstantsRed {
                         .splineToConstantHeading(new Vector2d(-30, -57.5), Math.toRadians(180))
                         .resetVelConstraint()
                         // Ok we're out of the truss now
-                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.5 : -56), (-39), Math.toRadians(-20)), Math.toRadians(110))
+                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.5 : -56), (-39.5), Math.toRadians(-20)), Math.toRadians(110))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
@@ -367,9 +367,10 @@ public class AngleAutoConstantsRed {
                 }
                 else{
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
-                            .lineToSplineHeading(new Pose2d(-50, (-48), Math.toRadians(0)))
-                            .splineToConstantHeading(new Vector2d(45, (-59.5)), 0)
+                            .lineToSplineHeading(new Pose2d(-50, (-46), Math.toRadians(0)))
+                            .splineToConstantHeading(new Vector2d(14, (-59)), 0)
                             .resetVelConstraint()
+                            .splineToConstantHeading(new Vector2d(whitePixelXCoord, (whitePixelYCoord)), 0)
                             .build();
 
                     toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
@@ -380,6 +381,7 @@ public class AngleAutoConstantsRed {
                             // Ok we're out of the truss now
                             .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -56 : -57 ), (-39.5), Math.toRadians(-20)), Math.toRadians(110))
                             .build();
+
                 }
                 break;
 

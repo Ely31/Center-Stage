@@ -32,7 +32,7 @@ public class SteeringScoringMech {
     }
     public void retract(double armTimerMs){
         arm.pivotGoToIntake();
-        if (armTimerMs > Arm3.pivotAwayFromBordTime){
+        if (armTimerMs > SteeringArm.pivotAwayFromBordTime){
             lift.retract();
         }
     }

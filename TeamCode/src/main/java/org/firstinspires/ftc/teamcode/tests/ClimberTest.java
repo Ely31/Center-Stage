@@ -4,15 +4,15 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.hardware.Arm3;
 import org.firstinspires.ftc.teamcode.hardware.Climber;
 import org.firstinspires.ftc.teamcode.hardware.Lift;
+import org.firstinspires.ftc.teamcode.hardware.SteeringArm;
 
 @TeleOp(name="",group="test")
 public class ClimberTest extends LinearOpMode {
     // Pre-init
     Lift lift;
-    Arm3 arm;
+    SteeringArm arm;
     Climber climber;
 
     enum ClimbingState{
@@ -29,7 +29,7 @@ public class ClimberTest extends LinearOpMode {
     public void runOpMode() {
         // Init
         lift = new Lift(hardwareMap);
-        arm = new Arm3(hardwareMap);
+        arm = new SteeringArm(hardwareMap);
         climber = new Climber(hardwareMap);
         ElapsedTime climberTimer = new ElapsedTime();
 

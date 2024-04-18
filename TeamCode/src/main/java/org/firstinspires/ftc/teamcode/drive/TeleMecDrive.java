@@ -55,6 +55,7 @@ public class  TeleMecDrive {
         }
         return correctedHeading;
     }
+
     private double headingOffset = 0;
 
     private double rotX;
@@ -161,8 +162,6 @@ public class  TeleMecDrive {
         telemetry.addLine("DRIVE");
         telemetry.addData("Heading in radians", getHeading());
         telemetry.addData("Heading in degrees", Math.toDegrees(getHeading()));
-        telemetry.addData("Normalized heading in radians", getNormalizedHeading());
-        telemetry.addData("Funny corrected heading", getFunnyCorrectedHeading());
         telemetry.addData("End of auto heading", AutoToTele.endOfAutoHeading);
         telemetry.addData("End of auto heading in degrees", Math.toDegrees(AutoToTele.endOfAutoHeading));
         telemetry.addData("End of auto side", AutoToTele.allianceSide);
