@@ -17,7 +17,7 @@ public class TeamPropDetector2 extends OpenCvPipeline {
     boolean alliance = true;
     // Don't use this first constructor unless it's for testing
     public TeamPropDetector2(){
-        this(true);
+        this(false);
     }
     public TeamPropDetector2(boolean isRedAlliance){
         if (isRedAlliance){
@@ -40,10 +40,10 @@ public class TeamPropDetector2 extends OpenCvPipeline {
 
     // Min and max values for the threshold
     public Scalar redLower = new Scalar(0, 20, 0);
-    public Scalar redUpper = new Scalar(30, 255, 155);
+    public Scalar redUpper = new Scalar(30, 255, 255);
     public Scalar redLower2 = new Scalar(170, 20, 0);
     public Scalar redUpper2 = new Scalar(180, 255, 155);
-    public Scalar blueLower = new Scalar(90, 150, 20);
+    public Scalar blueLower = new Scalar(90, 140, 20);
     public Scalar blueUpper = new Scalar(120, 255, 255);
     public Scalar lower;
     public Scalar upper;
