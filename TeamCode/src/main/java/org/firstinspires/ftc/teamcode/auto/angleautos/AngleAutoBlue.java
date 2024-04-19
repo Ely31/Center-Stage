@@ -147,7 +147,7 @@ public class AngleAutoBlue extends LinearOpMode {
 
                 drive.setPoseEstimate(autoConstants.startPos);
                 // Display auto configuration to telemetry
-                autoConstants.addTelemetryColorV4UpdateNewPog(telemetry);
+                autoConstants.addTelemetry(telemetry);
                 telemetry.update();
                 pipelineThrottle.reset();
             } // End of throttled section
@@ -192,9 +192,9 @@ public class AngleAutoBlue extends LinearOpMode {
                     break;
 
                 case WAITING_FOR_PPP2:
-                    if (actionTimer.milliseconds() > 50) scoringMech.intakeOff();
+                    if (actionTimer.milliseconds() > 60) scoringMech.intakeOff();
 
-                    if (actionTimer.milliseconds() > 200){
+                    if (actionTimer.milliseconds() > 210){
                         scoringMech.setIntakePos(ExtendoIntake.verticalPos);
                         moveOnToState(AutoState.SCORING_YELLOW, autoConstants.scoreYellowPixel);
                     }
@@ -272,7 +272,6 @@ public class AngleAutoBlue extends LinearOpMode {
                             scoringMech.scoreAsync(9, false);
                             //drive.getPoseEstimate().getHeading() + Math.toRadians(-90)
                             scoringMech.scoreAsync(9, false, drive.getPoseEstimate().getHeading() + Math.toRadians(-90));
-
                         }
                         else {
                             scoringMech.grabOffStackAsync(true, drive.isBusy());

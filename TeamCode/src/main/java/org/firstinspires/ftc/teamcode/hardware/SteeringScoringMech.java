@@ -173,7 +173,7 @@ public class SteeringScoringMech {
 
             case WAITING_FOR_ARM_PIVOT:
                 // Wait til the arm has moved some before steering to avoid crashing the deposit into the bot on the way up
-                if (scoringWait.seconds() > 0.25) arm.updateSteer(heading);
+                //if (scoringWait.seconds() > 0.25) arm.updateSteer(heading);
                 if (scoringWait.seconds() > 1.4) { // Wait for the arm to move all the way
                     arm.setBothGrippersState(false); // Drop the pixels
                     scoringWait.reset();
@@ -182,7 +182,7 @@ public class SteeringScoringMech {
                 break;
 
             case WAITING_FOR_PIXELS_DROP:
-                arm.updateSteer(heading);
+                //arm.updateSteer(heading);
                 if (scoringWait.seconds() > 0.25){ // Wait for them to fall out
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
@@ -191,13 +191,12 @@ public class SteeringScoringMech {
                     scoringWait.reset();
                     scoringState = ScoringState.BUMPING_UP;
                 }
-
                 break;
 
             case BUMPING_UP:
-                lift.setHeight(height+2);
-                arm.updateSteer(heading);
-                if (Utility.withinErrorOfValue(lift.getHeight(), height+2, 0.5)) {
+                lift.setHeight(height + 2);
+                //arm.updateSteer(heading);
+                if (Utility.withinErrorOfValue(lift.getHeight(), height + 2, 0.5)) {
                     scoringWait.reset();
                     scoringState = ScoringState.WAITING_FOR_ARM_RETRACT;
                 }

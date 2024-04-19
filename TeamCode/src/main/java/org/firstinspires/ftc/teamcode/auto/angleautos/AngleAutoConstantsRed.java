@@ -261,7 +261,7 @@ public class AngleAutoConstantsRed {
             }
             else{
                 if (avoidYellows && correctedSpikeMarkPos == 3){
-                    whitePixelYCoord = boardSideAvoid;
+                    whitePixelYCoord = boardSideAvoid - 3;
                 }
                 else whitePixelYCoord = boardSideWhiteY;
             }
@@ -322,7 +322,7 @@ public class AngleAutoConstantsRed {
                         .splineToConstantHeading(new Vector2d(-30, -57.5), Math.toRadians(180))
                         .resetVelConstraint()
                         // Ok we're out of the truss now
-                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.5 : -56), (-39.5), Math.toRadians(-20)), Math.toRadians(110))
+                        .splineToSplineHeading(new Pose2d((getNumFinishedCycles() == 0 ? -54.5 : -56), (-40), Math.toRadians(-20)), Math.toRadians(110))
                         .build();
 
                 scoreWhitePixels = drive.trajectorySequenceBuilder(toStack.end())
@@ -343,10 +343,17 @@ public class AngleAutoConstantsRed {
 
         switch (parkingStuff) {
             case PARK_CLOSE:
-                park = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
-                        .setTangent(Math.toRadians(180))
-                        .splineToLinearHeading(new Pose2d(50, -59.5, Math.toRadians(0)), Math.toRadians(-90))
-                        .build();
+                if(whitePixelDropBackstage2){
+                    park = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
+                            .setTangent(Math.toRadians(180))
+                            .splineToLinearHeading(new Pose2d(50, -59.5, Math.toRadians(0)), Math.toRadians(-90))
+                            .build();
+                }else{
+                    park = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
+                            .setTangent(Math.toRadians(180))
+                            .splineToLinearHeading(new Pose2d(50, -59.5, Math.toRadians(0)), Math.toRadians(-90))
+                            .build();
+                }
 
                 if(getOppositeAuto()){
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
@@ -370,7 +377,7 @@ public class AngleAutoConstantsRed {
                             .lineToSplineHeading(new Pose2d(-50, (-46), Math.toRadians(0)))
                             .splineToConstantHeading(new Vector2d(14, (-59)), 0)
                             .resetVelConstraint()
-                            .splineToConstantHeading(new Vector2d(whitePixelXCoord, (whitePixelYCoord)), 0)
+                            .splineToConstantHeading(new Vector2d(-45, -55), 0)
                             .build();
 
                     toStackWPB = drive.trajectorySequenceBuilder(scoreWhitePixelsBackstage.end())
@@ -387,9 +394,9 @@ public class AngleAutoConstantsRed {
 
             case PARK_FAR:
                 park = drive.trajectorySequenceBuilder(getNumFinishedCycles() == 0 ? scoreYellowPixel.end() : scoreWhitePixels.end())
-                        .setTangent(Math.toRadians(180))
-                        .splineToLinearHeading(new Pose2d(50, -12, Math.toRadians(0)), Math.toRadians(90))
-                        .build();
+                            .setTangent(Math.toRadians(180))
+                            .splineToLinearHeading(new Pose2d(50, -12, Math.toRadians(0)), Math.toRadians(90))
+                            .build();
 
                 if(getOppositeAuto()){
                     scoreWhitePixelsBackstage = drive.trajectorySequenceBuilder(toStack.end())
@@ -461,30 +468,6 @@ public class AngleAutoConstantsRed {
         telemetry.addData("Opposite autos", getOppositeAuto());
         telemetry.addData("White pixels backstage first cycle (1)", getWhitePixelDropBackstage1());
         telemetry.addData("White pixel backstage second cycle (2)", getWhitePixelDropBackstage2());
-        telemetry.addLine();
-        telemetry.addLine(autoConfigToEnglish());
-        telemetry.addLine();
-        telemetry.addLine(ramdomAutoCheckMessage());
-
-        prevConfigToEnglish = autoConfigToEnglish();
-    }
-
-    public void addTelemetryColorV4UpdateNewPog(Telemetry telemetry){
-        // Write the alliance in its color\
-
-        telemetry.addLine(
-                "<font color =#" + "ff0000" + "Side: " + (isWingSide() ? "Wing /\\" : "Board [") + // First time using this funny switchy thing; Ely says the ide is wrong
-                        "\nCorrected Spike Mark Pos: " + getCorrectedSpikeMarkPos() +
-                        "\nDelay in seconds: " + getDelaySeconds() +
-                        "\nNumber of cycles: " + getNumCycles() +
-                        "\nParking close: " + isParkingClose() +
-                        "\nDrop is offset: " + isDropOffset() +
-                        "\nAvoiding yellows: " + isAvoidingYellows() +
-                        "\nTape measure park: " +  isTapeMeasurePark() +
-                        "\nOpposite autos: " + getOppositeAuto() +
-                        "\nBackstage first cycle: " + getWhitePixelDropBackstage1() +
-                        "\nBackstage second cycle: " + getWhitePixelDropBackstage2() + "</font>"
-        );
         telemetry.addLine();
         telemetry.addLine(autoConfigToEnglish());
         telemetry.addLine();
